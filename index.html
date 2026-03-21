@@ -150,14 +150,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 .show-btn{width:100%;padding:17px;background:var(–accent);color:#fff;border:none;border-radius:var(–r);font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;box-shadow:0 4px 24px var(–accent-glow)}
 .show-btn:active{transform:scale(0.98);opacity:.88}
 .rating-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:7px}
-.r-btn{padding:13px 4px 11px;border:1px solid;border-radius:var(–r-sm);font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;transition:all .15s}
+.r-btn{padding:13px 4px 11px;border:2px solid transparent;border-radius:var(–r-sm);font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;transition:all .15s}
 .r-btn:active{transform:scale(0.93)}
 .r-lbl{font-size:12px;font-weight:800}
-.r-int{font-size:10px;opacity:.65;font-weight:500}
-.btn-again{background:var(–again-soft);border-color:rgba(255,77,109,.2);color:var(–again)}
-.btn-hard{background:var(–hard-soft);border-color:rgba(255,169,77,.2);color:var(–hard)}
-.btn-good{background:var(–good-soft);border-color:rgba(64,200,151,.2);color:var(–good)}
-.btn-easy{background:var(–easy-soft);border-color:rgba(77,171,247,.2);color:var(–easy)}
+.r-int{font-size:10px;opacity:.7;font-weight:600}
+.btn-again{background:rgba(255,77,109,0.15);border-color:rgba(255,77,109,0.45);color:#ff4d6d}
+.btn-hard{background:rgba(255,169,77,0.15);border-color:rgba(255,169,77,0.45);color:#ffa94d}
+.btn-good{background:rgba(64,200,151,0.15);border-color:rgba(64,200,151,0.45);color:#40c897}
+.btn-easy{background:rgba(77,171,247,0.15);border-color:rgba(77,171,247,0.45);color:#4dabf7}
 
 /* DONE */
 .done-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;gap:14px;text-align:center}
@@ -251,6 +251,27 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 .toggle.on{background:var(–accent)}
 .toggle::after{content:’’;position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.3)}
 .toggle.on::after{transform:translateX(18px)}
+
+/* SORTABLE FIELD LISTS */
+.sort-section-label{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(–text-dim);margin-bottom:6px;padding-left:4px}
+.sortable-list{display:flex;flex-direction:column;gap:0;border:1px solid var(–border);border-radius:var(–r-sm);overflow:hidden}
+.sortable-item{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(–border2);background:var(–surface);transition:background .15s,opacity .15s;cursor:default;touch-action:none}
+.sortable-item:last-child{border-bottom:none}
+.sortable-item.drag-over-item{background:var(–accent-soft);border-color:rgba(108,99,255,.3)}
+.field-drag{color:var(–text-dim);font-size:20px;cursor:grab;flex-shrink:0;padding:2px 4px;line-height:1;touch-action:none}
+.field-drag:active{cursor:grabbing}
+.field-info{flex:1;min-width:0}
+.field-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.field-role{font-size:10px;margin-top:2px}
+.field-role-front{color:var(–accent2)}
+.field-role-back{color:var(–good)}
+.field-role-hidden{color:var(–text-dim)}
+.field-actions{display:flex;gap:4px;flex-shrink:0}
+.field-action-btn{background:var(–surface2);border:1px solid var(–border);color:var(–text-muted);border-radius:7px;padding:4px 8px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap}
+.field-action-btn:active{transform:scale(0.92)}
+.field-action-btn.active-front{background:var(–accent-soft);border-color:rgba(108,99,255,.3);color:var(–accent2)}
+.field-action-btn.active-back{background:var(–good-soft);border-color:rgba(64,200,151,.3);color:var(–good)}
+.field-action-btn.active-hide{background:rgba(255,255,255,.05);color:var(–text-dim)}
 </style>
 
 </head>
@@ -572,18 +593,22 @@ function loadDecks(){
 //  FIELD CONFIG
 // ══════════════════════════════════════════════
 function getFieldConfig(did){
-  if(fieldConfigs[did]) return fieldConfigs[did];
+  if(fieldConfigs[did]){
+    const cfg = fieldConfigs[did];
+    // Migrate old single-string front to array
+    if(typeof cfg.front === 'string') cfg.front = cfg.front ? [cfg.front] : [];
+    return cfg;
+  }
   const deck = decks[did];
-  if(!deck) return {front:'',back:[],hidden:[]};
+  if(!deck) return {front:[],back:[],hidden:[]};
   const fields = deck.fields;
-  // Smart defaults for Japanese decks
   const frontCandidates = ['Expression','Front','Word','Vocab','単語','表現','Kanji','漢字','Question','Term'];
   const hiddenCandidates = ['Index','Frequency','optimized voc index','voc index','Optimized Voc Index','Note ID','ID','Notes','Diagram','Stroke Order','Stroke','KanjiReadings'];
   let front = fields[0];
   for(const c of frontCandidates){ if(fields.includes(c)){front=c;break} }
   const hidden = fields.filter(f=>hiddenCandidates.some(h=>f.toLowerCase().includes(h.toLowerCase())));
   const back = fields.filter(f=>f!==front && !hidden.includes(f));
-  return {front, back, hidden};
+  return {front:[front], back, hidden};
 }
 
 // ══════════════════════════════════════════════
@@ -675,13 +700,28 @@ function showFieldModal(did){
 }
 
 function renderFieldModal(fields){
-  let html='<div style="margin-bottom:12px;font-size:13px;color:var(--text-muted);line-height:1.5">Wähle welche Felder vorne, hinten oder versteckt sind.</div>';
-  for(const f of fields){
-    const role = f===tempConfig.front?'front':tempConfig.hidden.includes(f)?'hidden':'back';
-    html+=`<div class="field-row" id="fr_${esc(f)}">
+  // Build ordered lists: front fields in order, then back fields in order, then hidden
+  if(!Array.isArray(tempConfig.front)) tempConfig.front = tempConfig.front ? [tempConfig.front] : [];
+  if(!Array.isArray(tempConfig.back)) tempConfig.back = tempConfig.back || [];
+
+  const allAssigned = [...tempConfig.front, ...tempConfig.back, ...tempConfig.hidden];
+  // Add any unassigned fields to back
+  for(const f of fields){ if(!allAssigned.includes(f)) tempConfig.back.push(f); }
+
+  function fieldRow(f, role, idx, listId){
+    return `<div class="field-row sortable-item" data-field="${esc(f)}" data-role="${role}" data-idx="${idx}" data-list="${listId}"
+      draggable="true"
+      ondragstart="dragStart(event)"
+      ondragover="dragOver(event)"
+      ondrop="dragDrop(event)"
+      ondragend="dragEnd(event)"
+      ontouchstart="touchStart(event)"
+      ontouchmove="touchMove(event)"
+      ontouchend="touchEnd(event)">
+      <span class="field-drag">⠿</span>
       <div class="field-info">
         <div class="field-name">${esc(f)}</div>
-        <div class="field-role field-role-${role}" id="frl_${esc(f)}">${roleLabel(role)}</div>
+        <div class="field-role field-role-${role}">${roleLabel(role)}</div>
       </div>
       <div class="field-actions">
         <button class="field-action-btn ${role==='front'?'active-front':''}" onclick="setFieldRole('${esc(f)}','front')">Vorne</button>
@@ -690,33 +730,174 @@ function renderFieldModal(fields){
       </div>
     </div>`;
   }
-  document.getElementById('fieldContent').innerHTML=html;
+
+  let html = `<div style="margin-bottom:14px;font-size:13px;color:var(--text-muted);line-height:1.5">
+    Tippe auf <b>Vorne/Hinten/Aus</b> um Felder zuzuweisen.<br>
+    Ziehe <b>⠿</b> um die Reihenfolge anzupassen.
+  </div>`;
+
+  if(tempConfig.front.length){
+    html += `<div class="sort-section-label">▶ Vorderseite</div>
+    <div class="sortable-list" id="list-front">`;
+    tempConfig.front.forEach((f,i) => html += fieldRow(f,'front',i,'front'));
+    html += `</div>`;
+  }
+
+  if(tempConfig.back.length){
+    html += `<div class="sort-section-label" style="margin-top:14px">↩ Rückseite</div>
+    <div class="sortable-list" id="list-back">`;
+    tempConfig.back.forEach((f,i) => html += fieldRow(f,'back',i,'back'));
+    html += `</div>`;
+  }
+
+  if(tempConfig.hidden.length){
+    html += `<div class="sort-section-label" style="margin-top:14px">✕ Versteckt</div>
+    <div class="sortable-list" id="list-hidden">`;
+    tempConfig.hidden.forEach((f,i) => html += fieldRow(f,'hidden',i,'hidden'));
+    html += `</div>`;
+  }
+
+  document.getElementById('fieldContent').innerHTML = html;
 }
+
 
 function roleLabel(r){return r==='front'?'▶ Vorderseite':r==='back'?'↩ Rückseite':'✕ Versteckt'}
 
 function setFieldRole(field, role){
   const deck = decks[editingDid];
+  if(!Array.isArray(tempConfig.front)) tempConfig.front = tempConfig.front ? [tempConfig.front] : [];
   if(role==='front'){
-    // Previous front becomes back
-    if(tempConfig.front && tempConfig.front!==field){
-      tempConfig.back.unshift(tempConfig.front);
+    // Add to front array (toggle: if already front, remove it)
+    if(tempConfig.front.includes(field)){
+      // Already front - move to back instead
+      tempConfig.front = tempConfig.front.filter(f=>f!==field);
+      if(!tempConfig.back.includes(field)) tempConfig.back.push(field);
+    } else {
+      tempConfig.front.push(field);
+      tempConfig.back = tempConfig.back.filter(f=>f!==field);
+      tempConfig.hidden = tempConfig.hidden.filter(f=>f!==field);
     }
-    tempConfig.front = field;
-    tempConfig.back = tempConfig.back.filter(f=>f!==field);
-    tempConfig.hidden = tempConfig.hidden.filter(f=>f!==field);
   } else if(role==='back'){
-    if(tempConfig.front===field) tempConfig.front='';
-    if(!tempConfig.back.includes(field)) tempConfig.back.push(field);
-    tempConfig.back = tempConfig.back.filter(f=>f!==field||true);
+    tempConfig.front = tempConfig.front.filter(f=>f!==field);
     tempConfig.hidden = tempConfig.hidden.filter(f=>f!==field);
     if(!tempConfig.back.includes(field)) tempConfig.back.push(field);
   } else {
-    if(tempConfig.front===field) tempConfig.front='';
+    tempConfig.front = tempConfig.front.filter(f=>f!==field);
     tempConfig.back = tempConfig.back.filter(f=>f!==field);
     if(!tempConfig.hidden.includes(field)) tempConfig.hidden.push(field);
   }
   renderFieldModal(deck.fields);
+}
+
+// ══════════════════════════════════════════════
+//  DRAG & DROP / TOUCH SORT
+// ══════════════════════════════════════════════
+let dragSrc = null, dragSrcList = null;
+
+function getListArray(listId){
+  if(listId==='front') return tempConfig.front;
+  if(listId==='back') return tempConfig.back;
+  return tempConfig.hidden;
+}
+
+function dragStart(e){
+  dragSrc = e.currentTarget;
+  dragSrcList = dragSrc.dataset.list;
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(()=>dragSrc.style.opacity='0.4', 0);
+}
+function dragEnd(e){
+  e.currentTarget.style.opacity='1';
+  document.querySelectorAll('.sortable-item').forEach(el=>el.classList.remove('drag-over-item'));
+}
+function dragOver(e){
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.sortable-item').forEach(el=>el.classList.remove('drag-over-item'));
+  e.currentTarget.classList.add('drag-over-item');
+}
+function dragDrop(e){
+  e.preventDefault();
+  const target = e.currentTarget;
+  if(target===dragSrc) return;
+  const srcField = dragSrc.dataset.field;
+  const tgtField = target.dataset.field;
+  const srcList = dragSrc.dataset.list;
+  const tgtList = target.dataset.list;
+  // Remove from source
+  const srcArr = getListArray(srcList);
+  const srcIdx = srcArr.indexOf(srcField);
+  if(srcIdx>-1) srcArr.splice(srcIdx,1);
+  // Insert into target list at target position
+  const tgtArr = getListArray(tgtList);
+  const tgtIdx = tgtArr.indexOf(tgtField);
+  tgtArr.splice(tgtIdx,0,srcField);
+  // Update role if moved to different list
+  if(srcList!==tgtList){
+    // Already handled by array move above; role determined by which list
+  }
+  renderFieldModal(decks[editingDid].fields);
+}
+
+// Touch support for iOS
+let touchItem=null, touchClone=null, touchList=null, touchStartY=0;
+function touchStart(e){
+  const item = e.currentTarget;
+  // Only start drag if touching the handle
+  const handle = item.querySelector('.field-drag');
+  const touch = e.touches[0];
+  const hr = handle.getBoundingClientRect();
+  if(touch.clientX < hr.left-10 || touch.clientX > hr.right+10) return;
+  e.preventDefault();
+  touchItem = item;
+  touchList = item.dataset.list;
+  touchStartY = touch.clientY;
+  // Create visual clone
+  touchClone = item.cloneNode(true);
+  touchClone.style.cssText = `position:fixed;left:${item.getBoundingClientRect().left}px;top:${item.getBoundingClientRect().top}px;width:${item.offsetWidth}px;opacity:0.85;z-index:999;pointer-events:none;background:var(--surface3);border:1px solid var(--accent);border-radius:14px;transition:none`;
+  document.body.appendChild(touchClone);
+  item.style.opacity='0.3';
+}
+function touchMove(e){
+  if(!touchItem||!touchClone) return;
+  e.preventDefault();
+  const touch = e.touches[0];
+  const dy = touch.clientY - touchStartY;
+  const origTop = touchItem.getBoundingClientRect().top + dy - (touchClone.offsetTop - parseInt(touchClone.style.top));
+  touchClone.style.top = (parseInt(touchClone.style.top)||0) + (touch.clientY - touchStartY - (touch.clientY - e.touches[0].clientY||0)) + 'px';
+  // Recalc: just track absolute position
+  touchClone.style.top = (touchItem.getBoundingClientRect().top + window.scrollY + dy) + 'px';
+  // Find item under touch
+  touchClone.style.display='none';
+  const el = document.elementFromPoint(touch.clientX, touch.clientY);
+  touchClone.style.display='';
+  const overItem = el?.closest('.sortable-item');
+  document.querySelectorAll('.sortable-item').forEach(i=>i.classList.remove('drag-over-item'));
+  if(overItem && overItem!==touchItem) overItem.classList.add('drag-over-item');
+}
+function touchEnd(e){
+  if(!touchItem||!touchClone) return;
+  const touch = e.changedTouches[0];
+  touchClone.style.display='none';
+  const el = document.elementFromPoint(touch.clientX, touch.clientY);
+  touchClone.remove();
+  touchClone=null;
+  touchItem.style.opacity='1';
+  const overItem = el?.closest('.sortable-item');
+  if(overItem && overItem!==touchItem){
+    const srcField = touchItem.dataset.field;
+    const tgtField = overItem.dataset.field;
+    const srcList = touchItem.dataset.list;
+    const tgtList = overItem.dataset.list;
+    const srcArr = getListArray(srcList);
+    const srcIdx = srcArr.indexOf(srcField);
+    if(srcIdx>-1) srcArr.splice(srcIdx,1);
+    const tgtArr = getListArray(tgtList);
+    const tgtIdx = tgtArr.indexOf(tgtField);
+    tgtArr.splice(tgtIdx,0,srcField);
+  }
+  touchItem=null;
+  renderFieldModal(decks[editingDid].fields);
 }
 
 function saveFieldConfig(){
@@ -875,27 +1056,36 @@ function renderCard(){
   const c=curCard;
   const st=getState(c.nid,c.ord);
   const cfg=getFieldConfig(c.did);
-  const frontVal=c.fields[cfg.front]||Object.values(c.fields)[0]||'';
+  if(!Array.isArray(cfg.front)) cfg.front = cfg.front ? [cfg.front] : [];
+  const frontFields = cfg.front.filter(f=>c.fields[f]!==undefined);
+  if(!frontFields.length) frontFields.push(Object.keys(c.fields)[0]);
   const typeLabel=!st?'NEU':st.type===2?'WIEDERHOLUNG':'LERNEN';
 
-  // Detect audio in front field
-  const frontAudio=extractAudio(frontVal);
+  // Detect audio in any front field
+  const frontAudio = frontFields.map(f=>extractAudio(c.fields[f]||'')).find(Boolean);
 
   const div=document.createElement('div');
   div.className='flashcard c-in';
   div.id='fcard';
   div.onclick=flipCard;
 
+  // Render multiple front fields stacked
+  const frontHtml = frontFields.map((f,i)=>{
+    const val = removeAudioTags(c.fields[f]||'');
+    const big = i===0;
+    return '<div style="' + (i>0?'margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.07)':'') + '">' + renderField(val,big) + '</div>';
+  }).join('');
+
   div.innerHTML=`
     <div class="card-type-badge">${typeLabel}</div>
     ${frontAudio?`<button class="card-audio-btn" onclick="event.stopPropagation();playAudio('${frontAudio}')">🔊</button>`:''}
-    <div class="card-main">
-      <div class="card-front-html">${renderField(frontVal,true)}</div>
+    <div class="card-main" style="width:100%">
+      ${frontHtml}
     </div>
     <div class="tap-hint"><div class="tap-dot"></div>Tippen zum Aufdecken</div>
   `;
 
-  const stage=document.getElementById('cardStage');
+    const stage=document.getElementById('cardStage');
   stage.innerHTML='';
   stage.appendChild(div);
 }
