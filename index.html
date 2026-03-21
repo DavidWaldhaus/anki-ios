@@ -8,1165 +8,1094 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="漢字">
 <meta name="theme-color" content="#0a0a0f">
-<title>漢字 — Anki for iOS</title>
-
-<!-- SQL.js for reading .apkg (SQLite) files -->
-
+<title>漢字 — Anki für iOS</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/sql-wasm.js"></script>
-
-<!-- JSZip for unzipping .apkg -->
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-
 <style>
 :root {
-  --bg: #0a0a0f;
-  --surface: #13131a;
-  --surface2: #1c1c26;
-  --border: rgba(255,255,255,0.07);
-  --text: #f0f0f8;
-  --text-muted: rgba(240,240,248,0.45);
-  --text-dim: rgba(240,240,248,0.25);
-  --accent: #7c6fff;
-  --accent-soft: rgba(124,111,255,0.15);
-  --accent-glow: rgba(124,111,255,0.3);
-  --again: #ff5f6d;
-  --hard: #ff9f43;
-  --good: #48dbac;
-  --easy: #54a0ff;
-  --again-soft: rgba(255,95,109,0.12);
-  --hard-soft: rgba(255,159,67,0.12);
-  --good-soft: rgba(72,219,172,0.12);
-  --easy-soft: rgba(84,160,255,0.12);
-  --radius: 20px;
-  --radius-sm: 12px;
-  --safe-top: env(safe-area-inset-top, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --bg: #09090f;
+  --surface: #111118;
+  --surface2: #18181f;
+  --surface3: #1f1f28;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.04);
+  --text: #ededf5;
+  --text-muted: rgba(237,237,245,0.5);
+  --text-dim: rgba(237,237,245,0.25);
+  --accent: #6c63ff;
+  --accent2: #9d8fff;
+  --accent-soft: rgba(108,99,255,0.12);
+  --accent-glow: rgba(108,99,255,0.25);
+  --again: #ff4d6d;
+  --hard: #ffa94d;
+  --good: #40c897;
+  --easy: #4dabf7;
+  --again-soft: rgba(255,77,109,0.1);
+  --hard-soft: rgba(255,169,77,0.1);
+  --good-soft: rgba(64,200,151,0.1);
+  --easy-soft: rgba(77,171,247,0.1);
+  --r: 22px;
+  --r-sm: 14px;
+  --r-xs: 10px;
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
 }
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,'Hiragino Sans','Yu Gothic UI',BlinkMacSystemFont,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none}
 
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+/* SCREENS */
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;padding-top:calc(var(–safe-t) + 8px);padding-bottom:calc(var(–safe-b) + 8px);transition:opacity .22s ease,transform .22s ease}
+.screen.hidden{opacity:0;pointer-events:none;transform:translateY(16px)}
 
-html, body {
-  height: 100%;
-  background: var(--bg);
-  color: var(--text);
-  font-family: -apple-system, 'Hiragino Sans', 'Yu Gothic', BlinkMacSystemFont, sans-serif;
-  overflow: hidden;
-  user-select: none;
-  -webkit-user-select: none;
-}
+/* SCROLLABLE */
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px}
+.scroll::-webkit-scrollbar{display:none}
 
-/* ── SCREENS ── */
-.screen {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  padding-top: calc(var(--safe-top) + 12px);
-  padding-bottom: calc(var(--safe-bottom) + 12px);
-  transition: opacity 0.25s ease, transform 0.25s ease;
-}
-.screen.hidden { opacity: 0; pointer-events: none; transform: translateY(24px); }
-.screen.slide-left { transform: translateX(-100%); opacity: 0; }
-.screen.slide-right { transform: translateX(100%); opacity: 0; }
+/* NAV */
+.nav{display:flex;align-items:center;justify-content:space-between;padding:4px 16px 14px;flex-shrink:0}
+.nav-title{font-size:26px;font-weight:800;letter-spacing:-1px}
+.nav-title em{color:var(–accent2);font-style:normal}
+.nav-actions{display:flex;gap:8px}
+.icon-btn{background:var(–surface2);border:1px solid var(–border);color:var(–text);border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;transition:all .15s;flex-shrink:0}
+.icon-btn:active{transform:scale(0.88);background:var(–surface3)}
 
-/* ── NAV BAR ── */
-.nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20px 16px;
-  flex-shrink: 0;
-}
-.nav-title {
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-}
-.nav-title span { color: var(--accent); }
-.nav-btn {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  color: var(--text);
-  border-radius: 50%;
-  width: 40px; height: 40px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 18px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.nav-btn:active { transform: scale(0.9); background: var(--surface); }
+/* STATS ROW */
+.stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:0 16px 14px;flex-shrink:0}
+.stat-box{background:var(–surface);border:1px solid var(–border);border-radius:var(–r-sm);padding:12px 10px;text-align:center}
+.stat-val{font-size:22px;font-weight:800;letter-spacing:-0.5px}
+.stat-lbl{font-size:10px;color:var(–text-muted);text-transform:uppercase;letter-spacing:.6px;margin-top:2px}
 
-/* ── SCROLL AREA ── */
-.scroll { flex: 1; overflow-y: auto; padding: 0 16px; -webkit-overflow-scrolling: touch; }
-.scroll::-webkit-scrollbar { display: none; }
+/* SECTION LABEL */
+.sect{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(–text-dim);padding:2px 2px 10px}
 
-/* ── CARDS ── */
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 18px;
-  margin-bottom: 12px;
-}
+/* DECK CARD */
+.deck-card{background:var(–surface);border:1px solid var(–border);border-radius:var(–r);padding:16px;margin-bottom:10px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:12px;position:relative;overflow:hidden}
+.deck-card::after{content:’’;position:absolute;left:0;top:12px;bottom:12px;width:3px;background:var(–accent);border-radius:3px;opacity:.8}
+.deck-card:active{transform:scale(0.98);background:var(–surface2)}
+.deck-emoji{font-size:26px;flex-shrink:0}
+.deck-info{flex:1;min-width:0}
+.deck-name{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
+.deck-sub{font-size:12px;color:var(–text-muted)}
+.deck-pills{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap}
+.pill{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.2px}
+.pill-new{background:var(–easy-soft);color:var(–easy)}
+.pill-lrn{background:var(–hard-soft);color:var(–hard)}
+.pill-rev{background:var(–good-soft);color:var(–good)}
+.pill-0{background:rgba(255,255,255,0.05);color:var(–text-dim)}
+.deck-arr{color:var(–text-dim);font-size:16px;flex-shrink:0}
 
-/* ── IMPORT ZONE ── */
-#importZone {
-  border: 2px dashed var(--border);
-  border-radius: var(--radius);
-  padding: 40px 24px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  margin: 0 16px 16px;
-  background: var(--surface);
-}
-#importZone.drag-over {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-#importZone .icon { font-size: 48px; margin-bottom: 12px; }
-#importZone h3 { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
-#importZone p { font-size: 14px; color: var(--text-muted); }
-#fileInput { display: none; }
+/* IMPORT STRIP */
+.import-strip{display:flex;align-items:center;gap:12px;background:var(–surface);border:1px solid var(–border);border-radius:var(–r-sm);padding:14px 16px;cursor:pointer;transition:all .15s;margin-bottom:14px}
+.import-strip:active{background:var(–surface2)}
+.import-strip-icon{font-size:22px}
+.import-strip-text{flex:1}
+.import-strip-title{font-size:14px;font-weight:600}
+.import-strip-sub{font-size:11px;color:var(–text-muted);margin-top:1px}
 
-/* ── DECK LIST ── */
-.deck-item {
-  display: flex;
-  align-items: center;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 18px;
-  margin-bottom: 10px;
-  cursor: pointer;
-  transition: all 0.15s;
-  gap: 14px;
-  position: relative;
-  overflow: hidden;
-}
-.deck-item::before {
-  content: '';
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 3px;
-  background: var(--accent);
-  border-radius: 3px;
-}
-.deck-item:active { transform: scale(0.98); background: var(--surface2); }
-.deck-emoji { font-size: 28px; flex-shrink: 0; }
-.deck-info { flex: 1; min-width: 0; }
-.deck-name { font-size: 16px; font-weight: 600; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.deck-meta { font-size: 13px; color: var(--text-muted); }
-.deck-badges { display: flex; gap: 6px; margin-top: 6px; }
-.badge {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 20px;
-}
-.badge-new { background: var(--easy-soft); color: var(--easy); }
-.badge-learn { background: var(--hard-soft); color: var(--hard); }
-.badge-review { background: var(--good-soft); color: var(--good); }
-.badge-0 { background: rgba(255,255,255,0.06); color: var(--text-dim); }
-.deck-arrow { color: var(--text-dim); font-size: 18px; }
+/* EMPTY */
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:40px;text-align:center;color:var(–text-muted)}
+.empty-icon{font-size:52px;margin-bottom:6px;opacity:.7}
+.empty h3{font-size:17px;font-weight:700;color:var(–text)}
+.empty p{font-size:13px;line-height:1.6}
 
-/* ── STATS BAR ── */
-.stats-bar {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 10px;
-  margin: 0 16px 16px;
-}
-.stat-box {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 14px;
-  text-align: center;
-}
-.stat-val { font-size: 24px; font-weight: 700; }
-.stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+/* STUDY SCREEN */
+.study-bar{display:flex;align-items:center;padding:4px 16px 10px;gap:10px;flex-shrink:0}
+.back-btn{background:var(–surface2);border:1px solid var(–border);color:var(–text);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;transition:all .15s;flex-shrink:0}
+.back-btn:active{transform:scale(0.88)}
+.study-title{flex:1;font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.study-count{font-size:13px;color:var(–text-muted);font-weight:600;flex-shrink:0}
 
-/* ── STUDY SCREEN ── */
-#studyScreen {
-  background: var(--bg);
-}
-.study-nav {
-  display: flex;
-  align-items: center;
-  padding: 0 16px 12px;
-  gap: 12px;
-  flex-shrink: 0;
-}
-.back-btn {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  color: var(--text);
-  border-radius: 50%;
-  width: 38px; height: 38px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 16px;
-  cursor: pointer;
-  transition: all 0.15s;
-  flex-shrink: 0;
-}
-.back-btn:active { transform: scale(0.9); }
-.study-deck-name {
-  font-size: 15px;
-  font-weight: 600;
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.study-counter {
-  font-size: 13px;
-  color: var(--text-muted);
-  font-weight: 500;
-  flex-shrink: 0;
-}
+.prog-wrap{padding:0 16px 12px;flex-shrink:0}
+.prog-track{height:3px;background:var(–surface3);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(–accent),var(–accent2));border-radius:3px;transition:width .4s cubic-bezier(.4,0,.2,1)}
 
-/* ── PROGRESS BAR ── */
-.progress-wrap {
-  padding: 0 16px 16px;
-  flex-shrink: 0;
-}
-.progress-track {
-  height: 3px;
-  background: var(--surface2);
-  border-radius: 3px;
-  overflow: hidden;
-}
-.progress-fill {
-  height: 100%;
-  background: var(--accent);
-  border-radius: 3px;
-  transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
-}
+/* CARD STAGE */
+.card-stage{flex:1;padding:0 16px;display:flex;flex-direction:column;min-height:0}
+.flashcard{flex:1;background:var(–surface);border:1px solid var(–border);border-radius:26px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 22px;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease;position:relative;overflow:hidden;text-align:center}
+.flashcard::before{content:’’;position:absolute;inset:0;background:radial-gradient(ellipse 80% 40% at 50% 0%,var(–accent-soft),transparent);pointer-events:none}
+.flashcard:active{transform:scale(0.985)}
 
-/* ── CARD AREA ── */
-.card-area {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 0 16px;
-  min-height: 0;
-}
+.card-type-badge{position:absolute;top:14px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(–text-dim);background:var(–surface3);padding:3px 10px;border-radius:20px;border:1px solid var(–border)}
+.card-audio-btn{position:absolute;top:12px;right:14px;background:var(–surface2);border:1px solid var(–border);color:var(–accent2);border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;transition:all .15s}
+.card-audio-btn:active{transform:scale(0.88)}
 
-.flashcard {
-  flex: 1;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 32px 24px;
-  cursor: pointer;
-  transition: transform 0.2s cubic-bezier(0.4,0,0.2,1), box-shadow 0.2s;
-  position: relative;
-  overflow: hidden;
-  min-height: 0;
-  text-align: center;
-}
-.flashcard::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at 50% 0%, var(--accent-soft) 0%, transparent 70%);
-  pointer-events: none;
-}
-.flashcard:active { transform: scale(0.98); }
+.card-main{width:100%;display:flex;flex-direction:column;align-items:center;gap:10px}
+.card-front-text{font-size:clamp(44px,13vw,82px);font-weight:400;line-height:1.05;color:var(–text)}
+.card-front-html{max-width:100%;word-break:break-word}
+.card-front-html img{max-width:100%;border-radius:12px}
 
-.card-side-label {
-  position: absolute;
-  top: 16px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-.card-tags {
-  position: absolute;
-  top: 14px;
-  right: 16px;
-  display: flex;
-  gap: 4px;
-}
-.card-tag {
-  font-size: 10px;
-  padding: 2px 7px;
-  border-radius: 10px;
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-weight: 600;
-}
+.card-divider{width:36px;height:1px;background:var(–border);margin:14px auto;flex-shrink:0}
 
-.card-front-content {
-  width: 100%;
-}
-.card-jp-text {
-  font-size: clamp(42px, 12vw, 80px);
-  font-weight: 400;
-  line-height: 1.1;
-  margin-bottom: 12px;
-  color: var(--text);
-}
-.card-reading {
-  font-size: clamp(18px, 5vw, 28px);
-  color: var(--text-muted);
-  margin-bottom: 8px;
-  font-weight: 300;
-}
-.card-divider {
-  width: 40px;
-  height: 1px;
-  background: var(--border);
-  margin: 16px auto;
-}
-.card-meaning {
-  font-size: clamp(16px, 4vw, 22px);
-  color: var(--text);
-  font-weight: 500;
-  line-height: 1.4;
-}
-.card-extra {
-  font-size: 14px;
-  color: var(--text-muted);
-  margin-top: 10px;
-  line-height: 1.5;
-}
-.card-html {
-  max-width: 100%;
-  word-break: break-word;
-  text-align: center;
-}
-.card-html img { max-width: 100%; border-radius: 12px; }
-.card-html b, .card-html strong { color: var(--text); }
+.back-fields{width:100%;display:flex;flex-direction:column;gap:12px;max-height:38vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.back-fields::-webkit-scrollbar{display:none}
+.back-field{text-align:center}
+.back-field-label{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(–text-dim);margin-bottom:4px}
+.back-field-val{font-size:clamp(14px,4vw,20px);color:var(–text);line-height:1.4;word-break:break-word}
+.back-field-val.big{font-size:clamp(22px,6vw,36px)}
+.back-field-val .card-html img{max-width:100%;border-radius:10px}
 
-.tap-hint {
-  position: absolute;
-  bottom: 20px;
-  font-size: 12px;
-  color: var(--text-dim);
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-.tap-hint-dot {
-  width: 5px; height: 5px;
-  border-radius: 50%;
-  background: var(--accent);
-  animation: pulse 2s infinite;
-}
-@keyframes pulse {
-  0%, 100% { opacity: 0.4; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.3); }
-}
+.tap-hint{position:absolute;bottom:16px;font-size:11px;color:var(–text-dim);display:flex;align-items:center;gap:5px}
+.tap-dot{width:5px;height:5px;border-radius:50%;background:var(–accent);animation:pdot 2s infinite}
+@keyframes pdot{0%,100%{opacity:.35;transform:scale(1)}50%{opacity:1;transform:scale(1.4)}}
 
-/* ── ANSWER BUTTONS ── */
-.answer-section {
-  padding: 14px 0 0;
-  flex-shrink: 0;
-}
-.show-answer-btn {
-  width: 100%;
-  padding: 18px;
-  background: var(--accent);
-  color: white;
-  border: none;
-  border-radius: var(--radius);
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.15s;
-  font-family: inherit;
-  box-shadow: 0 4px 20px var(--accent-glow);
-}
-.show-answer-btn:active { transform: scale(0.98); opacity: 0.9; }
+/* ANSWER AREA */
+.ans-wrap{padding:10px 16px 0;flex-shrink:0}
+.show-btn{width:100%;padding:17px;background:var(–accent);color:#fff;border:none;border-radius:var(–r);font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;box-shadow:0 4px 24px var(–accent-glow)}
+.show-btn:active{transform:scale(0.98);opacity:.88}
+.rating-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:7px}
+.r-btn{padding:13px 4px 11px;border:1px solid;border-radius:var(–r-sm);font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;transition:all .15s}
+.r-btn:active{transform:scale(0.93)}
+.r-lbl{font-size:12px;font-weight:800}
+.r-int{font-size:10px;opacity:.65;font-weight:500}
+.btn-again{background:var(–again-soft);border-color:rgba(255,77,109,.2);color:var(–again)}
+.btn-hard{background:var(–hard-soft);border-color:rgba(255,169,77,.2);color:var(–hard)}
+.btn-good{background:var(–good-soft);border-color:rgba(64,200,151,.2);color:var(–good)}
+.btn-easy{background:var(–easy-soft);border-color:rgba(77,171,247,.2);color:var(–easy)}
 
-.rating-buttons {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
-  gap: 8px;
-}
-.rating-btn {
-  padding: 14px 4px;
-  border: 1px solid;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.15s;
-  font-family: inherit;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-}
-.rating-btn:active { transform: scale(0.95); }
-.rating-btn .r-label { font-size: 12px; font-weight: 700; }
-.rating-btn .r-interval { font-size: 10px; font-weight: 500; opacity: 0.7; }
-.btn-again { background: var(--again-soft); border-color: rgba(255,95,109,0.25); color: var(--again); }
-.btn-hard  { background: var(--hard-soft);  border-color: rgba(255,159,67,0.25); color: var(--hard); }
-.btn-good  { background: var(--good-soft);  border-color: rgba(72,219,172,0.25); color: var(--good); }
-.btn-easy  { background: var(--easy-soft);  border-color: rgba(84,160,255,0.25); color: var(--easy); }
+/* DONE */
+.done-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;gap:14px;text-align:center}
+.done-icon{font-size:68px;animation:bncin .6s cubic-bezier(.36,.07,.19,.97)}
+@keyframes bncin{0%,100%{transform:translateY(0)}35%{transform:translateY(-18px)}65%{transform:translateY(-7px)}}
+.done-title{font-size:26px;font-weight:800;letter-spacing:-.5px}
+.done-sub{font-size:14px;color:var(–text-muted);max-width:220px;line-height:1.55}
+.done-row{display:flex;gap:28px;margin-top:4px}
+.done-stat{text-align:center}
+.done-stat-val{font-size:26px;font-weight:800}
+.done-stat-lbl{font-size:11px;color:var(–text-muted);margin-top:2px}
+.primary-btn{padding:17px 32px;background:var(–accent);color:#fff;border:none;border-radius:var(–r);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;box-shadow:0 4px 20px var(–accent-glow);margin-top:6px;min-width:200px}
+.primary-btn:active{transform:scale(0.97)}
 
-/* ── DONE SCREEN ── */
-.done-card {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 40px 24px;
-  gap: 16px;
-}
-.done-icon { font-size: 72px; animation: bounce 0.6s cubic-bezier(0.36,0.07,0.19,0.97); }
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  30% { transform: translateY(-20px); }
-  60% { transform: translateY(-8px); }
-}
-.done-title { font-size: 28px; font-weight: 700; }
-.done-sub { font-size: 15px; color: var(--text-muted); max-width: 240px; line-height: 1.5; }
-.done-stats { display: flex; gap: 24px; margin-top: 8px; }
-.done-stat { text-align: center; }
-.done-stat-val { font-size: 28px; font-weight: 700; }
-.done-stat-label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-.primary-btn {
-  width: 100%;
-  max-width: 280px;
-  padding: 18px;
-  background: var(--accent);
-  color: white;
-  border: none;
-  border-radius: var(--radius);
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.15s;
-  font-family: inherit;
-  box-shadow: 0 4px 20px var(--accent-glow);
-  margin-top: 8px;
-}
-.primary-btn:active { transform: scale(0.97); }
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:50;display:flex;align-items:flex-end;transition:opacity .25s}
+.modal-bg.hidden{opacity:0;pointer-events:none}
+.modal{background:var(–surface);border:1px solid var(–border);border-radius:28px 28px 0 0;width:100%;max-height:88vh;display:flex;flex-direction:column;padding-bottom:calc(var(–safe-b) + 8px);transform:translateY(0);transition:transform .3s cubic-bezier(.4,0,.2,1)}
+.modal-bg.hidden .modal{transform:translateY(100%)}
+.modal-handle{width:36px;height:4px;background:var(–border);border-radius:2px;margin:12px auto 6px;flex-shrink:0}
+.modal-title{font-size:17px;font-weight:700;padding:8px 20px 14px;flex-shrink:0;border-bottom:1px solid var(–border)}
+.modal-scroll{overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;padding:16px 20px}
+.modal-scroll::-webkit-scrollbar{display:none}
+.modal-footer{padding:14px 20px 4px;flex-shrink:0;border-top:1px solid var(–border)}
 
-/* ── SWIPE ANIMATION ── */
-@keyframes swipeOut {
-  to { transform: translateX(-120%); opacity: 0; }
-}
-@keyframes swipeIn {
-  from { transform: translateX(120%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-.card-out { animation: swipeOut 0.25s ease forwards; }
-.card-in  { animation: swipeIn  0.25s ease forwards; }
+/* FIELD CONFIG */
+.field-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(–border2)}
+.field-row:last-child{border-bottom:none}
+.field-drag{color:var(–text-dim);font-size:18px;flex-shrink:0;cursor:grab}
+.field-info{flex:1;min-width:0}
+.field-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.field-role{font-size:11px;margin-top:2px}
+.field-role-front{color:var(–accent2)}
+.field-role-back{color:var(–good)}
+.field-role-hidden{color:var(–text-dim)}
+.field-actions{display:flex;gap:6px;flex-shrink:0}
+.field-action-btn{background:var(–surface2);border:1px solid var(–border);color:var(–text-muted);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap}
+.field-action-btn:active{transform:scale(0.92)}
+.field-action-btn.active-front{background:var(–accent-soft);border-color:rgba(108,99,255,.3);color:var(–accent2)}
+.field-action-btn.active-back{background:var(–good-soft);border-color:rgba(64,200,151,.3);color:var(–good)}
+.field-action-btn.active-hide{background:rgba(255,255,255,.05);color:var(–text-dim)}
 
-/* ── EMPTY STATE ── */
-.empty-state {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 40px 24px;
-  color: var(--text-muted);
-  gap: 10px;
-}
-.empty-state .e-icon { font-size: 48px; margin-bottom: 8px; }
-.empty-state h3 { font-size: 18px; font-weight: 600; color: var(--text); }
-.empty-state p { font-size: 14px; line-height: 1.5; }
+/* GITHUB SYNC */
+.sync-section{margin-bottom:18px}
+.sync-section-title{font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(–text-dim);margin-bottom:10px}
+.sync-input-group{display:flex;flex-direction:column;gap:8px}
+.sync-input-label{font-size:12px;color:var(–text-muted);font-weight:500}
+.sync-input{background:var(–surface2);border:1px solid var(–border);color:var(–text);border-radius:var(–r-xs);padding:12px 14px;font-size:14px;width:100%;font-family:inherit;outline:none;transition:border-color .15s;-webkit-appearance:none}
+.sync-input:focus{border-color:var(–accent)}
+.sync-input::placeholder{color:var(–text-dim)}
+.sync-status{font-size:12px;padding:10px 14px;border-radius:var(–r-xs);margin-top:6px;font-weight:500}
+.sync-ok{background:var(–good-soft);color:var(–good)}
+.sync-err{background:var(–again-soft);color:var(–again)}
+.sync-info{background:var(–accent-soft);color:var(–accent2)}
+.sync-btn{width:100%;padding:14px;background:var(–surface3);border:1px solid var(–border);color:var(–text);border-radius:var(–r-sm);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;margin-top:6px}
+.sync-btn:active{transform:scale(0.97)}
+.sync-btn.primary{background:var(–accent);border-color:transparent;color:#fff;box-shadow:0 3px 16px var(–accent-glow)}
 
-/* ── LOADING ── */
-#loadingOverlay {
-  position: fixed;
-  inset: 0;
-  background: var(--bg);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  gap: 16px;
-  transition: opacity 0.3s;
-}
-#loadingOverlay.hide { opacity: 0; pointer-events: none; }
-.loader-title { font-size: 32px; font-weight: 700; }
-.loader-title span { color: var(--accent); }
-.loader-sub { font-size: 14px; color: var(--text-muted); }
-.spinner {
-  width: 36px; height: 36px;
-  border: 3px solid var(--border);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-.loader-status { font-size: 13px; color: var(--text-dim); min-height: 20px; }
+/* TOAST */
+#toast{position:fixed;bottom:calc(var(–safe-b) + 90px);left:50%;transform:translateX(-50%) translateY(16px);background:var(–surface2);border:1px solid var(–border);color:var(–text);padding:11px 20px;border-radius:40px;font-size:13px;font-weight:600;z-index:200;opacity:0;transition:all .28s;white-space:nowrap;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* ── TOAST ── */
-#toast {
-  position: fixed;
-  bottom: calc(var(--safe-bottom) + 100px);
-  left: 50%; transform: translateX(-50%) translateY(20px);
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 12px 20px;
-  border-radius: 40px;
-  font-size: 14px;
-  font-weight: 500;
-  z-index: 200;
-  opacity: 0;
-  transition: all 0.3s;
-  white-space: nowrap;
-  backdrop-filter: blur(20px);
-}
-#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+/* LOADER */
+#loaderOverlay{position:fixed;inset:0;background:var(–bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;gap:14px;transition:opacity .3s}
+#loaderOverlay.gone{opacity:0;pointer-events:none}
+.loader-logo{font-size:36px;font-weight:800;letter-spacing:-1px}
+.loader-logo em{color:var(–accent2);font-style:normal}
+.spinner{width:32px;height:32px;border:3px solid var(–border);border-top-color:var(–accent);border-radius:50%;animation:spin .75s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-msg{font-size:13px;color:var(–text-dim);min-height:18px}
 
-/* ── SECTION HEADER ── */
-.section-header {
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  padding: 4px 4px 10px;
-}
+/* CARD ANIM */
+@keyframes cardOut{to{transform:translateX(-110%);opacity:0}}
+@keyframes cardIn{from{transform:translateX(110%);opacity:0}}
+.c-out{animation:cardOut .22s ease forwards}
+.c-in{animation:cardIn .22s ease forwards}
 
-/* ── RTF/HTML content styling ── */
-.card-html ruby rt { font-size: 0.55em; color: var(--text-muted); }
+/* SYNC INDICATOR */
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(–text-dim);flex-shrink:0;transition:background .3s}
+.sync-dot.syncing{background:var(–hard);animation:pdot 1s infinite}
+.sync-dot.synced{background:var(–good)}
+.sync-dot.error{background:var(–again)}
+.sync-indicator{display:flex;align-items:center;gap:5px;font-size:11px;color:var(–text-dim)}
+
+/* TOGGLE */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(–border2)}
+.toggle-info{flex:1}
+.toggle-title{font-size:14px;font-weight:600}
+.toggle-sub{font-size:11px;color:var(–text-muted);margin-top:2px}
+.toggle{width:44px;height:26px;background:var(–surface3);border-radius:13px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;border:none}
+.toggle.on{background:var(–accent)}
+.toggle::after{content:’’;position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.toggle.on::after{transform:translateX(18px)}
 </style>
 
 </head>
 <body>
 
-<div id="loadingOverlay">
-  <div class="loader-title">漢<span>字</span></div>
+<div id="loaderOverlay">
+  <div class="loader-logo">漢<em>字</em></div>
   <div class="spinner"></div>
-  <div class="loader-sub">Anki für iOS</div>
-  <div class="loader-status" id="loaderStatus">Wird geladen…</div>
+  <div class="loader-msg" id="loaderMsg">Initialisierung…</div>
 </div>
 
 <div id="toast"></div>
 
-<!-- ════════════════════════════
-     HOME SCREEN
-════════════════════════════ -->
+<!-- ════════ SETTINGS MODAL ════════ -->
+
+<div class="modal-bg hidden" id="settingsModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">⚙️ Einstellungen</div>
+    <div class="modal-scroll" id="settingsContent"></div>
+    <div class="modal-footer">
+      <button class="primary-btn" style="width:100%" onclick="closeModal('settingsModal')">Fertig</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ FIELD CONFIG MODAL ════════ -->
+
+<div class="modal-bg hidden" id="fieldModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="fieldModalTitle">Felder konfigurieren</div>
+    <div class="modal-scroll" id="fieldContent"></div>
+    <div class="modal-footer">
+      <button class="primary-btn" style="width:100%" onclick="saveFieldConfig()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ HOME ════════ -->
 
 <div class="screen" id="homeScreen">
   <div class="nav">
-    <div class="nav-title">漢<span>字</span></div>
-    <button class="nav-btn" onclick="document.getElementById('fileInput').click()" title="Deck importieren">＋</button>
-    <input type="file" id="fileInput" accept=".apkg,.colpkg" onchange="handleFileSelect(event)">
+    <div class="nav-title">漢<em>字</em></div>
+    <div class="nav-actions">
+      <div class="sync-indicator" id="syncIndicator" style="margin-right:4px">
+        <div class="sync-dot" id="syncDot"></div>
+        <span id="syncLabel"></span>
+      </div>
+      <button class="icon-btn" onclick="showSettings()" title="Einstellungen">⚙️</button>
+      <button class="icon-btn" onclick="triggerImport()" title="Importieren">＋</button>
+    </div>
+  </div>
+  <input type="file" id="fileInput" accept=".apkg,.colpkg" style="display:none" onchange="handleFile(event)">
+
+  <div class="stats-row" id="statsRow" style="display:none">
+    <div class="stat-box"><div class="stat-val" id="sNew" style="color:var(--easy)">0</div><div class="stat-lbl">Neu</div></div>
+    <div class="stat-box"><div class="stat-val" id="sLrn" style="color:var(--hard)">0</div><div class="stat-lbl">Lernen</div></div>
+    <div class="stat-box"><div class="stat-val" id="sRev" style="color:var(--good)">0</div><div class="stat-lbl">Wdh.</div></div>
   </div>
 
-  <div class="stats-bar" id="statsBar" style="display:none">
-    <div class="stat-box">
-      <div class="stat-val" id="statNew" style="color:var(--easy)">0</div>
-      <div class="stat-label">Neu</div>
-    </div>
-    <div class="stat-box">
-      <div class="stat-val" id="statLearn" style="color:var(--hard)">0</div>
-      <div class="stat-label">Lernen</div>
-    </div>
-    <div class="stat-box">
-      <div class="stat-val" id="statReview" style="color:var(--good)">0</div>
-      <div class="stat-label">Wdh.</div>
-    </div>
-  </div>
-
-  <div class="scroll" id="deckList">
-    <!-- populated by JS -->
-  </div>
+  <div class="scroll" id="deckListEl"></div>
 </div>
 
-<!-- ════════════════════════════
-     STUDY SCREEN
-════════════════════════════ -->
+<!-- ════════ STUDY ════════ -->
 
 <div class="screen hidden" id="studyScreen">
-  <div class="study-nav">
+  <div class="study-bar">
     <button class="back-btn" onclick="goHome()">←</button>
-    <div class="study-deck-name" id="studyDeckName"></div>
-    <div class="study-counter" id="studyCounter"></div>
+    <div class="study-title" id="studyTitle"></div>
+    <div class="study-count" id="studyCount"></div>
   </div>
-  <div class="progress-wrap">
-    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
-  </div>
-  <div class="card-area" id="cardArea">
-    <!-- populated by JS -->
-  </div>
-  <div class="answer-section" style="padding:14px 16px 0">
-    <div id="answerArea"></div>
-  </div>
+  <div class="prog-wrap"><div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div></div>
+  <div class="card-stage" id="cardStage"></div>
+  <div class="ans-wrap" id="ansWrap"></div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════
-//  STATE
-// ═══════════════════════════════════════════════════════
-let db = null;          // SQLite db from sql.js
-let decks = {};         // {id: {name, notes:[]}}
-let studyQueue = [];    // current session queue
-let studyIndex = 0;
-let currentCard = null;
-let cardFlipped = false;
-let sessionStats = { again:0, hard:0, good:0, easy:0 };
-let currentDeckId = null;
+// ══════════════════════════════════════════════
+//  GLOBALS
+// ══════════════════════════════════════════════
+let SQL = null, db = null;
+let decks = {};           // did -> {name, cards[]}
+let mediaFiles = {};      // filename -> base64 url
+let fieldConfigs = {};    // did -> {front: fieldName, back: [fieldName...], hidden: [fieldName...]}
+let studyQueue = [], studyIdx = 0, curCard = null, flipped = false;
+let sessionStats = {again:0,hard:0,good:0,easy:0};
+let ghConfig = {token:'', repo:'', user:''};
+let syncState = 'idle'; // idle | syncing | synced | error
 
-// Progress storage key
-const PROGRESS_KEY = 'kanjiApp_progress_v2';
-let progress = {}; // {noteId_cardOrd: {due, interval, ease, reps, lapses, type}}
+const PROGRESS_KEY  = 'kj_progress_v3';
+const FIELDCFG_KEY  = 'kj_fields_v3';
+const GH_KEY        = 'kj_github_v2';
+const DECKS_KEY     = 'kj_decknames_v1';
+let progress = {};
 
-// ═══════════════════════════════════════════════════════
-//  FSRS-LITE (simplified SM-2 compatible)
-// ═══════════════════════════════════════════════════════
-const RATINGS = { again:1, hard:2, good:3, easy:4 };
-function scheduleCard(state, rating) {
-  const now = Date.now();
-  let { interval=0, ease=2.5, reps=0, lapses=0, type=0 } = state;
-  const r = rating;
-
-  if (type === 0 || type === 1) { // new or learning
-    if (r === 1) { interval = 0; type = 1; }
-    else if (r === 2) { interval = 0.04; type = 1; } // 1 min
-    else if (r === 3) { interval = 0.07; type = 1; } // 10 min → due as review
-    else { interval = 1; type = 2; reps = 1; }
-  } else { // review
-    if (r === 1) {
-      lapses++; interval = 1; ease = Math.max(1.3, ease - 0.2); type = 1;
-    } else {
-      let newInterval;
-      if (r === 2) { newInterval = interval * ease * 1.2; ease = Math.max(1.3, ease - 0.15); }
-      else if (r === 3) { newInterval = interval * ease; }
-      else { newInterval = interval * ease * 1.3; ease = Math.min(3.0, ease + 0.15); }
-      interval = Math.max(1, Math.round(newInterval));
-      reps++; type = 2;
+// ══════════════════════════════════════════════
+//  FSRS-LITE
+// ══════════════════════════════════════════════
+const R={again:1,hard:2,good:3,easy:4};
+function schedule(st={},rating){
+  let{interval=0,ease=2.5,reps=0,lapses=0,type=0}=st;
+  if(type<2){
+    if(rating===1){interval=0;type=1}
+    else if(rating===2){interval=1/24/6;type=1}   // 10 min
+    else if(rating===3){interval=1/24;type=1}      // 1 hour -> enters review
+    else{interval=1;type=2;reps=1}
+  }else{
+    if(rating===1){lapses++;interval=1;ease=Math.max(1.3,ease-.2);type=1}
+    else{
+      let ni=rating===2?interval*ease*.8:rating===3?interval*ease:interval*ease*1.3;
+      ease=rating===2?Math.max(1.3,ease-.15):rating===4?Math.min(3,ease+.15):ease;
+      interval=Math.max(1,Math.round(ni));reps++;type=2;
     }
   }
-  const dueOffset = interval < 1 ? interval * 24 * 3600 * 1000 : interval * 86400000;
-  return { interval, ease, reps, lapses, type, due: now + dueOffset };
+  const ms=interval<1?interval*86400000:interval*86400000;
+  return{interval,ease,reps,lapses,type,due:Date.now()+ms};
 }
-
-function isDue(state) {
-  if (!state) return true; // never studied = due
-  const now = Date.now();
-  return now >= state.due;
-}
-
-function getIntervalLabel(state, rating) {
-  const sim = scheduleCard(state || {}, rating);
-  const ms = sim.due - Date.now();
-  if (ms < 60000) return '<1m';
-  if (ms < 3600000) return Math.round(ms/60000)+'m';
-  if (ms < 86400000) return Math.round(ms/3600000)+'h';
+function isDue(st){return!st||Date.now()>=st.due}
+function intervalLabel(st,r){
+  const s=schedule(st||{},r),ms=s.due-Date.now();
+  if(ms<60000)return '<1m';
+  if(ms<3600000)return Math.round(ms/60000)+'m';
+  if(ms<86400000)return Math.round(ms/3600000)+'h';
   return Math.round(ms/86400000)+'d';
 }
 
-// ═══════════════════════════════════════════════════════
-//  STORAGE
-// ═══════════════════════════════════════════════════════
-function loadProgress() {
-  try { progress = JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{}'); }
-  catch(e) { progress = {}; }
+// ══════════════════════════════════════════════
+//  LOCAL STORAGE
+// ══════════════════════════════════════════════
+function loadLocal(){
+  try{progress=JSON.parse(localStorage.getItem(PROGRESS_KEY)||'{}')}catch{progress={}}
+  try{fieldConfigs=JSON.parse(localStorage.getItem(FIELDCFG_KEY)||'{}')}catch{fieldConfigs={}}
+  try{ghConfig=JSON.parse(localStorage.getItem(GH_KEY)||'{}')}catch{ghConfig={}}
+  ghConfig={token:'',repo:'',user:'',...ghConfig};
 }
-function saveProgress() {
-  try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress)); }
-  catch(e) { console.warn('Could not save progress'); }
+function saveLocal(){
+  try{localStorage.setItem(PROGRESS_KEY,JSON.stringify(progress))}catch{}
+  try{localStorage.setItem(FIELDCFG_KEY,JSON.stringify(fieldConfigs))}catch{}
+  try{localStorage.setItem(GH_KEY,JSON.stringify(ghConfig))}catch{}
 }
-function getCardState(noteId, ord) {
-  return progress[`${noteId}_${ord}`] || null;
-}
-function setCardState(noteId, ord, state) {
-  progress[`${noteId}_${ord}`] = state;
-  saveProgress();
+function cardKey(nid,ord){return`${nid}_${ord}`}
+function getState(nid,ord){return progress[cardKey(nid,ord)]||null}
+function setState(nid,ord,st){progress[cardKey(nid,ord)]=st;saveLocal()}
+
+// ══════════════════════════════════════════════
+//  GITHUB SYNC
+// ══════════════════════════════════════════════
+const GH_FILE = 'kanji-progress.json';
+
+async function ghRequest(method, path, body=null){
+  const {token, repo, user} = ghConfig;
+  if(!token||!repo||!user) throw new Error('GitHub nicht konfiguriert');
+  const url = `https://api.github.com/repos/${user}/${repo}/contents/${path}`;
+  const headers = {
+    'Authorization': `token ${token}`,
+    'Content-Type': 'application/json',
+    'X-GitHub-Api-Version': '2022-11-28'
+  };
+  const opts = {method, headers};
+  if(body) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  if(!res.ok && res.status !== 404) throw new Error(`GitHub ${res.status}: ${res.statusText}`);
+  if(res.status === 404) return null;
+  return res.json();
 }
 
-// ═══════════════════════════════════════════════════════
-//  SQL.JS INIT
-// ═══════════════════════════════════════════════════════
-let SQL = null;
-async function initSQL() {
-  setLoaderStatus('SQL-Engine laden…');
-  SQL = await initSqlJs({
-    locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/${file}`
-  });
+async function ghPush(){
+  if(!ghConfig.token) return;
+  setSyncState('syncing');
+  try{
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(progress))));
+    const existing = await ghRequest('GET', GH_FILE);
+    const sha = existing?.sha;
+    await ghRequest('PUT', GH_FILE, {
+      message: `Sync ${new Date().toISOString()}`,
+      content,
+      ...(sha ? {sha} : {})
+    });
+    setSyncState('synced');
+  }catch(e){
+    setSyncState('error');
+    console.warn('GitHub push failed:', e);
+  }
 }
 
-// ═══════════════════════════════════════════════════════
-//  APKG IMPORT
-// ═══════════════════════════════════════════════════════
-async function handleFileSelect(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  event.target.value = '';
-  await importApkg(file);
+async function ghPull(){
+  if(!ghConfig.token) return;
+  setSyncState('syncing');
+  try{
+    const file = await ghRequest('GET', GH_FILE);
+    if(file?.content){
+      const json = decodeURIComponent(escape(atob(file.content.replace(/\n/g,''))));
+      const remote = JSON.parse(json);
+      // Merge: take the later due date for each card
+      for(const [k,v] of Object.entries(remote)){
+        if(!progress[k]||progress[k].due<v.due) progress[k]=v;
+      }
+      saveLocal();
+      setSyncState('synced');
+      toast('☁️ Fortschritt synchronisiert!');
+    } else {
+      setSyncState('synced');
+    }
+  }catch(e){
+    setSyncState('error');
+    console.warn('GitHub pull failed:', e);
+  }
 }
 
-async function importApkg(file) {
-  showLoader('Deck importieren…');
-  try {
-    setLoaderStatus('Datei entpacken…');
+function setSyncState(state){
+  syncState = state;
+  const dot = document.getElementById('syncDot');
+  const lbl = document.getElementById('syncLabel');
+  if(!dot) return;
+  dot.className = 'sync-dot ' + (state==='idle'?'':state);
+  lbl.textContent = state==='syncing'?'…':state==='synced'?'Sync ✓':state==='error'?'Sync ✗':'';
+}
+
+// Auto-push after rating with debounce
+let pushTimer;
+function schedulePush(){
+  if(!ghConfig.token) return;
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(ghPush, 3000);
+}
+
+// ══════════════════════════════════════════════
+//  SQL.JS
+// ══════════════════════════════════════════════
+async function initSQL(){
+  setMsg('Engine laden…');
+  SQL = await initSqlJs({locateFile:f=>`https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/${f}`});
+}
+
+// ══════════════════════════════════════════════
+//  IMPORT
+// ══════════════════════════════════════════════
+function triggerImport(){document.getElementById('fileInput').click()}
+async function handleFile(e){
+  const f=e.target.files[0];
+  if(f) await importApkg(f);
+  e.target.value='';
+}
+
+async function importApkg(file){
+  showLoader('Importieren…');
+  try{
+    setMsg('Entpacken…');
     const zip = await JSZip.loadAsync(file);
 
-    const dbFile = zip.file('collection.anki21') || zip.file('collection.anki2') || zip.file('collection.anki21b');
-    if (!dbFile) throw new Error('Keine Anki-Datenbank in der Datei gefunden.');
+    // Database
+    const dbEntry = zip.file('collection.anki21') || zip.file('collection.anki2') || zip.file('collection.anki21b');
+    if(!dbEntry) throw new Error('Keine Anki-Datenbank gefunden.');
+    setMsg('Datenbank lesen…');
+    const buf = await dbEntry.async('arraybuffer');
+    db = new SQL.Database(new Uint8Array(buf));
 
-    setLoaderStatus('Datenbank lesen…');
-    const dbBuf = await dbFile.async('arraybuffer');
-    db = new SQL.Database(new Uint8Array(dbBuf));
+    // Media files
+    setMsg('Medien laden…');
+    const mediaJson = zip.file('media');
+    if(mediaJson){
+      const mediaMap = JSON.parse(await mediaJson.async('string'));
+      for(const [idx, name] of Object.entries(mediaMap)){
+        const entry = zip.file(idx);
+        if(entry){
+          const blob = await entry.async('blob');
+          mediaFiles[name] = URL.createObjectURL(blob);
+        }
+      }
+    }
 
-    setLoaderStatus('Decks laden…');
+    setMsg('Karten laden…');
     loadDecks();
     hideLoader();
     renderHome();
-    toast('✅ Deck erfolgreich importiert!');
-  } catch(err) {
+    toast('✅ '+Object.keys(decks).length+' Deck(s) importiert');
+  }catch(err){
     hideLoader();
-    toast('❌ Fehler: ' + err.message);
+    toast('❌ '+err.message);
     console.error(err);
   }
 }
 
-// ═══════════════════════════════════════════════════════
-//  DECK LOADING
-// ═══════════════════════════════════════════════════════
-function loadDecks() {
+// ══════════════════════════════════════════════
+//  DECK PARSING
+// ══════════════════════════════════════════════
+function loadDecks(){
   decks = {};
+  const col = db.exec('SELECT decks,models FROM col LIMIT 1');
+  if(!col.length) return;
+  const deckDef = JSON.parse(col[0].values[0][0]);
+  const modelDef = JSON.parse(col[0].values[0][1]);
 
-  // Load deck info from col table
-  const colRes = db.exec('SELECT decks, models FROM col LIMIT 1');
-  if (!colRes.length) return;
-
-  const deckData = JSON.parse(colRes[0].values[0][0]);
-  const modelData = JSON.parse(colRes[0].values[0][1]);
-
-  // Build model -> field mapping
   const models = {};
-  for (const [mid, model] of Object.entries(modelData)) {
-    models[mid] = {
-      name: model.name,
-      fields: model.flds.map(f => f.name),
-      tmpls: model.tmpls
-    };
+  for(const[mid,m] of Object.entries(modelDef)){
+    models[mid] = {name:m.name, fields:m.flds.map(f=>f.name)};
   }
 
-  // Load cards and notes
-  const cards = db.exec(`
-    SELECT c.id, c.nid, c.did, c.ord, c.type, c.due, c.ivl, c.factor, c.reps, c.lapses,
-           n.mid, n.flds, n.tags
-    FROM cards c
-    JOIN notes n ON c.nid = n.id
+  const rows = db.exec(`
+    SELECT c.id,c.nid,c.did,c.ord,c.type,n.mid,n.flds,n.tags
+    FROM cards c JOIN notes n ON c.nid=n.id
   `);
+  if(!rows.length) return;
 
-  if (!cards.length) return;
-
-  for (const row of cards[0].values) {
-    const [cid, nid, did, ord, type, due, ivl, factor, reps, lapses, mid, flds, tags] = row;
-    const deckName = deckData[did]?.name || 'Unbekannt';
-
-    if (!decks[did]) decks[did] = { name: deckName, cards: [] };
-
-    const model = models[mid] || { fields: [], tmpls: [] };
-    const fieldValues = flds.split('\x1f');
-    const fields = {};
-    model.fields.forEach((name, i) => { fields[name] = fieldValues[i] || ''; });
-
-    // Smart field detection
-    const front = detectFront(fields, fieldValues);
-    const back  = detectBack(fields, fieldValues, front);
-
-    decks[did].cards.push({
-      cid, nid, did, ord, type, due, ivl,
-      factor: factor / 1000,
-      reps, lapses,
-      mid, fields, tags: tags || '',
-      front, back,
-      modelName: model.name
-    });
+  for(const[cid,nid,did,ord,type,mid,flds,tags] of rows[0].values){
+    const dn = deckDef[did]?.name || 'Unbekannt';
+    if(!decks[did]) decks[did]={name:dn,cards:[],fields:[]};
+    const model = models[mid]||{fields:[]};
+    const vals = flds.split('\x1f');
+    const fields={};
+    model.fields.forEach((n,i)=>fields[n]=vals[i]||'');
+    if(!decks[did].fields.length) decks[did].fields=model.fields;
+    decks[did].cards.push({cid,nid,did,ord,type,fields,tags:tags||''});
   }
 }
 
-// Smart detect what to show on front/back for Japanese
-function detectFront(fields, values) {
-  const keys = Object.keys(fields);
-  // Prefer: Expression, Front, Word, 表, Kanji, Question
-  for (const k of ['Expression','Front','Word','表現','単語','Kanji','漢字','Question','Vocab']) {
-    if (fields[k] !== undefined) return { key: k, val: fields[k] };
-  }
-  return { key: keys[0], val: values[0] || '' };
+// ══════════════════════════════════════════════
+//  FIELD CONFIG
+// ══════════════════════════════════════════════
+function getFieldConfig(did){
+  if(fieldConfigs[did]) return fieldConfigs[did];
+  const deck = decks[did];
+  if(!deck) return {front:'',back:[],hidden:[]};
+  const fields = deck.fields;
+  // Smart defaults for Japanese decks
+  const frontCandidates = ['Expression','Front','Word','Vocab','単語','表現','Kanji','漢字','Question','Term'];
+  const hiddenCandidates = ['Index','Frequency','optimized voc index','voc index','Optimized Voc Index','Note ID','ID','Notes','Diagram','Stroke Order','Stroke','KanjiReadings'];
+  let front = fields[0];
+  for(const c of frontCandidates){ if(fields.includes(c)){front=c;break} }
+  const hidden = fields.filter(f=>hiddenCandidates.some(h=>f.toLowerCase().includes(h.toLowerCase())));
+  const back = fields.filter(f=>f!==front && !hidden.includes(f));
+  return {front, back, hidden};
 }
 
-function detectBack(fields, values, front) {
-  const keys = Object.keys(fields);
-  const backFields = [];
-  for (const k of keys) {
-    if (k === front.key) continue;
-    backFields.push({ key: k, val: fields[k] });
-  }
-  return backFields;
-}
-
-// ═══════════════════════════════════════════════════════
-//  HOME RENDER
-// ═══════════════════════════════════════════════════════
-function renderHome() {
-  const listEl = document.getElementById('deckList');
-
-  if (!db || !Object.keys(decks).length) {
-    listEl.innerHTML = `
-      <div id="importZone" onclick="document.getElementById('fileInput').click()">
-        <div class="icon">🎌</div>
-        <h3>Anki-Deck importieren</h3>
-        <p>Tippe hier oder nutze das + Symbol<br>um eine .apkg Datei zu laden</p>
+// ══════════════════════════════════════════════
+//  HOME
+// ══════════════════════════════════════════════
+function renderHome(){
+  const el = document.getElementById('deckListEl');
+  if(!db||!Object.keys(decks).length){
+    el.innerHTML=`
+      <div class="import-strip" onclick="triggerImport()">
+        <div class="import-strip-icon">🎌</div>
+        <div class="import-strip-text">
+          <div class="import-strip-title">Anki-Deck importieren</div>
+          <div class="import-strip-sub">.apkg Datei aus Anki Desktop exportieren</div>
+        </div>
+        <span style="color:var(--text-dim);font-size:18px">›</span>
       </div>
-      <div class="empty-state">
-        <div class="e-icon">📚</div>
+      <div class="empty">
+        <div class="empty-icon">📚</div>
         <h3>Noch keine Decks</h3>
-        <p>Exportiere deine Decks aus Anki Desktop<br>als .apkg und importiere sie hier.</p>
+        <p>Exportiere dein Deck in Anki Desktop über<br><b>Datei → Exportieren → .apkg</b></p>
       </div>`;
-    document.getElementById('statsBar').style.display = 'none';
+    document.getElementById('statsRow').style.display='none';
     return;
   }
 
-  // Calculate totals
-  let totalNew=0, totalLearn=0, totalReview=0;
-
-  let html = `<div id="importZone" onclick="document.getElementById('fileInput').click()" style="margin-bottom:16px;padding:20px 16px;border-radius:14px;border:1px dashed var(--border);background:var(--surface);display:flex;align-items:center;gap:12px;cursor:pointer">
-    <span style="font-size:24px">📦</span>
-    <div>
-      <div style="font-size:14px;font-weight:600">Weiteres Deck importieren</div>
-      <div style="font-size:12px;color:var(--text-muted)">.apkg Datei wählen</div>
+  let tNew=0,tLrn=0,tRev=0;
+  const EMOJIS=['🎌','📖','✍️','🗾','📝','🎋','⛩️','🌸','📚','🈳'];
+  let html=`<div class="import-strip" onclick="triggerImport()" style="margin-bottom:14px">
+    <div class="import-strip-icon">📦</div>
+    <div class="import-strip-text">
+      <div class="import-strip-title">Weiteres Deck laden</div>
+      <div class="import-strip-sub">.apkg importieren</div>
     </div>
-  </div>`;
+  </div><div class="sect">Meine Decks</div>`;
 
-  html += `<div class="section-header">Meine Decks</div>`;
-
-  const EMOJIS = ['🎌','📖','✍️','🗾','🈳','📝','🎋','⛩️','🌸','📚'];
-
-  for (const [did, deck] of Object.entries(decks)) {
-    const { newCount, learnCount, reviewCount } = getDeckCounts(deck.cards);
-    totalNew += newCount; totalLearn += learnCount; totalReview += reviewCount;
-    const total = newCount + learnCount + reviewCount;
-    const emoji = EMOJIS[parseInt(did) % EMOJIS.length];
-    const deckDisplayName = deck.name.split('::').pop();
-
-    html += `<div class="deck-item" onclick="startStudy('${did}')">
+  for(const[did,deck] of Object.entries(decks)){
+    const{newC,lrnC,revC}=getCounts(deck.cards);
+    tNew+=newC;tLrn+=lrnC;tRev+=revC;
+    const emoji=EMOJIS[parseInt(did)%EMOJIS.length];
+    const name=deck.name.split('::').pop();
+    html+=`<div class="deck-card" onclick="startStudy('${did}')">
       <span class="deck-emoji">${emoji}</span>
       <div class="deck-info">
-        <div class="deck-name">${escHtml(deckDisplayName)}</div>
-        <div class="deck-meta">${deck.cards.length} Karten</div>
-        <div class="deck-badges">
-          <span class="badge ${newCount?'badge-new':'badge-0'}">${newCount} neu</span>
-          <span class="badge ${learnCount?'badge-learn':'badge-0'}">${learnCount} lernen</span>
-          <span class="badge ${reviewCount?'badge-review':'badge-0'}">${reviewCount} wdh.</span>
+        <div class="deck-name">${esc(name)}</div>
+        <div class="deck-sub">${deck.cards.length} Karten · <span style="cursor:pointer;color:var(--accent2);text-decoration:underline" onclick="event.stopPropagation();showFieldModal('${did}')">Felder konfigurieren</span></div>
+        <div class="deck-pills">
+          <span class="pill ${newC?'pill-new':'pill-0'}">${newC} neu</span>
+          <span class="pill ${lrnC?'pill-lrn':'pill-0'}">${lrnC} lernen</span>
+          <span class="pill ${revC?'pill-rev':'pill-0'}">${revC} wdh.</span>
         </div>
       </div>
-      <span class="deck-arrow">›</span>
+      <span class="deck-arr">›</span>
     </div>`;
   }
-
-  listEl.innerHTML = html;
-
-  // Stats bar
-  document.getElementById('statsBar').style.display = 'grid';
-  document.getElementById('statNew').textContent = totalNew;
-  document.getElementById('statLearn').textContent = totalLearn;
-  document.getElementById('statReview').textContent = totalReview;
+  el.innerHTML=html;
+  document.getElementById('statsRow').style.display='grid';
+  document.getElementById('sNew').textContent=tNew;
+  document.getElementById('sLrn').textContent=tLrn;
+  document.getElementById('sRev').textContent=tRev;
 }
 
-function getDeckCounts(cards) {
-  let newCount=0, learnCount=0, reviewCount=0;
-  for (const card of cards) {
-    const state = getCardState(card.nid, card.ord);
-    if (!state) { newCount++; continue; }
-    if (!isDue(state)) continue;
-    if (state.type === 2) reviewCount++;
-    else learnCount++;
+function getCounts(cards){
+  let newC=0,lrnC=0,revC=0;
+  for(const c of cards){
+    const st=getState(c.nid,c.ord);
+    if(!st){newC++;continue}
+    if(!isDue(st)) continue;
+    if(st.type===2) revC++; else lrnC++;
   }
-  return { newCount, learnCount, reviewCount };
+  return{newC,lrnC,revC};
 }
 
-// ═══════════════════════════════════════════════════════
-//  STUDY SESSION
-// ═══════════════════════════════════════════════════════
-function startStudy(did) {
-  currentDeckId = did;
+// ══════════════════════════════════════════════
+//  FIELD CONFIG MODAL
+// ══════════════════════════════════════════════
+let editingDid = null;
+let tempConfig = null;
+
+function showFieldModal(did){
+  editingDid = did;
   const deck = decks[did];
-  if (!deck) return;
+  const cfg = getFieldConfig(did);
+  tempConfig = JSON.parse(JSON.stringify(cfg));
 
-  sessionStats = { again:0, hard:0, good:0, easy:0 };
-
-  // Build queue: due cards + new cards (max 20 new)
-  const due = [], newCards = [];
-  for (const card of deck.cards) {
-    const state = getCardState(card.nid, card.ord);
-    if (!state) { newCards.push(card); }
-    else if (isDue(state)) { due.push(card); }
-  }
-
-  // Shuffle
-  shuffle(due); shuffle(newCards);
-  studyQueue = [...due, ...newCards.slice(0, 20)];
-  studyIndex = 0;
-
-  if (!studyQueue.length) {
-    showDoneScreen(true);
-    return;
-  }
-
-  // Switch screen
-  document.getElementById('studyDeckName').textContent = deck.name.split('::').pop();
-  showScreen('studyScreen');
-  showNextCard();
+  document.getElementById('fieldModalTitle').textContent = '⚙️ Felder: '+deck.name.split('::').pop();
+  renderFieldModal(deck.fields);
+  openModal('fieldModal');
 }
 
-function showNextCard() {
-  if (studyIndex >= studyQueue.length) {
-    showDoneScreen(false);
-    return;
+function renderFieldModal(fields){
+  let html='<div style="margin-bottom:12px;font-size:13px;color:var(--text-muted);line-height:1.5">Wähle welche Felder vorne, hinten oder versteckt sind.</div>';
+  for(const f of fields){
+    const role = f===tempConfig.front?'front':tempConfig.hidden.includes(f)?'hidden':'back';
+    html+=`<div class="field-row" id="fr_${esc(f)}">
+      <div class="field-info">
+        <div class="field-name">${esc(f)}</div>
+        <div class="field-role field-role-${role}" id="frl_${esc(f)}">${roleLabel(role)}</div>
+      </div>
+      <div class="field-actions">
+        <button class="field-action-btn ${role==='front'?'active-front':''}" onclick="setFieldRole('${esc(f)}','front')">Vorne</button>
+        <button class="field-action-btn ${role==='back'?'active-back':''}" onclick="setFieldRole('${esc(f)}','back')">Hinten</button>
+        <button class="field-action-btn ${role==='hidden'?'active-hide':''}" onclick="setFieldRole('${esc(f)}','hidden')">Aus</button>
+      </div>
+    </div>`;
   }
-  currentCard = studyQueue[studyIndex];
-  cardFlipped = false;
-  updateCounter();
+  document.getElementById('fieldContent').innerHTML=html;
+}
+
+function roleLabel(r){return r==='front'?'▶ Vorderseite':r==='back'?'↩ Rückseite':'✕ Versteckt'}
+
+function setFieldRole(field, role){
+  const deck = decks[editingDid];
+  if(role==='front'){
+    // Previous front becomes back
+    if(tempConfig.front && tempConfig.front!==field){
+      tempConfig.back.unshift(tempConfig.front);
+    }
+    tempConfig.front = field;
+    tempConfig.back = tempConfig.back.filter(f=>f!==field);
+    tempConfig.hidden = tempConfig.hidden.filter(f=>f!==field);
+  } else if(role==='back'){
+    if(tempConfig.front===field) tempConfig.front='';
+    if(!tempConfig.back.includes(field)) tempConfig.back.push(field);
+    tempConfig.back = tempConfig.back.filter(f=>f!==field||true);
+    tempConfig.hidden = tempConfig.hidden.filter(f=>f!==field);
+    if(!tempConfig.back.includes(field)) tempConfig.back.push(field);
+  } else {
+    if(tempConfig.front===field) tempConfig.front='';
+    tempConfig.back = tempConfig.back.filter(f=>f!==field);
+    if(!tempConfig.hidden.includes(field)) tempConfig.hidden.push(field);
+  }
+  renderFieldModal(deck.fields);
+}
+
+function saveFieldConfig(){
+  fieldConfigs[editingDid] = tempConfig;
+  saveLocal();
+  closeModal('fieldModal');
+  toast('✅ Felder gespeichert');
+  renderHome();
+}
+
+// ══════════════════════════════════════════════
+//  SETTINGS MODAL
+// ══════════════════════════════════════════════
+function showSettings(){
+  const syncOk = ghConfig.token && ghConfig.repo && ghConfig.user;
+  document.getElementById('settingsContent').innerHTML=`
+    <div class="sync-section">
+      <div class="sync-section-title">☁️ GitHub Sync</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;line-height:1.6">
+        Dein Lernfortschritt wird automatisch in deinem GitHub-Repo gespeichert und zwischen allen Geräten synchronisiert.
+      </div>
+      <div class="sync-input-group">
+        <div>
+          <div class="sync-input-label">GitHub Benutzername</div>
+          <input class="sync-input" id="ghUser" placeholder="deinusername" value="${esc(ghConfig.user||'')}">
+        </div>
+        <div>
+          <div class="sync-input-label">Repository Name</div>
+          <input class="sync-input" id="ghRepo" placeholder="kanji" value="${esc(ghConfig.repo||'')}">
+        </div>
+        <div>
+          <div class="sync-input-label">Personal Access Token</div>
+          <input class="sync-input" id="ghToken" type="password" placeholder="ghp_xxxxxxxxxxxx" value="${esc(ghConfig.token||'')}">
+          <div style="font-size:11px;color:var(--text-dim);margin-top:5px">
+            GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)<br>
+            Benötigt: <b>repo</b> Berechtigung
+          </div>
+        </div>
+      </div>
+      <button class="sync-btn primary" style="margin-top:12px" onclick="saveGHConfig()">Speichern & Testen</button>
+      ${syncOk?`<button class="sync-btn" onclick="ghPull().then(()=>renderHome())">⬇️ Jetzt Pull (vom Server laden)</button>
+      <button class="sync-btn" onclick="ghPush()">⬆️ Jetzt Push (zum Server senden)</button>`:''}
+      <div id="syncTestResult"></div>
+    </div>
+    <div class="sync-section" style="border-top:1px solid var(--border);padding-top:18px">
+      <div class="sync-section-title">📊 Daten</div>
+      <button class="sync-btn" onclick="exportProgress()">📤 Fortschritt als JSON exportieren</button>
+      <button class="sync-btn" onclick="document.getElementById('importProgressInput').click()">📥 Fortschritt importieren</button>
+      <input type="file" id="importProgressInput" accept=".json" style="display:none" onchange="importProgressFile(event)">
+      <button class="sync-btn" style="color:var(--again)" onclick="confirmReset()">🗑️ Fortschritt zurücksetzen</button>
+    </div>
+  `;
+  openModal('settingsModal');
+}
+
+async function saveGHConfig(){
+  ghConfig.user = document.getElementById('ghUser').value.trim();
+  ghConfig.repo = document.getElementById('ghRepo').value.trim();
+  ghConfig.token = document.getElementById('ghToken').value.trim();
+  saveLocal();
+  const res = document.getElementById('syncTestResult');
+  res.innerHTML='<div class="sync-status sync-info">Verbindung testen…</div>';
+  try{
+    const r = await fetch(`https://api.github.com/repos/${ghConfig.user}/${ghConfig.repo}`,{
+      headers:{'Authorization':`token ${ghConfig.token}`}
+    });
+    if(r.ok){
+      res.innerHTML='<div class="sync-status sync-ok">✅ Verbindung erfolgreich!</div>';
+      // Re-render to show push/pull buttons
+      showSettings();
+      ghPull();
+    } else {
+      res.innerHTML=`<div class="sync-status sync-err">❌ Fehler ${r.status} – Token oder Repo prüfen</div>`;
+    }
+  }catch(e){
+    res.innerHTML='<div class="sync-status sync-err">❌ Netzwerkfehler</div>';
+  }
+}
+
+function exportProgress(){
+  const blob = new Blob([JSON.stringify(progress,null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'kanji-progress.json';
+  a.click();
+}
+
+function importProgressFile(e){
+  const f = e.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{
+    try{
+      const data = JSON.parse(r.result);
+      Object.assign(progress, data);
+      saveLocal();
+      toast('✅ Fortschritt importiert');
+      renderHome();
+    }catch{toast('❌ Ungültige Datei')}
+  };
+  r.readAsText(f);
+  e.target.value='';
+}
+
+function confirmReset(){
+  if(confirm('Wirklich ALLEN Fortschritt löschen? Das kann nicht rückgängig gemacht werden.')){
+    progress={};
+    saveLocal();
+    toast('🗑️ Fortschritt gelöscht');
+    renderHome();
+    closeModal('settingsModal');
+  }
+}
+
+// ══════════════════════════════════════════════
+//  STUDY
+// ══════════════════════════════════════════════
+function startStudy(did){
+  const deck = decks[did];
+  if(!deck) return;
+  sessionStats={again:0,hard:0,good:0,easy:0};
+  const due=[],newCards=[];
+  for(const c of deck.cards){
+    const st=getState(c.nid,c.ord);
+    if(!st) newCards.push(c);
+    else if(isDue(st)) due.push(c);
+  }
+  shuffle(due); shuffle(newCards);
+  studyQueue=[...due,...newCards.slice(0,20)];
+  studyIdx=0;
+
+  if(!studyQueue.length){showDone(true);showScreen('studyScreen');return}
+
+  document.getElementById('studyTitle').textContent=deck.name.split('::').pop();
+  showScreen('studyScreen');
+  nextCard();
+}
+
+function nextCard(){
+  if(studyIdx>=studyQueue.length){showDone(false);return}
+  curCard=studyQueue[studyIdx];
+  flipped=false;
   updateProgress();
   renderCard();
-  renderAnswerArea(false);
+  renderAns(false);
 }
 
-function updateCounter() {
-  const remaining = studyQueue.length - studyIndex;
-  document.getElementById('studyCounter').textContent = remaining + ' übrig';
-}
-function updateProgress() {
-  const pct = studyIndex / studyQueue.length * 100;
-  document.getElementById('progressFill').style.width = pct + '%';
+function updateProgress(){
+  const rem=studyQueue.length-studyIdx;
+  document.getElementById('studyCount').textContent=rem+' übrig';
+  const pct=studyIdx/studyQueue.length*100;
+  document.getElementById('progFill').style.width=pct+'%';
 }
 
-function renderCard() {
-  const card = currentCard;
-  const state = getCardState(card.nid, card.ord);
-  const isNew = !state;
+function renderCard(){
+  const c=curCard;
+  const st=getState(c.nid,c.ord);
+  const cfg=getFieldConfig(c.did);
+  const frontVal=c.fields[cfg.front]||Object.values(c.fields)[0]||'';
+  const typeLabel=!st?'NEU':st.type===2?'WIEDERHOLUNG':'LERNEN';
 
-  const frontHtml = renderField(card.front.val);
+  // Detect audio in front field
+  const frontAudio=extractAudio(frontVal);
 
-  const cardEl = document.createElement('div');
-  cardEl.className = 'flashcard';
-  cardEl.id = 'flashcard';
-  cardEl.onclick = flipCard;
+  const div=document.createElement('div');
+  div.className='flashcard c-in';
+  div.id='fcard';
+  div.onclick=flipCard;
 
-  let typeLabel = isNew ? 'NEU' : (state.type === 2 ? 'WIEDERHOLUNG' : 'LERNEN');
-
-  cardEl.innerHTML = `
-    <span class="card-side-label">${typeLabel}</span>
-    <div class="card-front-content">
-      <div class="card-html">${frontHtml}</div>
+  div.innerHTML=`
+    <div class="card-type-badge">${typeLabel}</div>
+    ${frontAudio?`<button class="card-audio-btn" onclick="event.stopPropagation();playAudio('${frontAudio}')">🔊</button>`:''}
+    <div class="card-main">
+      <div class="card-front-html">${renderField(frontVal,true)}</div>
     </div>
-    <div class="tap-hint"><div class="tap-hint-dot"></div> Tippe zum Aufdecken</div>
+    <div class="tap-hint"><div class="tap-dot"></div>Tippen zum Aufdecken</div>
   `;
 
-  const area = document.getElementById('cardArea');
-  area.innerHTML = '';
-  area.appendChild(cardEl);
+  const stage=document.getElementById('cardStage');
+  stage.innerHTML='';
+  stage.appendChild(div);
 }
 
-function flipCard() {
-  if (cardFlipped) return;
-  cardFlipped = true;
+function flipCard(){
+  if(flipped) return;
+  flipped=true;
+  const c=curCard;
+  const cfg=getFieldConfig(c.did);
+  const st=getState(c.nid,c.ord);
 
-  const card = currentCard;
-  const state = getCardState(card.nid, card.ord);
+  const card=document.getElementById('fcard');
+  card.onclick=null;
+  card.querySelector('.tap-hint')?.remove();
 
-  // Build back content
-  let backParts = [];
-  for (const bf of card.back) {
-    if (!bf.val || bf.val.trim() === '') continue;
-    backParts.push(`<div style="margin-bottom:10px">
-      <div style="font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">${escHtml(bf.key)}</div>
-      <div class="card-html">${renderField(bf.val)}</div>
-    </div>`);
+  // Build back
+  const backFields=cfg.back.filter(f=>!cfg.hidden.includes(f)&&c.fields[f]&&c.fields[f].trim());
+  let backHtml='';
+  for(const f of backFields){
+    const val=c.fields[f];
+    const audio=extractAudio(val);
+    const cleanVal=removeAudioTags(val);
+    const isBig=backFields.indexOf(f)===0;
+    backHtml+=`<div class="back-field">
+      <div class="back-field-label">${esc(f)}</div>
+      <div class="back-field-val ${isBig?'big':''}">
+        ${renderField(cleanVal,isBig)}
+        ${audio?`<button class="card-audio-btn" style="position:static;display:inline-flex;margin-left:8px;vertical-align:middle;width:28px;height:28px;font-size:13px" onclick="playAudio('${audio}')">🔊</button>`:''}
+      </div>
+    </div>`;
   }
+  if(!backHtml) backHtml='<div style="color:var(--text-dim);font-size:14px">Keine weiteren Felder</div>';
 
-  const cardEl = document.getElementById('flashcard');
-  cardEl.onclick = null;
-  cardEl.querySelector('.tap-hint')?.remove();
+  const divider=document.createElement('div');
+  divider.className='card-divider';
+  const backEl=document.createElement('div');
+  backEl.className='back-fields';
+  backEl.innerHTML=backHtml;
 
-  // Add divider + back
-  const divider = document.createElement('div');
-  divider.className = 'card-divider';
-  const backEl = document.createElement('div');
-  backEl.style.cssText = 'margin-top:4px;width:100%;max-height:45vh;overflow-y:auto';
-  backEl.innerHTML = backParts.join('') || '<div style="color:var(--text-dim)">–</div>';
+  card.appendChild(divider);
+  card.appendChild(backEl);
 
-  cardEl.appendChild(divider);
-  cardEl.appendChild(backEl);
+  // Auto-play back audio
+  const firstBackAudio=backFields.map(f=>extractAudio(c.fields[f])).find(Boolean);
+  if(firstBackAudio) setTimeout(()=>playAudio(firstBackAudio),300);
 
-  renderAnswerArea(true, state);
+  renderAns(true,st);
 }
 
-function renderAnswerArea(showRating, state) {
-  const area = document.getElementById('answerArea');
-  if (!showRating) {
-    area.innerHTML = `<button class="show-answer-btn" onclick="flipCard()">Antwort zeigen</button>`;
+function renderAns(showRating,st){
+  const wrap=document.getElementById('ansWrap');
+  if(!showRating){
+    wrap.innerHTML=`<button class="show-btn" onclick="flipCard()">Antwort zeigen</button>`;
     return;
   }
-
-  const labels = [
-    {key:'again', cls:'btn-again', label:'Nochmal'},
-    {key:'hard',  cls:'btn-hard',  label:'Schwer'},
-    {key:'good',  cls:'btn-good',  label:'Gut'},
-    {key:'easy',  cls:'btn-easy',  label:'Leicht'},
+  const btns=[
+    {k:'again',cls:'btn-again',l:'Nochmal'},
+    {k:'hard', cls:'btn-hard', l:'Schwer'},
+    {k:'good', cls:'btn-good', l:'Gut'},
+    {k:'easy', cls:'btn-easy', l:'Leicht'},
   ];
-
-  area.innerHTML = `<div class="rating-buttons">${labels.map(b=>`
-    <button class="rating-btn ${b.cls}" onclick="rateCard('${b.key}')">
-      <span class="r-label">${b.label}</span>
-      <span class="r-interval">${getIntervalLabel(state, RATINGS[b.key])}</span>
+  wrap.innerHTML=`<div class="rating-grid">${btns.map(b=>`
+    <button class="r-btn ${b.cls}" onclick="rateCard('${b.k}')">
+      <span class="r-lbl">${b.l}</span>
+      <span class="r-int">${intervalLabel(st,R[b.k])}</span>
     </button>`).join('')}</div>`;
 }
 
-function rateCard(ratingKey) {
-  const card = currentCard;
-  const rating = RATINGS[ratingKey];
-  const state = getCardState(card.nid, card.ord) || {};
-  const newState = scheduleCard(state, rating);
-  setCardState(card.nid, card.ord, newState);
-  sessionStats[ratingKey]++;
+function rateCard(rk){
+  const c=curCard;
+  const rating=R[rk];
+  const st=getState(c.nid,c.ord)||{};
+  setState(c.nid,c.ord,schedule(st,rating));
+  sessionStats[rk]++;
+  schedulePush();
 
-  // Animate out
-  const cardEl = document.getElementById('flashcard');
-  if (cardEl) {
-    cardEl.classList.add('card-out');
-    cardEl.style.pointerEvents = 'none';
+  // Re-queue if again
+  if(rk==='again'&&studyQueue.length-studyIdx<8){
+    studyQueue.splice(Math.min(studyIdx+3,studyQueue.length),0,c);
   }
 
-  // Re-queue if again/hard and in learning
-  if (ratingKey === 'again' && studyQueue.length - studyIndex < 10) {
-    // re-insert later in queue
-    const laterIdx = Math.min(studyIndex + 3, studyQueue.length);
-    studyQueue.splice(laterIdx, 0, card);
-  }
-
-  studyIndex++;
-  setTimeout(showNextCard, 250);
+  const card=document.getElementById('fcard');
+  if(card){card.classList.remove('c-in');card.classList.add('c-out');card.style.pointerEvents='none'}
+  studyIdx++;
+  setTimeout(nextCard,230);
 }
 
-// ═══════════════════════════════════════════════════════
-//  DONE SCREEN
-// ═══════════════════════════════════════════════════════
-function showDoneScreen(allDone) {
-  const area = document.getElementById('cardArea');
-  const answerArea = document.getElementById('answerArea');
-  answerArea.innerHTML = '';
-  document.getElementById('progressFill').style.width = '100%';
-
-  const total = sessionStats.again + sessionStats.hard + sessionStats.good + sessionStats.easy;
-  const correct = sessionStats.good + sessionStats.easy;
-  const pct = total ? Math.round(correct/total*100) : 100;
-
-  area.innerHTML = `<div class="done-card">
-    <div class="done-icon">${allDone ? '🎌' : '🎉'}</div>
-    <div class="done-title">${allDone ? 'Alles wiederholt!' : 'Sitzung beendet!'}</div>
-    <div class="done-sub">${allDone ? 'Für heute sind alle Karten erledigt. Komm morgen wieder!' : total + ' Karten gelernt'}</div>
-    ${total > 0 ? `<div class="done-stats">
-      <div class="done-stat"><div class="done-stat-val" style="color:var(--again)">${sessionStats.again}</div><div class="done-stat-label">Nochmal</div></div>
-      <div class="done-stat"><div class="done-stat-val" style="color:var(--good)">${correct}</div><div class="done-stat-label">Richtig</div></div>
-      <div class="done-stat"><div class="done-stat-val">${pct}%</div><div class="done-stat-label">Korrekt</div></div>
-    </div>` : ''}
-    <button class="primary-btn" onclick="goHome()">Zurück zu den Decks</button>
+// ══════════════════════════════════════════════
+//  DONE
+// ══════════════════════════════════════════════
+function showDone(allDone){
+  document.getElementById('progFill').style.width='100%';
+  document.getElementById('ansWrap').innerHTML='';
+  const total=sessionStats.again+sessionStats.hard+sessionStats.good+sessionStats.easy;
+  const correct=sessionStats.good+sessionStats.easy;
+  const pct=total?Math.round(correct/total*100):100;
+  document.getElementById('cardStage').innerHTML=`<div class="done-wrap">
+    <div class="done-icon">${allDone?'🎌':'🎉'}</div>
+    <div class="done-title">${allDone?'Alles erledigt!':'Sitzung beendet!'}</div>
+    <div class="done-sub">${allDone?'Für heute sind alle Karten fertig. Bis morgen!':total+' Karten gelernt'}</div>
+    ${total?`<div class="done-row">
+      <div class="done-stat"><div class="done-stat-val" style="color:var(--again)">${sessionStats.again}</div><div class="done-stat-lbl">Nochmal</div></div>
+      <div class="done-stat"><div class="done-stat-val" style="color:var(--good)">${correct}</div><div class="done-stat-lbl">Richtig</div></div>
+      <div class="done-stat"><div class="done-stat-val">${pct}%</div><div class="done-stat-lbl">Quote</div></div>
+    </div>`:''}
+    <button class="primary-btn" onclick="goHome()">Zurück zu Decks</button>
   </div>`;
 }
 
-// ═══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════
+//  AUDIO
+// ══════════════════════════════════════════════
+function extractAudio(val){
+  if(!val) return null;
+  const m=val.match(/\[sound:([^\]]+)\]/);
+  return m?m[1]:null;
+}
+function removeAudioTags(val){
+  return val?val.replace(/\[sound:[^\]]+\]/g,''):val;
+}
+function playAudio(filename){
+  const url=mediaFiles[filename];
+  if(!url){toast('🔇 Audio nicht gefunden');return}
+  const audio=new Audio(url);
+  audio.play().catch(()=>toast('🔇 Wiedergabe fehlgeschlagen'));
+}
+
+// ══════════════════════════════════════════════
+//  FIELD RENDERING
+// ══════════════════════════════════════════════
+function renderField(val,big=false){
+  if(!val) return '';
+  // Remove audio tags for display
+  val=removeAudioTags(val);
+  if(!val.trim()) return '';
+
+  // If HTML content
+  if(/<[a-z]/i.test(val)){
+    return `<div class="card-front-html">${val}</div>`;
+  }
+  // Plain text – auto-size
+  const len=val.length;
+  let sz;
+  if(big){sz=len<=3?'72px':len<=6?'52px':len<=12?'36px':len<=24?'24px':'17px'}
+  else{sz=len<=8?'22px':len<=30?'17px':'14px'}
+  return `<span style="font-size:${sz};line-height:1.2;display:block">${esc(val)}</span>`;
+}
+
+// ══════════════════════════════════════════════
 //  HELPERS
-// ═══════════════════════════════════════════════════════
-function renderField(val) {
-  if (!val) return '';
-  // Anki uses HTML – sanitize and render
-  let html = val
-    .replace(/\[\[type:[^\]]+\]\]/g, '') // remove type fields
-    .replace(/{{[^}]+}}/g, '');           // remove template tags
+// ══════════════════════════════════════════════
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}}
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('hidden',s.id!==id))}
+function goHome(){showScreen('homeScreen');renderHome()}
 
-  // If it's plain text (no tags), auto-size
-  if (!/<[a-z]/i.test(html)) {
-    const len = html.length;
-    const size = len <= 4 ? '64px' : len <= 10 ? '42px' : len <= 20 ? '28px' : '18px';
-    return `<span style="font-size:${size};line-height:1.15">${escHtml(html)}</span>`;
-  }
-  return html;
+function openModal(id){
+  const m=document.getElementById(id);
+  m.classList.remove('hidden');
+  m.style.display='flex';
 }
-
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function closeModal(id){
+  const m=document.getElementById(id);
+  m.classList.add('hidden');
 }
-
-function shuffle(arr) {
-  for (let i=arr.length-1; i>0; i--) {
-    const j = Math.floor(Math.random()*(i+1));
-    [arr[i],arr[j]] = [arr[j],arr[i]];
-  }
-}
-
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => {
-    s.classList.toggle('hidden', s.id !== id);
-  });
-}
-
-function goHome() {
-  showScreen('homeScreen');
-  renderHome();
-}
-
-function showLoader(msg) {
-  const ol = document.getElementById('loadingOverlay');
-  ol.classList.remove('hide');
-  setLoaderStatus(msg);
-}
-function hideLoader() {
-  document.getElementById('loadingOverlay').classList.add('hide');
-}
-function setLoaderStatus(msg) {
-  const el = document.getElementById('loaderStatus');
-  if (el) el.textContent = msg;
-}
-
-let toastTimer;
-function toast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
-}
-
-// Drag & drop for import
-document.addEventListener('dragover', e => { e.preventDefault(); document.getElementById('importZone')?.classList.add('drag-over'); });
-document.addEventListener('dragleave', () => { document.getElementById('importZone')?.classList.remove('drag-over'); });
-document.addEventListener('drop', async e => {
-  e.preventDefault();
-  document.getElementById('importZone')?.classList.remove('drag-over');
-  const file = e.dataTransfer.files[0];
-  if (file && (file.name.endsWith('.apkg') || file.name.endsWith('.colpkg'))) {
-    await importApkg(file);
-  }
+// Close modals on backdrop click
+document.querySelectorAll('.modal-bg').forEach(bg=>{
+  bg.addEventListener('click',e=>{if(e.target===bg)closeModal(bg.id)});
 });
 
-// ═══════════════════════════════════════════════════════
+let toastT;
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),3200);
+}
+
+function showLoader(msg){
+  const ol=document.getElementById('loaderOverlay');
+  ol.classList.remove('gone');
+  setMsg(msg);
+}
+function hideLoader(){document.getElementById('loaderOverlay').classList.add('gone')}
+function setMsg(m){const el=document.getElementById('loaderMsg');if(el)el.textContent=m}
+
+// Drag & drop
+document.addEventListener('dragover',e=>e.preventDefault());
+document.addEventListener('drop',async e=>{
+  e.preventDefault();
+  const f=e.dataTransfer.files[0];
+  if(f&&(f.name.endsWith('.apkg')||f.name.endsWith('.colpkg'))) await importApkg(f);
+});
+
+// ══════════════════════════════════════════════
 //  INIT
-// ═══════════════════════════════════════════════════════
-(async function init() {
-  loadProgress();
+// ══════════════════════════════════════════════
+(async()=>{
+  loadLocal();
   await initSQL();
   hideLoader();
   renderHome();
+  // Pull progress from GitHub on startup if configured
+  if(ghConfig.token && ghConfig.repo && ghConfig.user){
+    ghPull().then(()=>renderHome());
+  }
 })();
 </script>
 
