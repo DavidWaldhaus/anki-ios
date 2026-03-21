@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="漢字">
+<meta name="theme-color" content="#0a0a0f">
+<title>漢字 — Anki for iOS</title>
+
+<!-- SQL.js for reading .apkg (SQLite) files -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/sql-wasm.js"></script>
+
+<!-- JSZip for unzipping .apkg -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<style>
+:root {
+  --bg: #0a0a0f;
+  --surface: #13131a;
+  --surface2: #1c1c26;
+  --border: rgba(255,255,255,0.07);
+  --text: #f0f0f8;
+  --text-muted: rgba(240,240,248,0.45);
+  --text-dim: rgba(240,240,248,0.25);
+  --accent: #7c6fff;
+  --accent-soft: rgba(124,111,255,0.15);
+  --accent-glow: rgba(124,111,255,0.3);
+  --again: #ff5f6d;
+  --hard: #ff9f43;
+  --good: #48dbac;
+  --easy: #54a0ff;
+  --again-soft: rgba(255,95,109,0.12);
+  --hard-soft: rgba(255,159,67,0.12);
+  --good-soft: rgba(72,219,172,0.12);
+  --easy-soft: rgba(84,160,255,0.12);
+  --radius: 20px;
+  --radius-sm: 12px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, 'Hiragino Sans', 'Yu Gothic', BlinkMacSystemFont, sans-serif;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ── SCREENS ── */
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding-top: calc(var(--safe-top) + 12px);
+  padding-bottom: calc(var(--safe-bottom) + 12px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.screen.hidden { opacity: 0; pointer-events: none; transform: translateY(24px); }
+.screen.slide-left { transform: translateX(-100%); opacity: 0; }
+.screen.slide-right { transform: translateX(100%); opacity: 0; }
+
+/* ── NAV BAR ── */
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px 16px;
+  flex-shrink: 0;
+}
+.nav-title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.nav-title span { color: var(--accent); }
+.nav-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 50%;
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.nav-btn:active { transform: scale(0.9); background: var(--surface); }
+
+/* ── SCROLL AREA ── */
+.scroll { flex: 1; overflow-y: auto; padding: 0 16px; -webkit-overflow-scrolling: touch; }
+.scroll::-webkit-scrollbar { display: none; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-bottom: 12px;
+}
+
+/* ── IMPORT ZONE ── */
+#importZone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 40px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin: 0 16px 16px;
+  background: var(--surface);
+}
+#importZone.drag-over {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+#importZone .icon { font-size: 48px; margin-bottom: 12px; }
+#importZone h3 { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+#importZone p { font-size: 14px; color: var(--text-muted); }
+#fileInput { display: none; }
+
+/* ── DECK LIST ── */
+.deck-item {
+  display: flex;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  gap: 14px;
+  position: relative;
+  overflow: hidden;
+}
+.deck-item::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--accent);
+  border-radius: 3px;
+}
+.deck-item:active { transform: scale(0.98); background: var(--surface2); }
+.deck-emoji { font-size: 28px; flex-shrink: 0; }
+.deck-info { flex: 1; min-width: 0; }
+.deck-name { font-size: 16px; font-weight: 600; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.deck-meta { font-size: 13px; color: var(--text-muted); }
+.deck-badges { display: flex; gap: 6px; margin-top: 6px; }
+.badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+.badge-new { background: var(--easy-soft); color: var(--easy); }
+.badge-learn { background: var(--hard-soft); color: var(--hard); }
+.badge-review { background: var(--good-soft); color: var(--good); }
+.badge-0 { background: rgba(255,255,255,0.06); color: var(--text-dim); }
+.deck-arrow { color: var(--text-dim); font-size: 18px; }
+
+/* ── STATS BAR ── */
+.stats-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin: 0 16px 16px;
+}
+.stat-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  text-align: center;
+}
+.stat-val { font-size: 24px; font-weight: 700; }
+.stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* ── STUDY SCREEN ── */
+#studyScreen {
+  background: var(--bg);
+}
+.study-nav {
+  display: flex;
+  align-items: center;
+  padding: 0 16px 12px;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.back-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 50%;
+  width: 38px; height: 38px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.back-btn:active { transform: scale(0.9); }
+.study-deck-name {
+  font-size: 15px;
+  font-weight: 600;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.study-counter {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+/* ── PROGRESS BAR ── */
+.progress-wrap {
+  padding: 0 16px 16px;
+  flex-shrink: 0;
+}
+.progress-track {
+  height: 3px;
+  background: var(--surface2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ── CARD AREA ── */
+.card-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0 16px;
+  min-height: 0;
+}
+
+.flashcard {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.4,0,0.2,1), box-shadow 0.2s;
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+  text-align: center;
+}
+.flashcard::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, var(--accent-soft) 0%, transparent 70%);
+  pointer-events: none;
+}
+.flashcard:active { transform: scale(0.98); }
+
+.card-side-label {
+  position: absolute;
+  top: 16px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.card-tags {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  display: flex;
+  gap: 4px;
+}
+.card-tag {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.card-front-content {
+  width: 100%;
+}
+.card-jp-text {
+  font-size: clamp(42px, 12vw, 80px);
+  font-weight: 400;
+  line-height: 1.1;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+.card-reading {
+  font-size: clamp(18px, 5vw, 28px);
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  font-weight: 300;
+}
+.card-divider {
+  width: 40px;
+  height: 1px;
+  background: var(--border);
+  margin: 16px auto;
+}
+.card-meaning {
+  font-size: clamp(16px, 4vw, 22px);
+  color: var(--text);
+  font-weight: 500;
+  line-height: 1.4;
+}
+.card-extra {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 10px;
+  line-height: 1.5;
+}
+.card-html {
+  max-width: 100%;
+  word-break: break-word;
+  text-align: center;
+}
+.card-html img { max-width: 100%; border-radius: 12px; }
+.card-html b, .card-html strong { color: var(--text); }
+
+.tap-hint {
+  position: absolute;
+  bottom: 20px;
+  font-size: 12px;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.tap-hint-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.3); }
+}
+
+/* ── ANSWER BUTTONS ── */
+.answer-section {
+  padding: 14px 0 0;
+  flex-shrink: 0;
+}
+.show-answer-btn {
+  width: 100%;
+  padding: 18px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  box-shadow: 0 4px 20px var(--accent-glow);
+}
+.show-answer-btn:active { transform: scale(0.98); opacity: 0.9; }
+
+.rating-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 8px;
+}
+.rating-btn {
+  padding: 14px 4px;
+  border: 1px solid;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.rating-btn:active { transform: scale(0.95); }
+.rating-btn .r-label { font-size: 12px; font-weight: 700; }
+.rating-btn .r-interval { font-size: 10px; font-weight: 500; opacity: 0.7; }
+.btn-again { background: var(--again-soft); border-color: rgba(255,95,109,0.25); color: var(--again); }
+.btn-hard  { background: var(--hard-soft);  border-color: rgba(255,159,67,0.25); color: var(--hard); }
+.btn-good  { background: var(--good-soft);  border-color: rgba(72,219,172,0.25); color: var(--good); }
+.btn-easy  { background: var(--easy-soft);  border-color: rgba(84,160,255,0.25); color: var(--easy); }
+
+/* ── DONE SCREEN ── */
+.done-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 24px;
+  gap: 16px;
+}
+.done-icon { font-size: 72px; animation: bounce 0.6s cubic-bezier(0.36,0.07,0.19,0.97); }
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-20px); }
+  60% { transform: translateY(-8px); }
+}
+.done-title { font-size: 28px; font-weight: 700; }
+.done-sub { font-size: 15px; color: var(--text-muted); max-width: 240px; line-height: 1.5; }
+.done-stats { display: flex; gap: 24px; margin-top: 8px; }
+.done-stat { text-align: center; }
+.done-stat-val { font-size: 28px; font-weight: 700; }
+.done-stat-label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.primary-btn {
+  width: 100%;
+  max-width: 280px;
+  padding: 18px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  box-shadow: 0 4px 20px var(--accent-glow);
+  margin-top: 8px;
+}
+.primary-btn:active { transform: scale(0.97); }
+
+/* ── SWIPE ANIMATION ── */
+@keyframes swipeOut {
+  to { transform: translateX(-120%); opacity: 0; }
+}
+@keyframes swipeIn {
+  from { transform: translateX(120%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.card-out { animation: swipeOut 0.25s ease forwards; }
+.card-in  { animation: swipeIn  0.25s ease forwards; }
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 24px;
+  color: var(--text-muted);
+  gap: 10px;
+}
+.empty-state .e-icon { font-size: 48px; margin-bottom: 8px; }
+.empty-state h3 { font-size: 18px; font-weight: 600; color: var(--text); }
+.empty-state p { font-size: 14px; line-height: 1.5; }
+
+/* ── LOADING ── */
+#loadingOverlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  gap: 16px;
+  transition: opacity 0.3s;
+}
+#loadingOverlay.hide { opacity: 0; pointer-events: none; }
+.loader-title { font-size: 32px; font-weight: 700; }
+.loader-title span { color: var(--accent); }
+.loader-sub { font-size: 14px; color: var(--text-muted); }
+.spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loader-status { font-size: 13px; color: var(--text-dim); min-height: 20px; }
+
+/* ── TOAST ── */
+#toast {
+  position: fixed;
+  bottom: calc(var(--safe-bottom) + 100px);
+  left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 12px 20px;
+  border-radius: 40px;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 200;
+  opacity: 0;
+  transition: all 0.3s;
+  white-space: nowrap;
+  backdrop-filter: blur(20px);
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── SECTION HEADER ── */
+.section-header {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 4px 4px 10px;
+}
+
+/* ── RTF/HTML content styling ── */
+.card-html ruby rt { font-size: 0.55em; color: var(--text-muted); }
+</style>
+
+</head>
+<body>
+
+<div id="loadingOverlay">
+  <div class="loader-title">漢<span>字</span></div>
+  <div class="spinner"></div>
+  <div class="loader-sub">Anki für iOS</div>
+  <div class="loader-status" id="loaderStatus">Wird geladen…</div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ════════════════════════════
+     HOME SCREEN
+════════════════════════════ -->
+
+<div class="screen" id="homeScreen">
+  <div class="nav">
+    <div class="nav-title">漢<span>字</span></div>
+    <button class="nav-btn" onclick="document.getElementById('fileInput').click()" title="Deck importieren">＋</button>
+    <input type="file" id="fileInput" accept=".apkg,.colpkg" onchange="handleFileSelect(event)">
+  </div>
+
+  <div class="stats-bar" id="statsBar" style="display:none">
+    <div class="stat-box">
+      <div class="stat-val" id="statNew" style="color:var(--easy)">0</div>
+      <div class="stat-label">Neu</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val" id="statLearn" style="color:var(--hard)">0</div>
+      <div class="stat-label">Lernen</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val" id="statReview" style="color:var(--good)">0</div>
+      <div class="stat-label">Wdh.</div>
+    </div>
+  </div>
+
+  <div class="scroll" id="deckList">
+    <!-- populated by JS -->
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     STUDY SCREEN
+════════════════════════════ -->
+
+<div class="screen hidden" id="studyScreen">
+  <div class="study-nav">
+    <button class="back-btn" onclick="goHome()">←</button>
+    <div class="study-deck-name" id="studyDeckName"></div>
+    <div class="study-counter" id="studyCounter"></div>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  </div>
+  <div class="card-area" id="cardArea">
+    <!-- populated by JS -->
+  </div>
+  <div class="answer-section" style="padding:14px 16px 0">
+    <div id="answerArea"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+let db = null;          // SQLite db from sql.js
+let decks = {};         // {id: {name, notes:[]}}
+let studyQueue = [];    // current session queue
+let studyIndex = 0;
+let currentCard = null;
+let cardFlipped = false;
+let sessionStats = { again:0, hard:0, good:0, easy:0 };
+let currentDeckId = null;
+
+// Progress storage key
+const PROGRESS_KEY = 'kanjiApp_progress_v2';
+let progress = {}; // {noteId_cardOrd: {due, interval, ease, reps, lapses, type}}
+
+// ═══════════════════════════════════════════════════════
+//  FSRS-LITE (simplified SM-2 compatible)
+// ═══════════════════════════════════════════════════════
+const RATINGS = { again:1, hard:2, good:3, easy:4 };
+function scheduleCard(state, rating) {
+  const now = Date.now();
+  let { interval=0, ease=2.5, reps=0, lapses=0, type=0 } = state;
+  const r = rating;
+
+  if (type === 0 || type === 1) { // new or learning
+    if (r === 1) { interval = 0; type = 1; }
+    else if (r === 2) { interval = 0.04; type = 1; } // 1 min
+    else if (r === 3) { interval = 0.07; type = 1; } // 10 min → due as review
+    else { interval = 1; type = 2; reps = 1; }
+  } else { // review
+    if (r === 1) {
+      lapses++; interval = 1; ease = Math.max(1.3, ease - 0.2); type = 1;
+    } else {
+      let newInterval;
+      if (r === 2) { newInterval = interval * ease * 1.2; ease = Math.max(1.3, ease - 0.15); }
+      else if (r === 3) { newInterval = interval * ease; }
+      else { newInterval = interval * ease * 1.3; ease = Math.min(3.0, ease + 0.15); }
+      interval = Math.max(1, Math.round(newInterval));
+      reps++; type = 2;
+    }
+  }
+  const dueOffset = interval < 1 ? interval * 24 * 3600 * 1000 : interval * 86400000;
+  return { interval, ease, reps, lapses, type, due: now + dueOffset };
+}
+
+function isDue(state) {
+  if (!state) return true; // never studied = due
+  const now = Date.now();
+  return now >= state.due;
+}
+
+function getIntervalLabel(state, rating) {
+  const sim = scheduleCard(state || {}, rating);
+  const ms = sim.due - Date.now();
+  if (ms < 60000) return '<1m';
+  if (ms < 3600000) return Math.round(ms/60000)+'m';
+  if (ms < 86400000) return Math.round(ms/3600000)+'h';
+  return Math.round(ms/86400000)+'d';
+}
+
+// ═══════════════════════════════════════════════════════
+//  STORAGE
+// ═══════════════════════════════════════════════════════
+function loadProgress() {
+  try { progress = JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{}'); }
+  catch(e) { progress = {}; }
+}
+function saveProgress() {
+  try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress)); }
+  catch(e) { console.warn('Could not save progress'); }
+}
+function getCardState(noteId, ord) {
+  return progress[`${noteId}_${ord}`] || null;
+}
+function setCardState(noteId, ord, state) {
+  progress[`${noteId}_${ord}`] = state;
+  saveProgress();
+}
+
+// ═══════════════════════════════════════════════════════
+//  SQL.JS INIT
+// ═══════════════════════════════════════════════════════
+let SQL = null;
+async function initSQL() {
+  setLoaderStatus('SQL-Engine laden…');
+  SQL = await initSqlJs({
+    locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/${file}`
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  APKG IMPORT
+// ═══════════════════════════════════════════════════════
+async function handleFileSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  event.target.value = '';
+  await importApkg(file);
+}
+
+async function importApkg(file) {
+  showLoader('Deck importieren…');
+  try {
+    setLoaderStatus('Datei entpacken…');
+    const zip = await JSZip.loadAsync(file);
+
+    const dbFile = zip.file('collection.anki21') || zip.file('collection.anki2') || zip.file('collection.anki21b');
+    if (!dbFile) throw new Error('Keine Anki-Datenbank in der Datei gefunden.');
+
+    setLoaderStatus('Datenbank lesen…');
+    const dbBuf = await dbFile.async('arraybuffer');
+    db = new SQL.Database(new Uint8Array(dbBuf));
+
+    setLoaderStatus('Decks laden…');
+    loadDecks();
+    hideLoader();
+    renderHome();
+    toast('✅ Deck erfolgreich importiert!');
+  } catch(err) {
+    hideLoader();
+    toast('❌ Fehler: ' + err.message);
+    console.error(err);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  DECK LOADING
+// ═══════════════════════════════════════════════════════
+function loadDecks() {
+  decks = {};
+
+  // Load deck info from col table
+  const colRes = db.exec('SELECT decks, models FROM col LIMIT 1');
+  if (!colRes.length) return;
+
+  const deckData = JSON.parse(colRes[0].values[0][0]);
+  const modelData = JSON.parse(colRes[0].values[0][1]);
+
+  // Build model -> field mapping
+  const models = {};
+  for (const [mid, model] of Object.entries(modelData)) {
+    models[mid] = {
+      name: model.name,
+      fields: model.flds.map(f => f.name),
+      tmpls: model.tmpls
+    };
+  }
+
+  // Load cards and notes
+  const cards = db.exec(`
+    SELECT c.id, c.nid, c.did, c.ord, c.type, c.due, c.ivl, c.factor, c.reps, c.lapses,
+           n.mid, n.flds, n.tags
+    FROM cards c
+    JOIN notes n ON c.nid = n.id
+  `);
+
+  if (!cards.length) return;
+
+  for (const row of cards[0].values) {
+    const [cid, nid, did, ord, type, due, ivl, factor, reps, lapses, mid, flds, tags] = row;
+    const deckName = deckData[did]?.name || 'Unbekannt';
+
+    if (!decks[did]) decks[did] = { name: deckName, cards: [] };
+
+    const model = models[mid] || { fields: [], tmpls: [] };
+    const fieldValues = flds.split('\x1f');
+    const fields = {};
+    model.fields.forEach((name, i) => { fields[name] = fieldValues[i] || ''; });
+
+    // Smart field detection
+    const front = detectFront(fields, fieldValues);
+    const back  = detectBack(fields, fieldValues, front);
+
+    decks[did].cards.push({
+      cid, nid, did, ord, type, due, ivl,
+      factor: factor / 1000,
+      reps, lapses,
+      mid, fields, tags: tags || '',
+      front, back,
+      modelName: model.name
+    });
+  }
+}
+
+// Smart detect what to show on front/back for Japanese
+function detectFront(fields, values) {
+  const keys = Object.keys(fields);
+  // Prefer: Expression, Front, Word, 表, Kanji, Question
+  for (const k of ['Expression','Front','Word','表現','単語','Kanji','漢字','Question','Vocab']) {
+    if (fields[k] !== undefined) return { key: k, val: fields[k] };
+  }
+  return { key: keys[0], val: values[0] || '' };
+}
+
+function detectBack(fields, values, front) {
+  const keys = Object.keys(fields);
+  const backFields = [];
+  for (const k of keys) {
+    if (k === front.key) continue;
+    backFields.push({ key: k, val: fields[k] });
+  }
+  return backFields;
+}
+
+// ═══════════════════════════════════════════════════════
+//  HOME RENDER
+// ═══════════════════════════════════════════════════════
+function renderHome() {
+  const listEl = document.getElementById('deckList');
+
+  if (!db || !Object.keys(decks).length) {
+    listEl.innerHTML = `
+      <div id="importZone" onclick="document.getElementById('fileInput').click()">
+        <div class="icon">🎌</div>
+        <h3>Anki-Deck importieren</h3>
+        <p>Tippe hier oder nutze das + Symbol<br>um eine .apkg Datei zu laden</p>
+      </div>
+      <div class="empty-state">
+        <div class="e-icon">📚</div>
+        <h3>Noch keine Decks</h3>
+        <p>Exportiere deine Decks aus Anki Desktop<br>als .apkg und importiere sie hier.</p>
+      </div>`;
+    document.getElementById('statsBar').style.display = 'none';
+    return;
+  }
+
+  // Calculate totals
+  let totalNew=0, totalLearn=0, totalReview=0;
+
+  let html = `<div id="importZone" onclick="document.getElementById('fileInput').click()" style="margin-bottom:16px;padding:20px 16px;border-radius:14px;border:1px dashed var(--border);background:var(--surface);display:flex;align-items:center;gap:12px;cursor:pointer">
+    <span style="font-size:24px">📦</span>
+    <div>
+      <div style="font-size:14px;font-weight:600">Weiteres Deck importieren</div>
+      <div style="font-size:12px;color:var(--text-muted)">.apkg Datei wählen</div>
+    </div>
+  </div>`;
+
+  html += `<div class="section-header">Meine Decks</div>`;
+
+  const EMOJIS = ['🎌','📖','✍️','🗾','🈳','📝','🎋','⛩️','🌸','📚'];
+
+  for (const [did, deck] of Object.entries(decks)) {
+    const { newCount, learnCount, reviewCount } = getDeckCounts(deck.cards);
+    totalNew += newCount; totalLearn += learnCount; totalReview += reviewCount;
+    const total = newCount + learnCount + reviewCount;
+    const emoji = EMOJIS[parseInt(did) % EMOJIS.length];
+    const deckDisplayName = deck.name.split('::').pop();
+
+    html += `<div class="deck-item" onclick="startStudy('${did}')">
+      <span class="deck-emoji">${emoji}</span>
+      <div class="deck-info">
+        <div class="deck-name">${escHtml(deckDisplayName)}</div>
+        <div class="deck-meta">${deck.cards.length} Karten</div>
+        <div class="deck-badges">
+          <span class="badge ${newCount?'badge-new':'badge-0'}">${newCount} neu</span>
+          <span class="badge ${learnCount?'badge-learn':'badge-0'}">${learnCount} lernen</span>
+          <span class="badge ${reviewCount?'badge-review':'badge-0'}">${reviewCount} wdh.</span>
+        </div>
+      </div>
+      <span class="deck-arrow">›</span>
+    </div>`;
+  }
+
+  listEl.innerHTML = html;
+
+  // Stats bar
+  document.getElementById('statsBar').style.display = 'grid';
+  document.getElementById('statNew').textContent = totalNew;
+  document.getElementById('statLearn').textContent = totalLearn;
+  document.getElementById('statReview').textContent = totalReview;
+}
+
+function getDeckCounts(cards) {
+  let newCount=0, learnCount=0, reviewCount=0;
+  for (const card of cards) {
+    const state = getCardState(card.nid, card.ord);
+    if (!state) { newCount++; continue; }
+    if (!isDue(state)) continue;
+    if (state.type === 2) reviewCount++;
+    else learnCount++;
+  }
+  return { newCount, learnCount, reviewCount };
+}
+
+// ═══════════════════════════════════════════════════════
+//  STUDY SESSION
+// ═══════════════════════════════════════════════════════
+function startStudy(did) {
+  currentDeckId = did;
+  const deck = decks[did];
+  if (!deck) return;
+
+  sessionStats = { again:0, hard:0, good:0, easy:0 };
+
+  // Build queue: due cards + new cards (max 20 new)
+  const due = [], newCards = [];
+  for (const card of deck.cards) {
+    const state = getCardState(card.nid, card.ord);
+    if (!state) { newCards.push(card); }
+    else if (isDue(state)) { due.push(card); }
+  }
+
+  // Shuffle
+  shuffle(due); shuffle(newCards);
+  studyQueue = [...due, ...newCards.slice(0, 20)];
+  studyIndex = 0;
+
+  if (!studyQueue.length) {
+    showDoneScreen(true);
+    return;
+  }
+
+  // Switch screen
+  document.getElementById('studyDeckName').textContent = deck.name.split('::').pop();
+  showScreen('studyScreen');
+  showNextCard();
+}
+
+function showNextCard() {
+  if (studyIndex >= studyQueue.length) {
+    showDoneScreen(false);
+    return;
+  }
+  currentCard = studyQueue[studyIndex];
+  cardFlipped = false;
+  updateCounter();
+  updateProgress();
+  renderCard();
+  renderAnswerArea(false);
+}
+
+function updateCounter() {
+  const remaining = studyQueue.length - studyIndex;
+  document.getElementById('studyCounter').textContent = remaining + ' übrig';
+}
+function updateProgress() {
+  const pct = studyIndex / studyQueue.length * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function renderCard() {
+  const card = currentCard;
+  const state = getCardState(card.nid, card.ord);
+  const isNew = !state;
+
+  const frontHtml = renderField(card.front.val);
+
+  const cardEl = document.createElement('div');
+  cardEl.className = 'flashcard';
+  cardEl.id = 'flashcard';
+  cardEl.onclick = flipCard;
+
+  let typeLabel = isNew ? 'NEU' : (state.type === 2 ? 'WIEDERHOLUNG' : 'LERNEN');
+
+  cardEl.innerHTML = `
+    <span class="card-side-label">${typeLabel}</span>
+    <div class="card-front-content">
+      <div class="card-html">${frontHtml}</div>
+    </div>
+    <div class="tap-hint"><div class="tap-hint-dot"></div> Tippe zum Aufdecken</div>
+  `;
+
+  const area = document.getElementById('cardArea');
+  area.innerHTML = '';
+  area.appendChild(cardEl);
+}
+
+function flipCard() {
+  if (cardFlipped) return;
+  cardFlipped = true;
+
+  const card = currentCard;
+  const state = getCardState(card.nid, card.ord);
+
+  // Build back content
+  let backParts = [];
+  for (const bf of card.back) {
+    if (!bf.val || bf.val.trim() === '') continue;
+    backParts.push(`<div style="margin-bottom:10px">
+      <div style="font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">${escHtml(bf.key)}</div>
+      <div class="card-html">${renderField(bf.val)}</div>
+    </div>`);
+  }
+
+  const cardEl = document.getElementById('flashcard');
+  cardEl.onclick = null;
+  cardEl.querySelector('.tap-hint')?.remove();
+
+  // Add divider + back
+  const divider = document.createElement('div');
+  divider.className = 'card-divider';
+  const backEl = document.createElement('div');
+  backEl.style.cssText = 'margin-top:4px;width:100%;max-height:45vh;overflow-y:auto';
+  backEl.innerHTML = backParts.join('') || '<div style="color:var(--text-dim)">–</div>';
+
+  cardEl.appendChild(divider);
+  cardEl.appendChild(backEl);
+
+  renderAnswerArea(true, state);
+}
+
+function renderAnswerArea(showRating, state) {
+  const area = document.getElementById('answerArea');
+  if (!showRating) {
+    area.innerHTML = `<button class="show-answer-btn" onclick="flipCard()">Antwort zeigen</button>`;
+    return;
+  }
+
+  const labels = [
+    {key:'again', cls:'btn-again', label:'Nochmal'},
+    {key:'hard',  cls:'btn-hard',  label:'Schwer'},
+    {key:'good',  cls:'btn-good',  label:'Gut'},
+    {key:'easy',  cls:'btn-easy',  label:'Leicht'},
+  ];
+
+  area.innerHTML = `<div class="rating-buttons">${labels.map(b=>`
+    <button class="rating-btn ${b.cls}" onclick="rateCard('${b.key}')">
+      <span class="r-label">${b.label}</span>
+      <span class="r-interval">${getIntervalLabel(state, RATINGS[b.key])}</span>
+    </button>`).join('')}</div>`;
+}
+
+function rateCard(ratingKey) {
+  const card = currentCard;
+  const rating = RATINGS[ratingKey];
+  const state = getCardState(card.nid, card.ord) || {};
+  const newState = scheduleCard(state, rating);
+  setCardState(card.nid, card.ord, newState);
+  sessionStats[ratingKey]++;
+
+  // Animate out
+  const cardEl = document.getElementById('flashcard');
+  if (cardEl) {
+    cardEl.classList.add('card-out');
+    cardEl.style.pointerEvents = 'none';
+  }
+
+  // Re-queue if again/hard and in learning
+  if (ratingKey === 'again' && studyQueue.length - studyIndex < 10) {
+    // re-insert later in queue
+    const laterIdx = Math.min(studyIndex + 3, studyQueue.length);
+    studyQueue.splice(laterIdx, 0, card);
+  }
+
+  studyIndex++;
+  setTimeout(showNextCard, 250);
+}
+
+// ═══════════════════════════════════════════════════════
+//  DONE SCREEN
+// ═══════════════════════════════════════════════════════
+function showDoneScreen(allDone) {
+  const area = document.getElementById('cardArea');
+  const answerArea = document.getElementById('answerArea');
+  answerArea.innerHTML = '';
+  document.getElementById('progressFill').style.width = '100%';
+
+  const total = sessionStats.again + sessionStats.hard + sessionStats.good + sessionStats.easy;
+  const correct = sessionStats.good + sessionStats.easy;
+  const pct = total ? Math.round(correct/total*100) : 100;
+
+  area.innerHTML = `<div class="done-card">
+    <div class="done-icon">${allDone ? '🎌' : '🎉'}</div>
+    <div class="done-title">${allDone ? 'Alles wiederholt!' : 'Sitzung beendet!'}</div>
+    <div class="done-sub">${allDone ? 'Für heute sind alle Karten erledigt. Komm morgen wieder!' : total + ' Karten gelernt'}</div>
+    ${total > 0 ? `<div class="done-stats">
+      <div class="done-stat"><div class="done-stat-val" style="color:var(--again)">${sessionStats.again}</div><div class="done-stat-label">Nochmal</div></div>
+      <div class="done-stat"><div class="done-stat-val" style="color:var(--good)">${correct}</div><div class="done-stat-label">Richtig</div></div>
+      <div class="done-stat"><div class="done-stat-val">${pct}%</div><div class="done-stat-label">Korrekt</div></div>
+    </div>` : ''}
+    <button class="primary-btn" onclick="goHome()">Zurück zu den Decks</button>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════
+function renderField(val) {
+  if (!val) return '';
+  // Anki uses HTML – sanitize and render
+  let html = val
+    .replace(/\[\[type:[^\]]+\]\]/g, '') // remove type fields
+    .replace(/{{[^}]+}}/g, '');           // remove template tags
+
+  // If it's plain text (no tags), auto-size
+  if (!/<[a-z]/i.test(html)) {
+    const len = html.length;
+    const size = len <= 4 ? '64px' : len <= 10 ? '42px' : len <= 20 ? '28px' : '18px';
+    return `<span style="font-size:${size};line-height:1.15">${escHtml(html)}</span>`;
+  }
+  return html;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function shuffle(arr) {
+  for (let i=arr.length-1; i>0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.toggle('hidden', s.id !== id);
+  });
+}
+
+function goHome() {
+  showScreen('homeScreen');
+  renderHome();
+}
+
+function showLoader(msg) {
+  const ol = document.getElementById('loadingOverlay');
+  ol.classList.remove('hide');
+  setLoaderStatus(msg);
+}
+function hideLoader() {
+  document.getElementById('loadingOverlay').classList.add('hide');
+}
+function setLoaderStatus(msg) {
+  const el = document.getElementById('loaderStatus');
+  if (el) el.textContent = msg;
+}
+
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// Drag & drop for import
+document.addEventListener('dragover', e => { e.preventDefault(); document.getElementById('importZone')?.classList.add('drag-over'); });
+document.addEventListener('dragleave', () => { document.getElementById('importZone')?.classList.remove('drag-over'); });
+document.addEventListener('drop', async e => {
+  e.preventDefault();
+  document.getElementById('importZone')?.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && (file.name.endsWith('.apkg') || file.name.endsWith('.colpkg'))) {
+    await importApkg(file);
+  }
+});
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+(async function init() {
+  loadProgress();
+  await initSQL();
+  hideLoader();
+  renderHome();
+})();
+</script>
+
+</body>
+</html>
