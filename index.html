@@ -732,6 +732,158 @@ function getFieldConfig(did){
 // ══════════════════════════════════════════════
 //  HOME
 // ══════════════════════════════════════════════
+function buildDeckTree() {
+  // Build tree from flat deck list using :: separator
+  const tree = {}; // rootName -> {did, name, children:{}, cards:[]}
+
+  for(const [did, deck] of Object.entries(decks)) {
+    const parts = deck.name.split('::');
+    let node = tree;
+    let path = '';
+    for(let i=0; i<parts.length; i++) {
+      const part = parts[i];
+      path = path ? path+'::'+part : part;
+      if(!node[part]) node[part] = {did: null, fullName: path, displayName: part, children: {}, allCards: []};
+      if(i === parts.length-1) node[part].did = did; // leaf
+      // accumulate all cards up the tree
+      node[part].allCards.push(...deck.cards);
+      node = node[part].children;
+    }
+  }
+  return tree;
+}
+
+function getAllCardsForNode(node) {
+  let cards = [...(node.allCards||[])];
+  for(const child of Object.values(node.children||{})) {
+    cards.push(...getAllCardsForNode(child));
+  }
+  // Deduplicate by card id
+  const seen = new Set();
+  return cards.filter(c => { if(seen.has(c.cid)) return false; seen.add(c.cid); return true; });
+}
+
+function renderDeckNode(node, depth=0) {
+  const hasChildren = Object.keys(node.children).length > 0;
+  const cards = node.allCards;
+  const {newC,lrnC,revC} = getCounts(cards);
+  const EMOJIS = ['🎌','📖','✍️','🗾','📝','🎋','⛩️','🌸','📚','🈳'];
+  const emoji = EMOJIS[Math.abs(node.fullName.length * 7) % EMOJIS.length];
+  const indent = depth * 16;
+  const nodeId = 'node_' + node.fullName.replace(/[^a-zA-Z0-9]/g,'_');
+
+  let html = '';
+
+  if(hasChildren) {
+    // Parent node – collapsible
+    html += `<div class="deck-card deck-parent" style="margin-left:${indent}px" onclick="toggleDeckNode('${nodeId}')">
+      <span class="deck-emoji">${emoji}</span>
+      <div class="deck-info">
+        <div class="deck-name">${esc(node.displayName)}</div>
+        <div class="deck-sub">${cards.length} Karten total</div>
+        <div class="deck-pills">
+          <span class="pill ${newC?'pill-new':'pill-0'}">${newC} neu</span>
+          <span class="pill ${lrnC?'pill-lrn':'pill-0'}">${lrnC} lernen</span>
+          <span class="pill ${revC?'pill-rev':'pill-0'}">${revC} wdh.</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
+        <button onclick="event.stopPropagation();startStudyCards(getAllCardsForNodeByName('${esc(node.fullName)}'),'${esc(node.displayName)}')"
+          style="background:#6e66ff;color:#fff;border:none;border-radius:10px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">
+          ▶ Alle lernen
+        </button>
+        <span class="deck-arr" id="${nodeId}_arrow">›</span>
+      </div>
+    </div>`;
+    // Children container
+    html += `<div id="${nodeId}_children" style="display:none">`;
+    for(const child of Object.values(node.children)) {
+      html += renderDeckNode(child, depth+1);
+    }
+    // Also show the parent deck itself if it has its own cards (did set)
+    if(node.did) {
+      html += renderLeafDeck(node.did, decks[node.did], depth+1);
+    }
+    html += `</div>`;
+  } else {
+    // Leaf node
+    if(node.did) html += renderLeafDeck(node.did, decks[node.did], depth);
+  }
+  return html;
+}
+
+function renderLeafDeck(did, deck, depth=0) {
+  const {newC,lrnC,revC} = getCounts(deck.cards);
+  const EMOJIS = ['🎌','📖','✍️','🗾','📝','🎋','⛩️','🌸','📚','🈳'];
+  const emoji = EMOJIS[Math.abs(did * 7) % EMOJIS.length];
+  const indent = depth * 16;
+  const name = deck.name.split('::').pop();
+  return `<div class="deck-card" style="margin-left:${indent}px" onclick="startStudy('${did}')">
+    <span class="deck-emoji" style="font-size:22px">${emoji}</span>
+    <div class="deck-info">
+      <div class="deck-name" style="font-size:14px">${esc(name)}</div>
+      <div class="deck-sub">${deck.cards.length} Karten · <span style="cursor:pointer;color:#a89fff;text-decoration:underline" onclick="event.stopPropagation();showFieldModal('${did}')">Felder</span></div>
+      <div class="deck-pills">
+        <span class="pill ${newC?'pill-new':'pill-0'}">${newC} neu</span>
+        <span class="pill ${lrnC?'pill-lrn':'pill-0'}">${lrnC} lernen</span>
+        <span class="pill ${revC?'pill-rev':'pill-0'}">${revC} wdh.</span>
+      </div>
+    </div>
+    <span class="deck-arr">›</span>
+  </div>`;
+}
+
+function toggleDeckNode(nodeId) {
+  const el = document.getElementById(nodeId + '_children');
+  const arrow = document.getElementById(nodeId + '_arrow');
+  if(!el) return;
+  const open = el.style.display === 'none';
+  el.style.display = open ? 'block' : 'none';
+  if(arrow) arrow.textContent = open ? '⌄' : '›';
+}
+
+// Cache for getAllCardsForNodeByName
+function getAllCardsForNodeByName(fullName) {
+  const tree = buildDeckTree();
+  const parts = fullName.split('::');
+  let node = tree;
+  for(const p of parts) {
+    if(!node[p]) return [];
+    node = node[p];
+    if(p === parts[parts.length-1]) return node.allCards;
+    node = node.children;
+  }
+  return [];
+}
+
+function startStudyCards(cards, name) {
+  // Deduplicate
+  const seen = new Set();
+  cards = cards.filter(c => { if(seen.has(c.cid)) return false; seen.add(c.cid); return true; });
+  if(!cards.length) { toast('Keine Karten zum Lernen'); return; }
+
+  sessionStats={again:0,hard:0,good:0,easy:0};
+  const due=[],newCards=[];
+  for(const c of cards){
+    const st=getState(c.nid,c.ord);
+    if(!st) newCards.push(c);
+    else if(isDue(st)) due.push(c);
+  }
+  shuffle(due);
+  if(userSettings.newOrder==='random') shuffle(newCards);
+  const maxNew=userSettings.newPerDeck||20;
+  studyQueue=[...due,...newCards.slice(0,maxNew)];
+  studyIdx=0;
+
+  if(!studyQueue.length){
+    document.getElementById('studyTitle').textContent=name;
+    showDone(true);showScreen('studyScreen');return;
+  }
+  document.getElementById('studyTitle').textContent=name;
+  showScreen('studyScreen');
+  nextCard();
+}
+
 function renderHome(){
   const el = document.getElementById('deckListEl');
   if(!db||!Object.keys(decks).length){
@@ -753,8 +905,13 @@ function renderHome(){
     return;
   }
 
+  // Build totals from all cards
   let tNew=0,tLrn=0,tRev=0;
-  const EMOJIS=['🎌','📖','✍️','🗾','📝','🎋','⛩️','🌸','📚','🈳'];
+  for(const deck of Object.values(decks)){
+    const{newC,lrnC,revC}=getCounts(deck.cards);
+    tNew+=newC;tLrn+=lrnC;tRev+=revC;
+  }
+
   let html=`<div class="import-strip" onclick="triggerImport()" style="margin-bottom:14px">
     <div class="import-strip-icon">📦</div>
     <div class="import-strip-text">
@@ -763,25 +920,11 @@ function renderHome(){
     </div>
   </div><div class="sect">Meine Decks</div>`;
 
-  for(const[did,deck] of Object.entries(decks)){
-    const{newC,lrnC,revC}=getCounts(deck.cards);
-    tNew+=newC;tLrn+=lrnC;tRev+=revC;
-    const emoji=EMOJIS[parseInt(did)%EMOJIS.length];
-    const name=deck.name.split('::').pop();
-    html+=`<div class="deck-card" onclick="startStudy('${did}')">
-      <span class="deck-emoji">${emoji}</span>
-      <div class="deck-info">
-        <div class="deck-name">${esc(name)}</div>
-        <div class="deck-sub">${deck.cards.length} Karten · <span style="cursor:pointer;color:#a89fff;text-decoration:underline" onclick="event.stopPropagation();showFieldModal('${did}')">Felder konfigurieren</span></div>
-        <div class="deck-pills">
-          <span class="pill ${newC?'pill-new':'pill-0'}">${newC} neu</span>
-          <span class="pill ${lrnC?'pill-lrn':'pill-0'}">${lrnC} lernen</span>
-          <span class="pill ${revC?'pill-rev':'pill-0'}">${revC} wdh.</span>
-        </div>
-      </div>
-      <span class="deck-arr">›</span>
-    </div>`;
+  const tree = buildDeckTree();
+  for(const node of Object.values(tree)) {
+    html += renderDeckNode(node, 0);
   }
+
   el.innerHTML=html;
   document.getElementById('statsRow').style.display='grid';
   document.getElementById('sNew').textContent=tNew;
@@ -1413,15 +1556,31 @@ function playAudio(filename){
 // ══════════════════════════════════════════════
 //  FIELD RENDERING
 // ══════════════════════════════════════════════
+function sanitizeAnkiHtml(html) {
+  // Replace inline color/background styles that break dark mode
+  // Remove color:black, color:#000, background:white etc
+  return html
+    .replace(/\s*color\s*:\s*(black|#000000|#000|rgb\(0,0,0\)|white|#ffffff|#fff|rgb\(255,255,255\))[^;"']*/gi, '')
+    .replace(/\s*background(-color)?\s*:\s*(white|#ffffff|#fff|rgb\(255,255,255\)|black|#000000|#000)[^;"']*/gi, '')
+    .replace(/\s*font-size\s*:\s*[^;"']+/gi, '') // remove hardcoded font sizes
+    .replace(/style="\s*"/g, '') // remove empty style attrs
+    .replace(/style="\s*;/g, 'style="') // remove leading semicolons
+    // Replace <img src="filename"> with mediaFiles lookup
+    .replace(/<img([^>]*)src="([^"]+)"([^>]*)>/gi, (match, pre, src, post) => {
+      const url = mediaFiles[src] || mediaFiles[src.split('/').pop()] || '';
+      if(!url) return `<div style="font-size:11px;color:#8888aa;padding:4px;border:1px dashed #4a4a66;border-radius:6px">🖼 ${esc(src)}</div>`;
+      return `<img${pre}src="${url}"${post}>`;
+    });
+}
+
 function renderField(val,big=false){
   if(!val) return '';
-  // Remove audio tags for display
   val=removeAudioTags(val);
   if(!val.trim()) return '';
 
-  // If HTML content
+  // If HTML content – sanitize Anki's inline styles for dark mode
   if(/<[a-z]/i.test(val)){
-    return `<div class="card-front-html">${val}</div>`;
+    return `<div class="card-front-html">${sanitizeAnkiHtml(val)}</div>`;
   }
   // Plain text – auto-size
   const len=val.length;
