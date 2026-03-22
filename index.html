@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -9,23 +8,10 @@
 <meta name="apple-mobile-web-app-title" content="漢字">
 <meta name="theme-color" content="#0d0d14">
 <title>漢字 — Anki für iOS</title>
-<script>
-// Load CDN scripts with fallback error handling
-function loadScript(src) {
-  return new Promise((resolve, reject) => {
-    const s = document.createElement('script');
-    s.src = src;
-    s.onload = resolve;
-    s.onerror = () => reject(new Error('Skript konnte nicht geladen werden: ' + src));
-    document.head.appendChild(s);
-  });
-}
-</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/sql-wasm.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <!-- TWO COMPLETE STYLESHEETS - JS swaps them, no CSS variables needed -->
-
 <style id="theme-dark">
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow:hidden;user-select:none;-webkit-user-select:none;
@@ -204,7 +190,6 @@ html,body{height:100%;overflow:hidden;user-select:none;-webkit-user-select:none;
 .c-out{animation:cardOut .22s ease forwards}
 .c-in{animation:cardIn .22s ease forwards}
 </style>
-
 <style id="theme-light" disabled>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow:hidden;user-select:none;-webkit-user-select:none;
@@ -397,7 +382,6 @@ html,body{height:100%;overflow:hidden;user-select:none;-webkit-user-select:none;
   } catch(e) {}
 })();
 </script>
-
 </head>
 <body>
   <div id="dbTheme"></div>
@@ -409,6 +393,7 @@ html,body{height:100%;overflow:hidden;user-select:none;-webkit-user-select:none;
   <button onclick="document.getElementById('debugBanner').style.display='none'" style="margin-top:4px;background:#ff4466;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer">Schließen</button>
 </div>
 
+
 <div id="loaderOverlay">
   <div class="loader-logo">漢<em>字</em></div>
   <div class="spinner"></div>
@@ -418,7 +403,6 @@ html,body{height:100%;overflow:hidden;user-select:none;-webkit-user-select:none;
 <div id="toast"></div>
 
 <!-- ════════ SETTINGS MODAL ════════ -->
-
 <div class="modal-bg hidden" id="settingsModal">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -431,7 +415,6 @@ html,body{height:100%;overflow:hidden;user-select:none;-webkit-user-select:none;
 </div>
 
 <!-- ════════ FIELD CONFIG MODAL ════════ -->
-
 <div class="modal-bg hidden" id="fieldModal">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -444,7 +427,6 @@ html,body{height:100%;overflow:hidden;user-select:none;-webkit-user-select:none;
 </div>
 
 <!-- ════════ HOME ════════ -->
-
 <div class="screen" id="homeScreen">
   <div class="nav">
     <div class="nav-title">漢<em>字</em></div>
@@ -469,7 +451,6 @@ html,body{height:100%;overflow:hidden;user-select:none;-webkit-user-select:none;
 </div>
 
 <!-- ════════ STUDY ════════ -->
-
 <div class="screen hidden" id="studyScreen">
   <div class="study-bar">
     <button class="back-btn" onclick="goHome()">←</button>
@@ -488,21 +469,21 @@ html,body{height:100%;overflow:hidden;user-select:none;-webkit-user-select:none;
 let SQL = null, db = null;
 let decks = {};           // did -> {name, cards[]}
 let mediaFiles = {};      // filename -> base64 url
-let fieldConfigs = {};    // did -> {front: fieldName, back: [fieldName…], hidden: [fieldName…]}
+let fieldConfigs = {};    // did -> {front: fieldName, back: [fieldName...], hidden: [fieldName...]}
 let studyQueue = [], studyIdx = 0, curCard = null, flipped = false;
 let sessionStats = {again:0,hard:0,good:0,easy:0};
-let ghConfig = {token:’’, repo:’’, user:’’};
-let syncState = ‘idle’;
+let ghConfig = {token:'', repo:'', user:''};
+let syncState = 'idle';
 let userSettings = {
-theme: ‘auto’,       // ‘auto’ | ‘dark’ | ‘light’
-newPerDeck: 20,      // max new cards per session
-newOrder: ‘ordered’, // ‘ordered’ | ‘random’
+  theme: 'auto',       // 'auto' | 'dark' | 'light'
+  newPerDeck: 20,      // max new cards per session
+  newOrder: 'ordered', // 'ordered' | 'random'
 };
 
-const PROGRESS_KEY  = ‘kj_progress_v3’;
-const FIELDCFG_KEY  = ‘kj_fields_v3’;
-const GH_KEY        = ‘kj_github_v2’;
-const SETTINGS_KEY  = ‘kj_settings_v1’;
+const PROGRESS_KEY  = 'kj_progress_v3';
+const FIELDCFG_KEY  = 'kj_fields_v3';
+const GH_KEY        = 'kj_github_v2';
+const SETTINGS_KEY  = 'kj_settings_v1';
 let progress = {};
 
 // ══════════════════════════════════════════════
@@ -510,53 +491,53 @@ let progress = {};
 // ══════════════════════════════════════════════
 const R={again:1,hard:2,good:3,easy:4};
 function schedule(st={},rating){
-let{interval=0,ease=2.5,reps=0,lapses=0,type=0}=st;
-if(type<2){
-if(rating===1){interval=0;type=1}
-else if(rating===2){interval=1/24/6;type=1}   // 10 min
-else if(rating===3){interval=1/24;type=1}      // 1 hour -> enters review
-else{interval=1;type=2;reps=1}
-}else{
-if(rating===1){lapses++;interval=1;ease=Math.max(1.3,ease-.2);type=1}
-else{
-let ni=rating===2?interval*ease*.8:rating===3?interval*ease:interval*ease*1.3;
-ease=rating===2?Math.max(1.3,ease-.15):rating===4?Math.min(3,ease+.15):ease;
-interval=Math.max(1,Math.round(ni));reps++;type=2;
-}
-}
-const ms=interval<1?interval*86400000:interval*86400000;
-return{interval,ease,reps,lapses,type,due:Date.now()+ms};
+  let{interval=0,ease=2.5,reps=0,lapses=0,type=0}=st;
+  if(type<2){
+    if(rating===1){interval=0;type=1}
+    else if(rating===2){interval=1/24/6;type=1}   // 10 min
+    else if(rating===3){interval=1/24;type=1}      // 1 hour -> enters review
+    else{interval=1;type=2;reps=1}
+  }else{
+    if(rating===1){lapses++;interval=1;ease=Math.max(1.3,ease-.2);type=1}
+    else{
+      let ni=rating===2?interval*ease*.8:rating===3?interval*ease:interval*ease*1.3;
+      ease=rating===2?Math.max(1.3,ease-.15):rating===4?Math.min(3,ease+.15):ease;
+      interval=Math.max(1,Math.round(ni));reps++;type=2;
+    }
+  }
+  const ms=interval<1?interval*86400000:interval*86400000;
+  return{interval,ease,reps,lapses,type,due:Date.now()+ms};
 }
 function isDue(st){return!st||Date.now()>=st.due}
 function intervalLabel(st,r){
-const s=schedule(st||{},r),ms=s.due-Date.now();
-if(ms<60000)return ‘<1m’;
-if(ms<3600000)return Math.round(ms/60000)+‘m’;
-if(ms<86400000)return Math.round(ms/3600000)+‘h’;
-return Math.round(ms/86400000)+‘d’;
+  const s=schedule(st||{},r),ms=s.due-Date.now();
+  if(ms<60000)return '<1m';
+  if(ms<3600000)return Math.round(ms/60000)+'m';
+  if(ms<86400000)return Math.round(ms/3600000)+'h';
+  return Math.round(ms/86400000)+'d';
 }
 
 // ══════════════════════════════════════════════
 //  LOCAL STORAGE
 // ══════════════════════════════════════════════
 function loadLocal(){
-try{progress=JSON.parse(localStorage.getItem(PROGRESS_KEY)||’{}’)}catch{progress={}}
-try{fieldConfigs=JSON.parse(localStorage.getItem(FIELDCFG_KEY)||’{}’)}catch{fieldConfigs={}}
-try{ghConfig=JSON.parse(localStorage.getItem(GH_KEY)||’{}’)}catch{ghConfig={}}
-try{userSettings={…userSettings,…JSON.parse(localStorage.getItem(SETTINGS_KEY)||’{}’)};}catch{}
-ghConfig={token:’’,repo:’’,user:’’,…ghConfig};
+  try{progress=JSON.parse(localStorage.getItem(PROGRESS_KEY)||'{}')}catch{progress={}}
+  try{fieldConfigs=JSON.parse(localStorage.getItem(FIELDCFG_KEY)||'{}')}catch{fieldConfigs={}}
+  try{ghConfig=JSON.parse(localStorage.getItem(GH_KEY)||'{}')}catch{ghConfig={}}
+  try{userSettings={...userSettings,...JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}')};}catch{}
+  ghConfig={token:'',repo:'',user:'',...ghConfig};
 }
 function saveLocal(){
-try{localStorage.setItem(PROGRESS_KEY,JSON.stringify(progress))}catch{}
-try{localStorage.setItem(FIELDCFG_KEY,JSON.stringify(fieldConfigs))}catch{}
-try{localStorage.setItem(GH_KEY,JSON.stringify(ghConfig))}catch{}
-try{localStorage.setItem(SETTINGS_KEY,JSON.stringify(userSettings))}catch{}
+  try{localStorage.setItem(PROGRESS_KEY,JSON.stringify(progress))}catch{}
+  try{localStorage.setItem(FIELDCFG_KEY,JSON.stringify(fieldConfigs))}catch{}
+  try{localStorage.setItem(GH_KEY,JSON.stringify(ghConfig))}catch{}
+  try{localStorage.setItem(SETTINGS_KEY,JSON.stringify(userSettings))}catch{}
 }
 function applyTheme(){
-const t = userSettings.theme;
-const isDark = t===‘dark’ || (t===‘auto’ && window.matchMedia(’(prefers-color-scheme: dark)’).matches);
-document.getElementById(‘theme-dark’).disabled = !isDark;
-document.getElementById(‘theme-light’).disabled = isDark;
+  const t = userSettings.theme;
+  const isDark = t==='dark' || (t==='auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  document.getElementById('theme-dark').disabled = !isDark;
+  document.getElementById('theme-light').disabled = isDark;
 }
 function cardKey(nid,ord){return`${nid}_${ord}`}
 function getState(nid,ord){return progress[cardKey(nid,ord)]||null}
@@ -565,242 +546,266 @@ function setState(nid,ord,st){progress[cardKey(nid,ord)]=st;saveLocal()}
 // ══════════════════════════════════════════════
 //  GITHUB SYNC
 // ══════════════════════════════════════════════
-const GH_FILE = ‘kanji-progress.json’;
+const GH_FILE = 'kanji-progress.json';
 
 async function ghRequest(method, path, body=null){
-const {token, repo, user} = ghConfig;
-if(!token||!repo||!user) throw new Error(‘GitHub nicht konfiguriert’);
-const url = `https://api.github.com/repos/${user}/${repo}/contents/${path}`;
-const headers = {
-‘Authorization’: `token ${token}`,
-‘Content-Type’: ‘application/json’,
-‘X-GitHub-Api-Version’: ‘2022-11-28’
-};
-const opts = {method, headers};
-if(body) opts.body = JSON.stringify(body);
-const res = await fetch(url, opts);
-if(!res.ok && res.status !== 404) throw new Error(`GitHub ${res.status}: ${res.statusText}`);
-if(res.status === 404) return null;
-return res.json();
+  const {token, repo, user} = ghConfig;
+  if(!token||!repo||!user) throw new Error('GitHub nicht konfiguriert');
+  const url = `https://api.github.com/repos/${user}/${repo}/contents/${path}`;
+  const headers = {
+    'Authorization': `token ${token}`,
+    'Content-Type': 'application/json',
+    'X-GitHub-Api-Version': '2022-11-28'
+  };
+  const opts = {method, headers};
+  if(body) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  if(!res.ok && res.status !== 404) throw new Error(`GitHub ${res.status}: ${res.statusText}`);
+  if(res.status === 404) return null;
+  return res.json();
 }
 
 async function ghPush(){
-if(!ghConfig.token) return;
-setSyncState(‘syncing’);
-try{
-const content = btoa(unescape(encodeURIComponent(JSON.stringify(progress))));
-const existing = await ghRequest(‘GET’, GH_FILE);
-const sha = existing?.sha;
-await ghRequest(‘PUT’, GH_FILE, {
-message: `Sync ${new Date().toISOString()}`,
-content,
-…(sha ? {sha} : {})
-});
-setSyncState(‘synced’);
-}catch(e){
-setSyncState(‘error’);
-console.warn(‘GitHub push failed:’, e);
-}
+  if(!ghConfig.token) return;
+  setSyncState('syncing');
+  try{
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(progress))));
+    const existing = await ghRequest('GET', GH_FILE);
+    const sha = existing?.sha;
+    await ghRequest('PUT', GH_FILE, {
+      message: `Sync ${new Date().toISOString()}`,
+      content,
+      ...(sha ? {sha} : {})
+    });
+    setSyncState('synced');
+  }catch(e){
+    setSyncState('error');
+    console.warn('GitHub push failed:', e);
+  }
 }
 
 async function ghPull(){
-if(!ghConfig.token) return;
-setSyncState(‘syncing’);
-try{
-const file = await ghRequest(‘GET’, GH_FILE);
-if(file?.content){
-const json = decodeURIComponent(escape(atob(file.content.replace(/\n/g,’’))));
-const remote = JSON.parse(json);
-// Merge: take the later due date for each card
-for(const [k,v] of Object.entries(remote)){
-if(!progress[k]||progress[k].due<v.due) progress[k]=v;
-}
-saveLocal();
-setSyncState(‘synced’);
-toast(‘☁️ Fortschritt synchronisiert!’);
-} else {
-setSyncState(‘synced’);
-}
-}catch(e){
-setSyncState(‘error’);
-console.warn(‘GitHub pull failed:’, e);
-}
+  if(!ghConfig.token) return;
+  setSyncState('syncing');
+  try{
+    const file = await ghRequest('GET', GH_FILE);
+    if(file?.content){
+      const json = decodeURIComponent(escape(atob(file.content.replace(/\n/g,''))));
+      const remote = JSON.parse(json);
+      // Merge: take the later due date for each card
+      for(const [k,v] of Object.entries(remote)){
+        if(!progress[k]||progress[k].due<v.due) progress[k]=v;
+      }
+      saveLocal();
+      setSyncState('synced');
+      toast('☁️ Fortschritt synchronisiert!');
+    } else {
+      setSyncState('synced');
+    }
+  }catch(e){
+    setSyncState('error');
+    console.warn('GitHub pull failed:', e);
+  }
 }
 
 function setSyncState(state){
-syncState = state;
-const dot = document.getElementById(‘syncDot’);
-const lbl = document.getElementById(‘syncLabel’);
-if(!dot) return;
-dot.className = ‘sync-dot ’ + (state===‘idle’?’’:state);
-lbl.textContent = state===‘syncing’?’…’:state===‘synced’?‘Sync ✓’:state===‘error’?‘Sync ✗’:’’;
+  syncState = state;
+  const dot = document.getElementById('syncDot');
+  const lbl = document.getElementById('syncLabel');
+  if(!dot) return;
+  dot.className = 'sync-dot ' + (state==='idle'?'':state);
+  lbl.textContent = state==='syncing'?'…':state==='synced'?'Sync ✓':state==='error'?'Sync ✗':'';
 }
 
 // Auto-push after rating with debounce
 let pushTimer;
 function schedulePush(){
-if(!ghConfig.token) return;
-clearTimeout(pushTimer);
-pushTimer = setTimeout(ghPush, 3000);
+  if(!ghConfig.token) return;
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(ghPush, 3000);
 }
 
 // ══════════════════════════════════════════════
 //  SQL.JS
 // ══════════════════════════════════════════════
 async function initSQL(){
-setMsg(‘Engine laden…’);
-SQL = await initSqlJs({locateFile:f=>`https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/${f}`});
+  setMsg('Engine laden…');
+  SQL = await initSqlJs({locateFile:f=>`https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/${f}`});
 }
 
 // ══════════════════════════════════════════════
 //  IMPORT
 // ══════════════════════════════════════════════
-function triggerImport(){document.getElementById(‘fileInput’).click()}
+function triggerImport(){document.getElementById('fileInput').click()}
 async function handleFile(e){
-const f=e.target.files[0];
-if(f) await importApkg(f);
-e.target.value=’’;
+  const f=e.target.files[0];
+  if(f) await importApkg(f);
+  e.target.value='';
 }
 
 async function importApkg(file){
-showLoader(‘Importieren…’);
-try{
-setMsg(‘Entpacken…’);
-const zip = await JSZip.loadAsync(file);
+  showLoader('Importieren…');
+  try{
+    setMsg('Entpacken…');
+    const zip = await JSZip.loadAsync(file);
 
-```
-// Database
-const dbEntry = zip.file('collection.anki21') || zip.file('collection.anki2') || zip.file('collection.anki21b');
-if(!dbEntry) throw new Error('Keine Anki-Datenbank gefunden.');
-setMsg('Datenbank lesen…');
-const buf = await dbEntry.async('arraybuffer');
-db = new SQL.Database(new Uint8Array(buf));
+    // Database - parse SQLite directly without sql.js
+    const dbEntry = zip.file('collection.anki21') || zip.file('collection.anki2') || zip.file('collection.anki21b');
+    if(!dbEntry) throw new Error('Keine Anki-Datenbank gefunden.');
+    setMsg('Datenbank lesen…');
+    const buf = await dbEntry.async('arraybuffer');
+    db = parseSQLite(new Uint8Array(buf));
 
-// Media files
-setMsg('Medien laden…');
-const mediaJson = zip.file('media');
-if(mediaJson){
-  const mediaMap = JSON.parse(await mediaJson.async('string'));
-  for(const [idx, name] of Object.entries(mediaMap)){
-    const entry = zip.file(idx);
-    if(entry){
-      const blob = await entry.async('blob');
-      mediaFiles[name] = URL.createObjectURL(blob);
+    // Media files
+    setMsg('Medien laden…');
+    const mediaJson = zip.file('media');
+    if(mediaJson){
+      const mediaMap = JSON.parse(await mediaJson.async('string'));
+      for(const [idx, name] of Object.entries(mediaMap)){
+        const entry = zip.file(idx);
+        if(entry){
+          const blob = await entry.async('blob');
+          mediaFiles[name] = URL.createObjectURL(blob);
+        }
+      }
     }
+
+    setMsg('Karten laden…');
+    loadDecks();
+    hideLoader();
+    renderHome();
+    toast('✅ '+Object.keys(decks).length+' Deck(s) importiert');
+  }catch(err){
+    hideLoader();
+    toast('❌ '+err.message);
+    console.error(err);
   }
-}
-
-setMsg('Karten laden…');
-loadDecks();
-hideLoader();
-renderHome();
-toast('✅ '+Object.keys(decks).length+' Deck(s) importiert');
-```
-
-}catch(err){
-hideLoader();
-toast(’❌ ’+err.message);
-console.error(err);
-}
 }
 
 // ══════════════════════════════════════════════
 //  DECK PARSING
 // ══════════════════════════════════════════════
 function loadDecks(){
-decks = {};
-const col = db.exec(‘SELECT decks,models FROM col LIMIT 1’);
-if(!col.length) return;
-const deckDef = JSON.parse(col[0].values[0][0]);
-const modelDef = JSON.parse(col[0].values[0][1]);
+  decks = {};
+  const col = db.exec('SELECT decks,models FROM col LIMIT 1');
+  if(!col.length) return;
+  const deckDef = JSON.parse(col[0].values[0][0]);
+  const modelDef = JSON.parse(col[0].values[0][1]);
 
-const models = {};
-for(const[mid,m] of Object.entries(modelDef)){
-models[mid] = {name:m.name, fields:m.flds.map(f=>f.name)};
-}
+  const models = {};
+  for(const[mid,m] of Object.entries(modelDef)){
+    models[mid] = {name:m.name, fields:m.flds.map(f=>f.name)};
+  }
 
-const rows = db.exec(`SELECT c.id,c.nid,c.did,c.ord,c.type,n.mid,n.flds,n.tags FROM cards c JOIN notes n ON c.nid=n.id`);
-if(!rows.length) return;
+  const rows = db.exec(`
+    SELECT c.id,c.nid,c.did,c.ord,c.type,n.mid,n.flds,n.tags
+    FROM cards c JOIN notes n ON c.nid=n.id
+  `);
+  if(!rows.length) return;
 
-for(const[cid,nid,did,ord,type,mid,flds,tags] of rows[0].values){
-const dn = deckDef[did]?.name || ‘Unbekannt’;
-if(!decks[did]) decks[did]={name:dn,cards:[],fields:[]};
-const model = models[mid]||{fields:[]};
-const vals = flds.split(’\x1f’);
-const fields={};
-model.fields.forEach((n,i)=>fields[n]=vals[i]||’’);
-if(!decks[did].fields.length) decks[did].fields=model.fields;
-decks[did].cards.push({cid,nid,did,ord,type,fields,tags:tags||’’});
-}
+  for(const[cid,nid,did,ord,type,mid,flds,tags] of rows[0].values){
+    const dn = deckDef[did]?.name || 'Unbekannt';
+    if(!decks[did]) decks[did]={name:dn,cards:[],fields:[]};
+    const model = models[mid]||{fields:[]};
+    const vals = flds.split('\x1f');
+    const fields={};
+    model.fields.forEach((n,i)=>fields[n]=vals[i]||'');
+    if(!decks[did].fields.length) decks[did].fields=model.fields;
+    decks[did].cards.push({cid,nid,did,ord,type,fields,tags:tags||''});
+  }
 }
 
 // ══════════════════════════════════════════════
 //  FIELD CONFIG
 // ══════════════════════════════════════════════
 function getFieldConfig(did){
-if(fieldConfigs[did]){
-const cfg = fieldConfigs[did];
-// Migrate old single-string front to array
-if(typeof cfg.front === ‘string’) cfg.front = cfg.front ? [cfg.front] : [];
-return cfg;
-}
-const deck = decks[did];
-if(!deck) return {front:[],back:[],hidden:[]};
-const fields = deck.fields;
-const frontCandidates = [‘Expression’,‘Front’,‘Word’,‘Vocab’,‘単語’,‘表現’,‘Kanji’,‘漢字’,‘Question’,‘Term’];
-const hiddenCandidates = [‘Index’,‘Frequency’,‘optimized voc index’,‘voc index’,‘Optimized Voc Index’,‘Note ID’,‘ID’,‘Notes’,‘Diagram’,‘Stroke Order’,‘Stroke’,‘KanjiReadings’];
-let front = fields[0];
-for(const c of frontCandidates){ if(fields.includes(c)){front=c;break} }
-const hidden = fields.filter(f=>hiddenCandidates.some(h=>f.toLowerCase().includes(h.toLowerCase())));
-const back = fields.filter(f=>f!==front && !hidden.includes(f));
-return {front:[front], back, hidden};
+  if(fieldConfigs[did]){
+    const cfg = fieldConfigs[did];
+    // Migrate old single-string front to array
+    if(typeof cfg.front === 'string') cfg.front = cfg.front ? [cfg.front] : [];
+    return cfg;
+  }
+  const deck = decks[did];
+  if(!deck) return {front:[],back:[],hidden:[]};
+  const fields = deck.fields;
+  const frontCandidates = ['Expression','Front','Word','Vocab','単語','表現','Kanji','漢字','Question','Term'];
+  const hiddenCandidates = ['Index','Frequency','optimized voc index','voc index','Optimized Voc Index','Note ID','ID','Notes','Diagram','Stroke Order','Stroke','KanjiReadings'];
+  let front = fields[0];
+  for(const c of frontCandidates){ if(fields.includes(c)){front=c;break} }
+  const hidden = fields.filter(f=>hiddenCandidates.some(h=>f.toLowerCase().includes(h.toLowerCase())));
+  const back = fields.filter(f=>f!==front && !hidden.includes(f));
+  return {front:[front], back, hidden};
 }
 
 // ══════════════════════════════════════════════
 //  HOME
 // ══════════════════════════════════════════════
 function renderHome(){
-const el = document.getElementById(‘deckListEl’);
-if(!db||!Object.keys(decks).length){
-el.innerHTML=` <div class="import-strip" onclick="triggerImport()"> <div class="import-strip-icon">🎌</div> <div class="import-strip-text"> <div class="import-strip-title">Anki-Deck importieren</div> <div class="import-strip-sub">.apkg Datei aus Anki Desktop exportieren</div> </div> <span style="color:#4a4a66;font-size:18px">›</span> </div> <div class="empty"> <div class="empty-icon">📚</div> <h3>Noch keine Decks</h3> <p>Exportiere dein Deck in Anki Desktop über<br><b>Datei → Exportieren → .apkg</b></p> </div>`;
-document.getElementById(‘statsRow’).style.display=‘none’;
-return;
-}
+  const el = document.getElementById('deckListEl');
+  if(!db||!Object.keys(decks).length){
+    el.innerHTML=`
+      <div class="import-strip" onclick="triggerImport()">
+        <div class="import-strip-icon">🎌</div>
+        <div class="import-strip-text">
+          <div class="import-strip-title">Anki-Deck importieren</div>
+          <div class="import-strip-sub">.apkg Datei aus Anki Desktop exportieren</div>
+        </div>
+        <span style="color:#4a4a66;font-size:18px">›</span>
+      </div>
+      <div class="empty">
+        <div class="empty-icon">📚</div>
+        <h3>Noch keine Decks</h3>
+        <p>Exportiere dein Deck in Anki Desktop über<br><b>Datei → Exportieren → .apkg</b></p>
+      </div>`;
+    document.getElementById('statsRow').style.display='none';
+    return;
+  }
 
-let tNew=0,tLrn=0,tRev=0;
-const EMOJIS=[‘🎌’,‘📖’,‘✍️’,‘🗾’,‘📝’,‘🎋’,‘⛩️’,‘🌸’,‘📚’,‘🈳’];
-let html=`<div class="import-strip" onclick="triggerImport()" style="margin-bottom:14px">
-<div class="import-strip-icon">📦</div>
-<div class="import-strip-text">
-<div class="import-strip-title">Weiteres Deck laden</div>
-<div class="import-strip-sub">.apkg importieren</div>
-</div>
-
+  let tNew=0,tLrn=0,tRev=0;
+  const EMOJIS=['🎌','📖','✍️','🗾','📝','🎋','⛩️','🌸','📚','🈳'];
+  let html=`<div class="import-strip" onclick="triggerImport()" style="margin-bottom:14px">
+    <div class="import-strip-icon">📦</div>
+    <div class="import-strip-text">
+      <div class="import-strip-title">Weiteres Deck laden</div>
+      <div class="import-strip-sub">.apkg importieren</div>
+    </div>
   </div><div class="sect">Meine Decks</div>`;
 
-for(const[did,deck] of Object.entries(decks)){
-const{newC,lrnC,revC}=getCounts(deck.cards);
-tNew+=newC;tLrn+=lrnC;tRev+=revC;
-const emoji=EMOJIS[parseInt(did)%EMOJIS.length];
-const name=deck.name.split(’::’).pop();
-html+=`<div class="deck-card" onclick="startStudy('${did}')"> <span class="deck-emoji">${emoji}</span> <div class="deck-info"> <div class="deck-name">${esc(name)}</div> <div class="deck-sub">${deck.cards.length} Karten · <span style="cursor:pointer;color:#a89fff;text-decoration:underline" onclick="event.stopPropagation();showFieldModal('${did}')">Felder konfigurieren</span></div> <div class="deck-pills"> <span class="pill ${newC?'pill-new':'pill-0'}">${newC} neu</span> <span class="pill ${lrnC?'pill-lrn':'pill-0'}">${lrnC} lernen</span> <span class="pill ${revC?'pill-rev':'pill-0'}">${revC} wdh.</span> </div> </div> <span class="deck-arr">›</span> </div>`;
-}
-el.innerHTML=html;
-document.getElementById(‘statsRow’).style.display=‘grid’;
-document.getElementById(‘sNew’).textContent=tNew;
-document.getElementById(‘sLrn’).textContent=tLrn;
-document.getElementById(‘sRev’).textContent=tRev;
+  for(const[did,deck] of Object.entries(decks)){
+    const{newC,lrnC,revC}=getCounts(deck.cards);
+    tNew+=newC;tLrn+=lrnC;tRev+=revC;
+    const emoji=EMOJIS[parseInt(did)%EMOJIS.length];
+    const name=deck.name.split('::').pop();
+    html+=`<div class="deck-card" onclick="startStudy('${did}')">
+      <span class="deck-emoji">${emoji}</span>
+      <div class="deck-info">
+        <div class="deck-name">${esc(name)}</div>
+        <div class="deck-sub">${deck.cards.length} Karten · <span style="cursor:pointer;color:#a89fff;text-decoration:underline" onclick="event.stopPropagation();showFieldModal('${did}')">Felder konfigurieren</span></div>
+        <div class="deck-pills">
+          <span class="pill ${newC?'pill-new':'pill-0'}">${newC} neu</span>
+          <span class="pill ${lrnC?'pill-lrn':'pill-0'}">${lrnC} lernen</span>
+          <span class="pill ${revC?'pill-rev':'pill-0'}">${revC} wdh.</span>
+        </div>
+      </div>
+      <span class="deck-arr">›</span>
+    </div>`;
+  }
+  el.innerHTML=html;
+  document.getElementById('statsRow').style.display='grid';
+  document.getElementById('sNew').textContent=tNew;
+  document.getElementById('sLrn').textContent=tLrn;
+  document.getElementById('sRev').textContent=tRev;
 }
 
 function getCounts(cards){
-let newC=0,lrnC=0,revC=0;
-for(const c of cards){
-const st=getState(c.nid,c.ord);
-if(!st){newC++;continue}
-if(!isDue(st)) continue;
-if(st.type===2) revC++; else lrnC++;
-}
-return{newC,lrnC,revC};
+  let newC=0,lrnC=0,revC=0;
+  for(const c of cards){
+    const st=getState(c.nid,c.ord);
+    if(!st){newC++;continue}
+    if(!isDue(st)) continue;
+    if(st.type===2) revC++; else lrnC++;
+  }
+  return{newC,lrnC,revC};
 }
 
 // ══════════════════════════════════════════════
@@ -810,82 +815,104 @@ let editingDid = null;
 let tempConfig = null;
 
 function showFieldModal(did){
-editingDid = did;
-const deck = decks[did];
-const cfg = getFieldConfig(did);
-tempConfig = JSON.parse(JSON.stringify(cfg));
+  editingDid = did;
+  const deck = decks[did];
+  const cfg = getFieldConfig(did);
+  tempConfig = JSON.parse(JSON.stringify(cfg));
 
-document.getElementById(‘fieldModalTitle’).textContent = ‘⚙️ Felder: ‘+deck.name.split(’::’).pop();
-renderFieldModal(deck.fields);
-openModal(‘fieldModal’);
+  document.getElementById('fieldModalTitle').textContent = '⚙️ Felder: '+deck.name.split('::').pop();
+  renderFieldModal(deck.fields);
+  openModal('fieldModal');
 }
 
 function renderFieldModal(fields){
-// Build ordered lists: front fields in order, then back fields in order, then hidden
-if(!Array.isArray(tempConfig.front)) tempConfig.front = tempConfig.front ? [tempConfig.front] : [];
-if(!Array.isArray(tempConfig.back)) tempConfig.back = tempConfig.back || [];
+  // Build ordered lists: front fields in order, then back fields in order, then hidden
+  if(!Array.isArray(tempConfig.front)) tempConfig.front = tempConfig.front ? [tempConfig.front] : [];
+  if(!Array.isArray(tempConfig.back)) tempConfig.back = tempConfig.back || [];
 
-const allAssigned = […tempConfig.front, …tempConfig.back, …tempConfig.hidden];
-// Add any unassigned fields to back
-for(const f of fields){ if(!allAssigned.includes(f)) tempConfig.back.push(f); }
+  const allAssigned = [...tempConfig.front, ...tempConfig.back, ...tempConfig.hidden];
+  // Add any unassigned fields to back
+  for(const f of fields){ if(!allAssigned.includes(f)) tempConfig.back.push(f); }
 
-function fieldRow(f, role, idx, listId){
-return `<div class="field-row sortable-item" data-field="${esc(f)}" data-role="${role}" data-idx="${idx}" data-list="${listId}" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="dragDrop(event)" ondragend="dragEnd(event)" ontouchstart="touchStart(event)" ontouchmove="touchMove(event)" ontouchend="touchEnd(event)"> <span class="field-drag">⠿</span> <div class="field-info"> <div class="field-name">${esc(f)}</div> <div class="field-role field-role-${role}">${roleLabel(role)}</div> </div> <div class="field-actions"> <button class="field-action-btn ${role==='front'?'active-front':''}" onclick="setFieldRole('${esc(f)}','front')">Vorne</button> <button class="field-action-btn ${role==='back'?'active-back':''}" onclick="setFieldRole('${esc(f)}','back')">Hinten</button> <button class="field-action-btn ${role==='hidden'?'active-hide':''}" onclick="setFieldRole('${esc(f)}','hidden')">Aus</button> </div> </div>`;
-}
+  function fieldRow(f, role, idx, listId){
+    return `<div class="field-row sortable-item" data-field="${esc(f)}" data-role="${role}" data-idx="${idx}" data-list="${listId}"
+      draggable="true"
+      ondragstart="dragStart(event)"
+      ondragover="dragOver(event)"
+      ondrop="dragDrop(event)"
+      ondragend="dragEnd(event)"
+      ontouchstart="touchStart(event)"
+      ontouchmove="touchMove(event)"
+      ontouchend="touchEnd(event)">
+      <span class="field-drag">⠿</span>
+      <div class="field-info">
+        <div class="field-name">${esc(f)}</div>
+        <div class="field-role field-role-${role}">${roleLabel(role)}</div>
+      </div>
+      <div class="field-actions">
+        <button class="field-action-btn ${role==='front'?'active-front':''}" onclick="setFieldRole('${esc(f)}','front')">Vorne</button>
+        <button class="field-action-btn ${role==='back'?'active-back':''}" onclick="setFieldRole('${esc(f)}','back')">Hinten</button>
+        <button class="field-action-btn ${role==='hidden'?'active-hide':''}" onclick="setFieldRole('${esc(f)}','hidden')">Aus</button>
+      </div>
+    </div>`;
+  }
 
-let html = `<div style="margin-bottom:14px;font-size:13px;color:#8888aa;line-height:1.5">
-Tippe auf <b>Vorne/Hinten/Aus</b> um Felder zuzuweisen.<br>
-Ziehe <b>⠿</b> um die Reihenfolge anzupassen.
-
+  let html = `<div style="margin-bottom:14px;font-size:13px;color:#8888aa;line-height:1.5">
+    Tippe auf <b>Vorne/Hinten/Aus</b> um Felder zuzuweisen.<br>
+    Ziehe <b>⠿</b> um die Reihenfolge anzupassen.
   </div>`;
 
-if(tempConfig.front.length){
-html += `<div class="sort-section-label">▶ Vorderseite</div> <div class="sortable-list" id="list-front">`;
-tempConfig.front.forEach((f,i) => html += fieldRow(f,‘front’,i,‘front’));
-html += `</div>`;
+  if(tempConfig.front.length){
+    html += `<div class="sort-section-label">▶ Vorderseite</div>
+    <div class="sortable-list" id="list-front">`;
+    tempConfig.front.forEach((f,i) => html += fieldRow(f,'front',i,'front'));
+    html += `</div>`;
+  }
+
+  if(tempConfig.back.length){
+    html += `<div class="sort-section-label" style="margin-top:14px">↩ Rückseite</div>
+    <div class="sortable-list" id="list-back">`;
+    tempConfig.back.forEach((f,i) => html += fieldRow(f,'back',i,'back'));
+    html += `</div>`;
+  }
+
+  if(tempConfig.hidden.length){
+    html += `<div class="sort-section-label" style="margin-top:14px">✕ Versteckt</div>
+    <div class="sortable-list" id="list-hidden">`;
+    tempConfig.hidden.forEach((f,i) => html += fieldRow(f,'hidden',i,'hidden'));
+    html += `</div>`;
+  }
+
+  document.getElementById('fieldContent').innerHTML = html;
 }
 
-if(tempConfig.back.length){
-html += `<div class="sort-section-label" style="margin-top:14px">↩ Rückseite</div> <div class="sortable-list" id="list-back">`;
-tempConfig.back.forEach((f,i) => html += fieldRow(f,‘back’,i,‘back’));
-html += `</div>`;
-}
 
-if(tempConfig.hidden.length){
-html += `<div class="sort-section-label" style="margin-top:14px">✕ Versteckt</div> <div class="sortable-list" id="list-hidden">`;
-tempConfig.hidden.forEach((f,i) => html += fieldRow(f,‘hidden’,i,‘hidden’));
-html += `</div>`;
-}
-
-document.getElementById(‘fieldContent’).innerHTML = html;
-}
-
-function roleLabel(r){return r===‘front’?‘▶ Vorderseite’:r===‘back’?‘↩ Rückseite’:‘✕ Versteckt’}
+function roleLabel(r){return r==='front'?'▶ Vorderseite':r==='back'?'↩ Rückseite':'✕ Versteckt'}
 
 function setFieldRole(field, role){
-const deck = decks[editingDid];
-if(!Array.isArray(tempConfig.front)) tempConfig.front = tempConfig.front ? [tempConfig.front] : [];
-if(role===‘front’){
-// Add to front array (toggle: if already front, remove it)
-if(tempConfig.front.includes(field)){
-// Already front - move to back instead
-tempConfig.front = tempConfig.front.filter(f=>f!==field);
-if(!tempConfig.back.includes(field)) tempConfig.back.push(field);
-} else {
-tempConfig.front.push(field);
-tempConfig.back = tempConfig.back.filter(f=>f!==field);
-tempConfig.hidden = tempConfig.hidden.filter(f=>f!==field);
-}
-} else if(role===‘back’){
-tempConfig.front = tempConfig.front.filter(f=>f!==field);
-tempConfig.hidden = tempConfig.hidden.filter(f=>f!==field);
-if(!tempConfig.back.includes(field)) tempConfig.back.push(field);
-} else {
-tempConfig.front = tempConfig.front.filter(f=>f!==field);
-tempConfig.back = tempConfig.back.filter(f=>f!==field);
-if(!tempConfig.hidden.includes(field)) tempConfig.hidden.push(field);
-}
-renderFieldModal(deck.fields);
+  const deck = decks[editingDid];
+  if(!Array.isArray(tempConfig.front)) tempConfig.front = tempConfig.front ? [tempConfig.front] : [];
+  if(role==='front'){
+    // Add to front array (toggle: if already front, remove it)
+    if(tempConfig.front.includes(field)){
+      // Already front - move to back instead
+      tempConfig.front = tempConfig.front.filter(f=>f!==field);
+      if(!tempConfig.back.includes(field)) tempConfig.back.push(field);
+    } else {
+      tempConfig.front.push(field);
+      tempConfig.back = tempConfig.back.filter(f=>f!==field);
+      tempConfig.hidden = tempConfig.hidden.filter(f=>f!==field);
+    }
+  } else if(role==='back'){
+    tempConfig.front = tempConfig.front.filter(f=>f!==field);
+    tempConfig.hidden = tempConfig.hidden.filter(f=>f!==field);
+    if(!tempConfig.back.includes(field)) tempConfig.back.push(field);
+  } else {
+    tempConfig.front = tempConfig.front.filter(f=>f!==field);
+    tempConfig.back = tempConfig.back.filter(f=>f!==field);
+    if(!tempConfig.hidden.includes(field)) tempConfig.hidden.push(field);
+  }
+  renderFieldModal(deck.fields);
 }
 
 // ══════════════════════════════════════════════
@@ -894,471 +921,482 @@ renderFieldModal(deck.fields);
 let dragSrc = null, dragSrcList = null;
 
 function getListArray(listId){
-if(listId===‘front’) return tempConfig.front;
-if(listId===‘back’) return tempConfig.back;
-return tempConfig.hidden;
+  if(listId==='front') return tempConfig.front;
+  if(listId==='back') return tempConfig.back;
+  return tempConfig.hidden;
 }
 
 function dragStart(e){
-dragSrc = e.currentTarget;
-dragSrcList = dragSrc.dataset.list;
-e.dataTransfer.effectAllowed = ‘move’;
-setTimeout(()=>dragSrc.style.opacity=‘0.4’, 0);
+  dragSrc = e.currentTarget;
+  dragSrcList = dragSrc.dataset.list;
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(()=>dragSrc.style.opacity='0.4', 0);
 }
 function dragEnd(e){
-e.currentTarget.style.opacity=‘1’;
-document.querySelectorAll(’.sortable-item’).forEach(el=>el.classList.remove(‘drag-over-item’));
+  e.currentTarget.style.opacity='1';
+  document.querySelectorAll('.sortable-item').forEach(el=>el.classList.remove('drag-over-item'));
 }
 function dragOver(e){
-e.preventDefault();
-e.dataTransfer.dropEffect = ‘move’;
-document.querySelectorAll(’.sortable-item’).forEach(el=>el.classList.remove(‘drag-over-item’));
-e.currentTarget.classList.add(‘drag-over-item’);
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.sortable-item').forEach(el=>el.classList.remove('drag-over-item'));
+  e.currentTarget.classList.add('drag-over-item');
 }
 function dragDrop(e){
-e.preventDefault();
-const target = e.currentTarget;
-if(target===dragSrc) return;
-const srcField = dragSrc.dataset.field;
-const tgtField = target.dataset.field;
-const srcList = dragSrc.dataset.list;
-const tgtList = target.dataset.list;
-// Remove from source
-const srcArr = getListArray(srcList);
-const srcIdx = srcArr.indexOf(srcField);
-if(srcIdx>-1) srcArr.splice(srcIdx,1);
-// Insert into target list at target position
-const tgtArr = getListArray(tgtList);
-const tgtIdx = tgtArr.indexOf(tgtField);
-tgtArr.splice(tgtIdx,0,srcField);
-// Update role if moved to different list
-if(srcList!==tgtList){
-// Already handled by array move above; role determined by which list
-}
-renderFieldModal(decks[editingDid].fields);
+  e.preventDefault();
+  const target = e.currentTarget;
+  if(target===dragSrc) return;
+  const srcField = dragSrc.dataset.field;
+  const tgtField = target.dataset.field;
+  const srcList = dragSrc.dataset.list;
+  const tgtList = target.dataset.list;
+  // Remove from source
+  const srcArr = getListArray(srcList);
+  const srcIdx = srcArr.indexOf(srcField);
+  if(srcIdx>-1) srcArr.splice(srcIdx,1);
+  // Insert into target list at target position
+  const tgtArr = getListArray(tgtList);
+  const tgtIdx = tgtArr.indexOf(tgtField);
+  tgtArr.splice(tgtIdx,0,srcField);
+  // Update role if moved to different list
+  if(srcList!==tgtList){
+    // Already handled by array move above; role determined by which list
+  }
+  renderFieldModal(decks[editingDid].fields);
 }
 
 // Touch support for iOS
 let touchItem=null, touchClone=null, touchList=null, touchStartY=0;
 function touchStart(e){
-const item = e.currentTarget;
-// Only start drag if touching the handle
-const handle = item.querySelector(’.field-drag’);
-const touch = e.touches[0];
-const hr = handle.getBoundingClientRect();
-if(touch.clientX < hr.left-10 || touch.clientX > hr.right+10) return;
-e.preventDefault();
-touchItem = item;
-touchList = item.dataset.list;
-touchStartY = touch.clientY;
-// Create visual clone
-touchClone = item.cloneNode(true);
-touchClone.style.cssText = `position:fixed;left:${item.getBoundingClientRect().left}px;top:${item.getBoundingClientRect().top}px;width:${item.offsetWidth}px;opacity:0.85;z-index:999;pointer-events:none;background:#272734;border:1px solid #6e66ff;border-radius:14px;transition:none`;
-document.body.appendChild(touchClone);
-item.style.opacity=‘0.3’;
+  const item = e.currentTarget;
+  // Only start drag if touching the handle
+  const handle = item.querySelector('.field-drag');
+  const touch = e.touches[0];
+  const hr = handle.getBoundingClientRect();
+  if(touch.clientX < hr.left-10 || touch.clientX > hr.right+10) return;
+  e.preventDefault();
+  touchItem = item;
+  touchList = item.dataset.list;
+  touchStartY = touch.clientY;
+  // Create visual clone
+  touchClone = item.cloneNode(true);
+  touchClone.style.cssText = `position:fixed;left:${item.getBoundingClientRect().left}px;top:${item.getBoundingClientRect().top}px;width:${item.offsetWidth}px;opacity:0.85;z-index:999;pointer-events:none;background:#272734;border:1px solid #6e66ff;border-radius:14px;transition:none`;
+  document.body.appendChild(touchClone);
+  item.style.opacity='0.3';
 }
 function touchMove(e){
-if(!touchItem||!touchClone) return;
-e.preventDefault();
-const touch = e.touches[0];
-const dy = touch.clientY - touchStartY;
-const origTop = touchItem.getBoundingClientRect().top + dy - (touchClone.offsetTop - parseInt(touchClone.style.top));
-touchClone.style.top = (parseInt(touchClone.style.top)||0) + (touch.clientY - touchStartY - (touch.clientY - e.touches[0].clientY||0)) + ‘px’;
-// Recalc: just track absolute position
-touchClone.style.top = (touchItem.getBoundingClientRect().top + window.scrollY + dy) + ‘px’;
-// Find item under touch
-touchClone.style.display=‘none’;
-const el = document.elementFromPoint(touch.clientX, touch.clientY);
-touchClone.style.display=’’;
-const overItem = el?.closest(’.sortable-item’);
-document.querySelectorAll(’.sortable-item’).forEach(i=>i.classList.remove(‘drag-over-item’));
-if(overItem && overItem!==touchItem) overItem.classList.add(‘drag-over-item’);
+  if(!touchItem||!touchClone) return;
+  e.preventDefault();
+  const touch = e.touches[0];
+  const dy = touch.clientY - touchStartY;
+  const origTop = touchItem.getBoundingClientRect().top + dy - (touchClone.offsetTop - parseInt(touchClone.style.top));
+  touchClone.style.top = (parseInt(touchClone.style.top)||0) + (touch.clientY - touchStartY - (touch.clientY - e.touches[0].clientY||0)) + 'px';
+  // Recalc: just track absolute position
+  touchClone.style.top = (touchItem.getBoundingClientRect().top + window.scrollY + dy) + 'px';
+  // Find item under touch
+  touchClone.style.display='none';
+  const el = document.elementFromPoint(touch.clientX, touch.clientY);
+  touchClone.style.display='';
+  const overItem = el?.closest('.sortable-item');
+  document.querySelectorAll('.sortable-item').forEach(i=>i.classList.remove('drag-over-item'));
+  if(overItem && overItem!==touchItem) overItem.classList.add('drag-over-item');
 }
 function touchEnd(e){
-if(!touchItem||!touchClone) return;
-const touch = e.changedTouches[0];
-touchClone.style.display=‘none’;
-const el = document.elementFromPoint(touch.clientX, touch.clientY);
-touchClone.remove();
-touchClone=null;
-touchItem.style.opacity=‘1’;
-const overItem = el?.closest(’.sortable-item’);
-if(overItem && overItem!==touchItem){
-const srcField = touchItem.dataset.field;
-const tgtField = overItem.dataset.field;
-const srcList = touchItem.dataset.list;
-const tgtList = overItem.dataset.list;
-const srcArr = getListArray(srcList);
-const srcIdx = srcArr.indexOf(srcField);
-if(srcIdx>-1) srcArr.splice(srcIdx,1);
-const tgtArr = getListArray(tgtList);
-const tgtIdx = tgtArr.indexOf(tgtField);
-tgtArr.splice(tgtIdx,0,srcField);
-}
-touchItem=null;
-renderFieldModal(decks[editingDid].fields);
+  if(!touchItem||!touchClone) return;
+  const touch = e.changedTouches[0];
+  touchClone.style.display='none';
+  const el = document.elementFromPoint(touch.clientX, touch.clientY);
+  touchClone.remove();
+  touchClone=null;
+  touchItem.style.opacity='1';
+  const overItem = el?.closest('.sortable-item');
+  if(overItem && overItem!==touchItem){
+    const srcField = touchItem.dataset.field;
+    const tgtField = overItem.dataset.field;
+    const srcList = touchItem.dataset.list;
+    const tgtList = overItem.dataset.list;
+    const srcArr = getListArray(srcList);
+    const srcIdx = srcArr.indexOf(srcField);
+    if(srcIdx>-1) srcArr.splice(srcIdx,1);
+    const tgtArr = getListArray(tgtList);
+    const tgtIdx = tgtArr.indexOf(tgtField);
+    tgtArr.splice(tgtIdx,0,srcField);
+  }
+  touchItem=null;
+  renderFieldModal(decks[editingDid].fields);
 }
 
 function saveFieldConfig(){
-fieldConfigs[editingDid] = tempConfig;
-saveLocal();
-closeModal(‘fieldModal’);
-toast(‘✅ Felder gespeichert’);
-renderHome();
+  fieldConfigs[editingDid] = tempConfig;
+  saveLocal();
+  closeModal('fieldModal');
+  toast('✅ Felder gespeichert');
+  renderHome();
 }
 
 // ══════════════════════════════════════════════
 //  SETTINGS MODAL
 // ══════════════════════════════════════════════
 function showSettings(){
-const s = userSettings;
-const syncOk = ghConfig.token && ghConfig.repo && ghConfig.user;
-document.getElementById(‘settingsContent’).innerHTML=`
-<!-- APPEARANCE -->
-<div class="settings-group">
-<div class="settings-group-title">Erscheinungsbild</div>
-<div class="settings-card">
-<div class="settings-row">
-<div class="settings-row-info">
-<div class="settings-row-title">Darstellung</div>
-<div class="settings-row-sub">Hell, Dunkel oder wie das iPhone</div>
-</div>
-<div class="segment" id="themeSegment">
-<button class="seg-btn ${s.theme==='light'?'active':''}" onclick="setTheme('light')">Hell</button>
-<button class="seg-btn ${s.theme==='auto'?'active':''}" onclick="setTheme('auto')">Auto</button>
-<button class="seg-btn ${s.theme==='dark'?'active':''}" onclick="setTheme('dark')">Dunkel</button>
-</div>
-</div>
-</div>
-</div>
-
-```
-<!-- STUDY SETTINGS -->
-<div class="settings-group">
-  <div class="settings-group-title">Lernen</div>
-  <div class="settings-card">
-    <div class="settings-row">
-      <div class="settings-row-info">
-        <div class="settings-row-title">Neue Karten pro Sitzung</div>
-        <div class="settings-row-sub">Pro Deck, zusätzlich zu fälligen Karten</div>
-      </div>
-      <div class="stepper">
-        <button class="stepper-btn" onclick="adjustNew(-5)">−</button>
-        <div class="stepper-val" id="newPerDeckVal">${s.newPerDeck}</div>
-        <button class="stepper-btn" onclick="adjustNew(+5)">+</button>
+  const s = userSettings;
+  const syncOk = ghConfig.token && ghConfig.repo && ghConfig.user;
+  document.getElementById('settingsContent').innerHTML=`
+    <!-- APPEARANCE -->
+    <div class="settings-group">
+      <div class="settings-group-title">Erscheinungsbild</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div class="settings-row-info">
+            <div class="settings-row-title">Darstellung</div>
+            <div class="settings-row-sub">Hell, Dunkel oder wie das iPhone</div>
+          </div>
+          <div class="segment" id="themeSegment">
+            <button class="seg-btn ${s.theme==='light'?'active':''}" onclick="setTheme('light')">Hell</button>
+            <button class="seg-btn ${s.theme==='auto'?'active':''}" onclick="setTheme('auto')">Auto</button>
+            <button class="seg-btn ${s.theme==='dark'?'active':''}" onclick="setTheme('dark')">Dunkel</button>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="settings-row">
-      <div class="settings-row-info">
-        <div class="settings-row-title">Reihenfolge neue Karten</div>
-        <div class="settings-row-sub">Geordnet = Deck-Reihenfolge (empfohlen)</div>
-      </div>
-      <div class="segment" id="orderSegment">
-        <button class="seg-btn ${s.newOrder==='ordered'?'active':''}" onclick="setOrder('ordered')">Geordnet</button>
-        <button class="seg-btn ${s.newOrder==='random'?'active':''}" onclick="setOrder('random')">Zufällig</button>
+
+    <!-- STUDY SETTINGS -->
+    <div class="settings-group">
+      <div class="settings-group-title">Lernen</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div class="settings-row-info">
+            <div class="settings-row-title">Neue Karten pro Sitzung</div>
+            <div class="settings-row-sub">Pro Deck, zusätzlich zu fälligen Karten</div>
+          </div>
+          <div class="stepper">
+            <button class="stepper-btn" onclick="adjustNew(-5)">−</button>
+            <div class="stepper-val" id="newPerDeckVal">${s.newPerDeck}</div>
+            <button class="stepper-btn" onclick="adjustNew(+5)">+</button>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-row-info">
+            <div class="settings-row-title">Reihenfolge neue Karten</div>
+            <div class="settings-row-sub">Geordnet = Deck-Reihenfolge (empfohlen)</div>
+          </div>
+          <div class="segment" id="orderSegment">
+            <button class="seg-btn ${s.newOrder==='ordered'?'active':''}" onclick="setOrder('ordered')">Geordnet</button>
+            <button class="seg-btn ${s.newOrder==='random'?'active':''}" onclick="setOrder('random')">Zufällig</button>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
 
-<!-- GITHUB SYNC -->
-<div class="settings-group">
-  <div class="settings-group-title">☁️ GitHub Sync</div>
-  <div class="settings-card" style="padding:16px">
-    <div style="font-size:13px;color:#8888aa;margin-bottom:14px;line-height:1.6">
-      Fortschritt wird automatisch in deinem GitHub-Repo gespeichert und zwischen iPhone, iPad und Mac synchronisiert.
+    <!-- GITHUB SYNC -->
+    <div class="settings-group">
+      <div class="settings-group-title">☁️ GitHub Sync</div>
+      <div class="settings-card" style="padding:16px">
+        <div style="font-size:13px;color:#8888aa;margin-bottom:14px;line-height:1.6">
+          Fortschritt wird automatisch in deinem GitHub-Repo gespeichert und zwischen iPhone, iPad und Mac synchronisiert.
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div>
+            <label class="s-label">GitHub Benutzername</label>
+            <input class="s-input" id="ghUser" placeholder="deinusername" value="${esc(ghConfig.user||'')}">
+          </div>
+          <div>
+            <label class="s-label">Repository Name</label>
+            <input class="s-input" id="ghRepo" placeholder="kanji" value="${esc(ghConfig.repo||'')}">
+          </div>
+          <div>
+            <label class="s-label">Personal Access Token</label>
+            <input class="s-input" id="ghToken" type="password" placeholder="ghp_xxxxxxxxxxxx" value="${esc(ghConfig.token||'')}">
+            <div class="s-hint">GitHub → Settings → Developer settings → Personal access tokens → <b>repo</b> Berechtigung</div>
+          </div>
+        </div>
+        <button class="s-btn accent" onclick="saveGHConfig()">Speichern & verbinden</button>
+        ${syncOk?`
+        <button class="s-btn" onclick="ghPull().then(()=>renderHome())">⬇️ Jetzt synchronisieren</button>
+        <button class="s-btn" onclick="ghPush()">⬆️ Jetzt hochladen</button>`:''}
+        <div id="syncTestResult"></div>
+      </div>
     </div>
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <div>
-        <label class="s-label">GitHub Benutzername</label>
-        <input class="s-input" id="ghUser" placeholder="deinusername" value="${esc(ghConfig.user||'')}">
-      </div>
-      <div>
-        <label class="s-label">Repository Name</label>
-        <input class="s-input" id="ghRepo" placeholder="kanji" value="${esc(ghConfig.repo||'')}">
-      </div>
-      <div>
-        <label class="s-label">Personal Access Token</label>
-        <input class="s-input" id="ghToken" type="password" placeholder="ghp_xxxxxxxxxxxx" value="${esc(ghConfig.token||'')}">
-        <div class="s-hint">GitHub → Settings → Developer settings → Personal access tokens → <b>repo</b> Berechtigung</div>
+
+    <!-- DATA -->
+    <div class="settings-group">
+      <div class="settings-group-title">Daten</div>
+      <div class="settings-card" style="padding:16px;display:flex;flex-direction:column;gap:8px">
+        <button class="s-btn" onclick="exportProgress()">📤 Fortschritt exportieren (.json)</button>
+        <button class="s-btn" onclick="document.getElementById('importProgressInput').click()">📥 Fortschritt importieren</button>
+        <input type="file" id="importProgressInput" accept=".json" style="display:none" onchange="importProgressFile(event)">
+        <button class="s-btn danger" onclick="confirmReset()">🗑️ Fortschritt zurücksetzen</button>
       </div>
     </div>
-    <button class="s-btn accent" onclick="saveGHConfig()">Speichern & verbinden</button>
-    ${syncOk?`
-    <button class="s-btn" onclick="ghPull().then(()=>renderHome())">⬇️ Jetzt synchronisieren</button>
-    <button class="s-btn" onclick="ghPush()">⬆️ Jetzt hochladen</button>`:''}
-    <div id="syncTestResult"></div>
-  </div>
-</div>
-
-<!-- DATA -->
-<div class="settings-group">
-  <div class="settings-group-title">Daten</div>
-  <div class="settings-card" style="padding:16px;display:flex;flex-direction:column;gap:8px">
-    <button class="s-btn" onclick="exportProgress()">📤 Fortschritt exportieren (.json)</button>
-    <button class="s-btn" onclick="document.getElementById('importProgressInput').click()">📥 Fortschritt importieren</button>
-    <input type="file" id="importProgressInput" accept=".json" style="display:none" onchange="importProgressFile(event)">
-    <button class="s-btn danger" onclick="confirmReset()">🗑️ Fortschritt zurücksetzen</button>
-  </div>
-</div>
-```
-
-`;
-openModal(‘settingsModal’);
+  `;
+  openModal('settingsModal');
 }
 
 function setTheme(t){
-userSettings.theme = t;
-saveLocal();
-applyTheme();
-// Update segment buttons
-document.querySelectorAll(’#themeSegment .seg-btn’).forEach((b,i)=>{
-b.classList.toggle(‘active’, [‘light’,‘auto’,‘dark’][i]===t);
-});
+  userSettings.theme = t;
+  saveLocal();
+  applyTheme();
+  // Update segment buttons
+  document.querySelectorAll('#themeSegment .seg-btn').forEach((b,i)=>{
+    b.classList.toggle('active', ['light','auto','dark'][i]===t);
+  });
 }
 function adjustNew(delta){
-userSettings.newPerDeck = Math.max(1, Math.min(100, (userSettings.newPerDeck||20) + delta));
-saveLocal();
-const el = document.getElementById(‘newPerDeckVal’);
-if(el) el.textContent = userSettings.newPerDeck;
+  userSettings.newPerDeck = Math.max(1, Math.min(100, (userSettings.newPerDeck||20) + delta));
+  saveLocal();
+  const el = document.getElementById('newPerDeckVal');
+  if(el) el.textContent = userSettings.newPerDeck;
 }
 function setOrder(o){
-userSettings.newOrder = o;
-saveLocal();
-document.querySelectorAll(’#orderSegment .seg-btn’).forEach((b,i)=>{
-b.classList.toggle(‘active’, [‘ordered’,‘random’][i]===o);
-});
+  userSettings.newOrder = o;
+  saveLocal();
+  document.querySelectorAll('#orderSegment .seg-btn').forEach((b,i)=>{
+    b.classList.toggle('active', ['ordered','random'][i]===o);
+  });
 }
 
+
 async function saveGHConfig(){
-ghConfig.user = document.getElementById(‘ghUser’).value.trim();
-ghConfig.repo = document.getElementById(‘ghRepo’).value.trim();
-ghConfig.token = document.getElementById(‘ghToken’).value.trim();
-saveLocal();
-const res = document.getElementById(‘syncTestResult’);
-res.innerHTML=’<div class="sync-status sync-info">Verbindung testen…</div>’;
-try{
-const r = await fetch(`https://api.github.com/repos/${ghConfig.user}/${ghConfig.repo}`,{
-headers:{‘Authorization’:`token ${ghConfig.token}`}
-});
-if(r.ok){
-res.innerHTML=’<div class="sync-status sync-ok">✅ Verbindung erfolgreich!</div>’;
-// Re-render to show push/pull buttons
-showSettings();
-ghPull();
-} else {
-res.innerHTML=`<div class="sync-status sync-err">❌ Fehler ${r.status} – Token oder Repo prüfen</div>`;
-}
-}catch(e){
-res.innerHTML=’<div class="sync-status sync-err">❌ Netzwerkfehler</div>’;
-}
+  ghConfig.user = document.getElementById('ghUser').value.trim();
+  ghConfig.repo = document.getElementById('ghRepo').value.trim();
+  ghConfig.token = document.getElementById('ghToken').value.trim();
+  saveLocal();
+  const res = document.getElementById('syncTestResult');
+  res.innerHTML='<div class="sync-status sync-info">Verbindung testen…</div>';
+  try{
+    const r = await fetch(`https://api.github.com/repos/${ghConfig.user}/${ghConfig.repo}`,{
+      headers:{'Authorization':`token ${ghConfig.token}`}
+    });
+    if(r.ok){
+      res.innerHTML='<div class="sync-status sync-ok">✅ Verbindung erfolgreich!</div>';
+      // Re-render to show push/pull buttons
+      showSettings();
+      ghPull();
+    } else {
+      res.innerHTML=`<div class="sync-status sync-err">❌ Fehler ${r.status} – Token oder Repo prüfen</div>`;
+    }
+  }catch(e){
+    res.innerHTML='<div class="sync-status sync-err">❌ Netzwerkfehler</div>';
+  }
 }
 
 function exportProgress(){
-const blob = new Blob([JSON.stringify(progress,null,2)],{type:‘application/json’});
-const a = document.createElement(‘a’);
-a.href = URL.createObjectURL(blob);
-a.download = ‘kanji-progress.json’;
-a.click();
+  const blob = new Blob([JSON.stringify(progress,null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'kanji-progress.json';
+  a.click();
 }
 
 function importProgressFile(e){
-const f = e.target.files[0];
-if(!f) return;
-const r = new FileReader();
-r.onload = ()=>{
-try{
-const data = JSON.parse(r.result);
-Object.assign(progress, data);
-saveLocal();
-toast(‘✅ Fortschritt importiert’);
-renderHome();
-}catch{toast(‘❌ Ungültige Datei’)}
-};
-r.readAsText(f);
-e.target.value=’’;
+  const f = e.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{
+    try{
+      const data = JSON.parse(r.result);
+      Object.assign(progress, data);
+      saveLocal();
+      toast('✅ Fortschritt importiert');
+      renderHome();
+    }catch{toast('❌ Ungültige Datei')}
+  };
+  r.readAsText(f);
+  e.target.value='';
 }
 
 function confirmReset(){
-if(confirm(‘Wirklich ALLEN Fortschritt löschen? Das kann nicht rückgängig gemacht werden.’)){
-progress={};
-saveLocal();
-toast(‘🗑️ Fortschritt gelöscht’);
-renderHome();
-closeModal(‘settingsModal’);
-}
+  if(confirm('Wirklich ALLEN Fortschritt löschen? Das kann nicht rückgängig gemacht werden.')){
+    progress={};
+    saveLocal();
+    toast('🗑️ Fortschritt gelöscht');
+    renderHome();
+    closeModal('settingsModal');
+  }
 }
 
 // ══════════════════════════════════════════════
 //  STUDY
 // ══════════════════════════════════════════════
 function startStudy(did){
-const deck = decks[did];
-if(!deck) return;
-sessionStats={again:0,hard:0,good:0,easy:0};
-const due=[],newCards=[];
-for(const c of deck.cards){
-const st=getState(c.nid,c.ord);
-if(!st) newCards.push(c);
-else if(isDue(st)) due.push(c);
-}
-shuffle(due);
-// New cards: ordered or random based on setting
-if(userSettings.newOrder === ‘random’) shuffle(newCards);
-const maxNew = userSettings.newPerDeck || 20;
-studyQueue=[…due,…newCards.slice(0, maxNew)];
-studyIdx=0;
+  const deck = decks[did];
+  if(!deck) return;
+  sessionStats={again:0,hard:0,good:0,easy:0};
+  const due=[],newCards=[];
+  for(const c of deck.cards){
+    const st=getState(c.nid,c.ord);
+    if(!st) newCards.push(c);
+    else if(isDue(st)) due.push(c);
+  }
+  shuffle(due);
+  // New cards: ordered or random based on setting
+  if(userSettings.newOrder === 'random') shuffle(newCards);
+  const maxNew = userSettings.newPerDeck || 20;
+  studyQueue=[...due,...newCards.slice(0, maxNew)];
+  studyIdx=0;
 
-if(!studyQueue.length){showDone(true);showScreen(‘studyScreen’);return}
+  if(!studyQueue.length){showDone(true);showScreen('studyScreen');return}
 
-document.getElementById(‘studyTitle’).textContent=deck.name.split(’::’).pop();
-showScreen(‘studyScreen’);
-nextCard();
+  document.getElementById('studyTitle').textContent=deck.name.split('::').pop();
+  showScreen('studyScreen');
+  nextCard();
 }
 
 function nextCard(){
-if(studyIdx>=studyQueue.length){showDone(false);return}
-curCard=studyQueue[studyIdx];
-flipped=false;
-updateProgress();
-renderCard();
-renderAns(false);
+  if(studyIdx>=studyQueue.length){showDone(false);return}
+  curCard=studyQueue[studyIdx];
+  flipped=false;
+  updateProgress();
+  renderCard();
+  renderAns(false);
 }
 
 function updateProgress(){
-const rem=studyQueue.length-studyIdx;
-document.getElementById(‘studyCount’).textContent=rem+’ übrig’;
-const pct=studyIdx/studyQueue.length*100;
-document.getElementById(‘progFill’).style.width=pct+’%’;
+  const rem=studyQueue.length-studyIdx;
+  document.getElementById('studyCount').textContent=rem+' übrig';
+  const pct=studyIdx/studyQueue.length*100;
+  document.getElementById('progFill').style.width=pct+'%';
 }
 
 function renderCard(){
-const c=curCard;
-const st=getState(c.nid,c.ord);
-const cfg=getFieldConfig(c.did);
-if(!Array.isArray(cfg.front)) cfg.front = cfg.front ? [cfg.front] : [];
-const frontFields = cfg.front.filter(f=>c.fields[f]!==undefined);
-if(!frontFields.length) frontFields.push(Object.keys(c.fields)[0]);
-const typeLabel=!st?‘NEU’:st.type===2?‘WIEDERHOLUNG’:‘LERNEN’;
+  const c=curCard;
+  const st=getState(c.nid,c.ord);
+  const cfg=getFieldConfig(c.did);
+  if(!Array.isArray(cfg.front)) cfg.front = cfg.front ? [cfg.front] : [];
+  const frontFields = cfg.front.filter(f=>c.fields[f]!==undefined);
+  if(!frontFields.length) frontFields.push(Object.keys(c.fields)[0]);
+  const typeLabel=!st?'NEU':st.type===2?'WIEDERHOLUNG':'LERNEN';
 
-// Detect audio in any front field
-const frontAudio = frontFields.map(f=>extractAudio(c.fields[f]||’’)).find(Boolean);
+  // Detect audio in any front field
+  const frontAudio = frontFields.map(f=>extractAudio(c.fields[f]||'')).find(Boolean);
 
-const div=document.createElement(‘div’);
-div.className=‘flashcard c-in’;
-div.id=‘fcard’;
-div.onclick=flipCard;
+  const div=document.createElement('div');
+  div.className='flashcard c-in';
+  div.id='fcard';
+  div.onclick=flipCard;
 
-// Render multiple front fields stacked
-const frontHtml = frontFields.map((f,i)=>{
-const val = removeAudioTags(c.fields[f]||’’);
-const big = i===0;
-return ‘<div style="' + (i>0?'margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.07)':'') + '">’ + renderField(val,big) + ‘</div>’;
-}).join(’’);
+  // Render multiple front fields stacked
+  const frontHtml = frontFields.map((f,i)=>{
+    const val = removeAudioTags(c.fields[f]||'');
+    const big = i===0;
+    return '<div style="' + (i>0?'margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.07)':'') + '">' + renderField(val,big) + '</div>';
+  }).join('');
 
-div.innerHTML=` <div class="card-type-badge">${typeLabel}</div> ${frontAudio?`<button class="card-audio-btn" onclick="event.stopPropagation();playAudio('${frontAudio}')">🔊</button>`:''} <div class="card-main" style="width:100%"> ${frontHtml} </div> <div class="tap-hint"><div class="tap-dot"></div>Tippen zum Aufdecken</div> `;
+  div.innerHTML=`
+    <div class="card-type-badge">${typeLabel}</div>
+    ${frontAudio?`<button class="card-audio-btn" onclick="event.stopPropagation();playAudio('${frontAudio}')">🔊</button>`:''}
+    <div class="card-main" style="width:100%">
+      ${frontHtml}
+    </div>
+    <div class="tap-hint"><div class="tap-dot"></div>Tippen zum Aufdecken</div>
+  `;
 
-```
-const stage=document.getElementById('cardStage');
-```
-
-stage.innerHTML=’’;
-stage.appendChild(div);
+    const stage=document.getElementById('cardStage');
+  stage.innerHTML='';
+  stage.appendChild(div);
 }
 
 function flipCard(){
-if(flipped) return;
-flipped=true;
-const c=curCard;
-const cfg=getFieldConfig(c.did);
-const st=getState(c.nid,c.ord);
+  if(flipped) return;
+  flipped=true;
+  const c=curCard;
+  const cfg=getFieldConfig(c.did);
+  const st=getState(c.nid,c.ord);
 
-const card=document.getElementById(‘fcard’);
-card.onclick=null;
-card.querySelector(’.tap-hint’)?.remove();
+  const card=document.getElementById('fcard');
+  card.onclick=null;
+  card.querySelector('.tap-hint')?.remove();
 
-// Build back
-const backFields=cfg.back.filter(f=>!cfg.hidden.includes(f)&&c.fields[f]&&c.fields[f].trim());
-let backHtml=’’;
-for(const f of backFields){
-const val=c.fields[f];
-const audio=extractAudio(val);
-const cleanVal=removeAudioTags(val);
-const isBig=backFields.indexOf(f)===0;
-backHtml+=`<div class="back-field"> <div class="back-field-label">${esc(f)}</div> <div class="back-field-val ${isBig?'big':''}"> ${renderField(cleanVal,isBig)} ${audio?`<button class="card-audio-btn" style="position:static;display:inline-flex;margin-left:8px;vertical-align:middle;width:28px;height:28px;font-size:13px" onclick="playAudio('${audio}')">🔊</button>`:''} </div> </div>`;
-}
-if(!backHtml) backHtml=’<div style="color:#4a4a66;font-size:14px">Keine weiteren Felder</div>’;
+  // Build back
+  const backFields=cfg.back.filter(f=>!cfg.hidden.includes(f)&&c.fields[f]&&c.fields[f].trim());
+  let backHtml='';
+  for(const f of backFields){
+    const val=c.fields[f];
+    const audio=extractAudio(val);
+    const cleanVal=removeAudioTags(val);
+    const isBig=backFields.indexOf(f)===0;
+    backHtml+=`<div class="back-field">
+      <div class="back-field-label">${esc(f)}</div>
+      <div class="back-field-val ${isBig?'big':''}">
+        ${renderField(cleanVal,isBig)}
+        ${audio?`<button class="card-audio-btn" style="position:static;display:inline-flex;margin-left:8px;vertical-align:middle;width:28px;height:28px;font-size:13px" onclick="playAudio('${audio}')">🔊</button>`:''}
+      </div>
+    </div>`;
+  }
+  if(!backHtml) backHtml='<div style="color:#4a4a66;font-size:14px">Keine weiteren Felder</div>';
 
-const divider=document.createElement(‘div’);
-divider.className=‘card-divider’;
-const backEl=document.createElement(‘div’);
-backEl.className=‘back-fields’;
-backEl.innerHTML=backHtml;
+  const divider=document.createElement('div');
+  divider.className='card-divider';
+  const backEl=document.createElement('div');
+  backEl.className='back-fields';
+  backEl.innerHTML=backHtml;
 
-card.appendChild(divider);
-card.appendChild(backEl);
+  card.appendChild(divider);
+  card.appendChild(backEl);
 
-// Auto-play back audio
-const firstBackAudio=backFields.map(f=>extractAudio(c.fields[f])).find(Boolean);
-if(firstBackAudio) setTimeout(()=>playAudio(firstBackAudio),300);
+  // Auto-play back audio
+  const firstBackAudio=backFields.map(f=>extractAudio(c.fields[f])).find(Boolean);
+  if(firstBackAudio) setTimeout(()=>playAudio(firstBackAudio),300);
 
-renderAns(true,st);
+  renderAns(true,st);
 }
 
 function renderAns(showRating,st){
-const wrap=document.getElementById(‘ansWrap’);
-if(!showRating){
-wrap.innerHTML=`<button class="show-btn" onclick="flipCard()">Antwort zeigen</button>`;
-return;
-}
-const btns=[
-{k:‘again’,cls:‘btn-again’,l:‘Nochmal’},
-{k:‘hard’, cls:‘btn-hard’, l:‘Schwer’},
-{k:‘good’, cls:‘btn-good’, l:‘Gut’},
-{k:‘easy’, cls:‘btn-easy’, l:‘Leicht’},
-];
-wrap.innerHTML=`<div class="rating-grid">${btns.map(b=>`
-<button class="r-btn ${b.cls}" onclick="rateCard('${b.k}')">
-<span class="r-lbl">${b.l}</span>
-<span class="r-int">${intervalLabel(st,R[b.k])}</span>
-</button>`).join('')}</div>`;
+  const wrap=document.getElementById('ansWrap');
+  if(!showRating){
+    wrap.innerHTML=`<button class="show-btn" onclick="flipCard()">Antwort zeigen</button>`;
+    return;
+  }
+  const btns=[
+    {k:'again',cls:'btn-again',l:'Nochmal'},
+    {k:'hard', cls:'btn-hard', l:'Schwer'},
+    {k:'good', cls:'btn-good', l:'Gut'},
+    {k:'easy', cls:'btn-easy', l:'Leicht'},
+  ];
+  wrap.innerHTML=`<div class="rating-grid">${btns.map(b=>`
+    <button class="r-btn ${b.cls}" onclick="rateCard('${b.k}')">
+      <span class="r-lbl">${b.l}</span>
+      <span class="r-int">${intervalLabel(st,R[b.k])}</span>
+    </button>`).join('')}</div>`;
 }
 
 function rateCard(rk){
-const c=curCard;
-const rating=R[rk];
-const st=getState(c.nid,c.ord)||{};
-setState(c.nid,c.ord,schedule(st,rating));
-sessionStats[rk]++;
-schedulePush();
+  const c=curCard;
+  const rating=R[rk];
+  const st=getState(c.nid,c.ord)||{};
+  setState(c.nid,c.ord,schedule(st,rating));
+  sessionStats[rk]++;
+  schedulePush();
 
-// Re-queue if again
-if(rk===‘again’&&studyQueue.length-studyIdx<8){
-studyQueue.splice(Math.min(studyIdx+3,studyQueue.length),0,c);
-}
+  // Re-queue if again
+  if(rk==='again'&&studyQueue.length-studyIdx<8){
+    studyQueue.splice(Math.min(studyIdx+3,studyQueue.length),0,c);
+  }
 
-const card=document.getElementById(‘fcard’);
-if(card){card.classList.remove(‘c-in’);card.classList.add(‘c-out’);card.style.pointerEvents=‘none’}
-studyIdx++;
-setTimeout(nextCard,230);
+  const card=document.getElementById('fcard');
+  if(card){card.classList.remove('c-in');card.classList.add('c-out');card.style.pointerEvents='none'}
+  studyIdx++;
+  setTimeout(nextCard,230);
 }
 
 // ══════════════════════════════════════════════
 //  DONE
 // ══════════════════════════════════════════════
 function showDone(allDone){
-document.getElementById(‘progFill’).style.width=‘100%’;
-document.getElementById(‘ansWrap’).innerHTML=’’;
-const total=sessionStats.again+sessionStats.hard+sessionStats.good+sessionStats.easy;
-const correct=sessionStats.good+sessionStats.easy;
-const pct=total?Math.round(correct/total*100):100;
-document.getElementById(‘cardStage’).innerHTML=`<div class="done-wrap"> <div class="done-icon">${allDone?'🎌':'🎉'}</div> <div class="done-title">${allDone?'Alles erledigt!':'Sitzung beendet!'}</div> <div class="done-sub">${allDone?'Für heute sind alle Karten fertig. Bis morgen!':total+' Karten gelernt'}</div> ${total?`<div class="done-row">
-<div class="done-stat"><div class="done-stat-val" style="color:#ff4d6d">${sessionStats.again}</div><div class="done-stat-lbl">Nochmal</div></div>
-<div class="done-stat"><div class="done-stat-val" style="color:#3ecf8e">${correct}</div><div class="done-stat-lbl">Richtig</div></div>
-<div class="done-stat"><div class="done-stat-val">${pct}%</div><div class="done-stat-lbl">Quote</div></div>
-</div>`:’’}
-<button class="primary-btn" onclick="goHome()">Zurück zu Decks</button>
-
+  document.getElementById('progFill').style.width='100%';
+  document.getElementById('ansWrap').innerHTML='';
+  const total=sessionStats.again+sessionStats.hard+sessionStats.good+sessionStats.easy;
+  const correct=sessionStats.good+sessionStats.easy;
+  const pct=total?Math.round(correct/total*100):100;
+  document.getElementById('cardStage').innerHTML=`<div class="done-wrap">
+    <div class="done-icon">${allDone?'🎌':'🎉'}</div>
+    <div class="done-title">${allDone?'Alles erledigt!':'Sitzung beendet!'}</div>
+    <div class="done-sub">${allDone?'Für heute sind alle Karten fertig. Bis morgen!':total+' Karten gelernt'}</div>
+    ${total?`<div class="done-row">
+      <div class="done-stat"><div class="done-stat-val" style="color:#ff4d6d">${sessionStats.again}</div><div class="done-stat-lbl">Nochmal</div></div>
+      <div class="done-stat"><div class="done-stat-val" style="color:#3ecf8e">${correct}</div><div class="done-stat-lbl">Richtig</div></div>
+      <div class="done-stat"><div class="done-stat-val">${pct}%</div><div class="done-stat-lbl">Quote</div></div>
+    </div>`:''}
+    <button class="primary-btn" onclick="goHome()">Zurück zu Decks</button>
   </div>`;
 }
 
@@ -1366,122 +1404,128 @@ document.getElementById(‘cardStage’).innerHTML=`<div class="done-wrap"> <div
 //  AUDIO
 // ══════════════════════════════════════════════
 function extractAudio(val){
-if(!val) return null;
-const m=val.match(/[sound:([^]]+)]/);
-return m?m[1]:null;
+  if(!val) return null;
+  const m=val.match(/\[sound:([^\]]+)\]/);
+  return m?m[1]:null;
 }
 function removeAudioTags(val){
-return val?val.replace(/[sound:[^]]+]/g,’’):val;
+  return val?val.replace(/\[sound:[^\]]+\]/g,''):val;
 }
 function playAudio(filename){
-const url=mediaFiles[filename];
-if(!url){toast(‘🔇 Audio nicht gefunden’);return}
-const audio=new Audio(url);
-audio.play().catch(()=>toast(‘🔇 Wiedergabe fehlgeschlagen’));
+  const url=mediaFiles[filename];
+  if(!url){toast('🔇 Audio nicht gefunden');return}
+  const audio=new Audio(url);
+  audio.play().catch(()=>toast('🔇 Wiedergabe fehlgeschlagen'));
 }
 
 // ══════════════════════════════════════════════
 //  FIELD RENDERING
 // ══════════════════════════════════════════════
 function renderField(val,big=false){
-if(!val) return ‘’;
-// Remove audio tags for display
-val=removeAudioTags(val);
-if(!val.trim()) return ‘’;
+  if(!val) return '';
+  // Remove audio tags for display
+  val=removeAudioTags(val);
+  if(!val.trim()) return '';
 
-// If HTML content
-if(/<[a-z]/i.test(val)){
-return `<div class="card-front-html">${val}</div>`;
-}
-// Plain text – auto-size
-const len=val.length;
-let sz;
-if(big){sz=len<=3?‘72px’:len<=6?‘52px’:len<=12?‘36px’:len<=24?‘24px’:‘17px’}
-else{sz=len<=8?‘22px’:len<=30?‘17px’:‘14px’}
-return `<span style="font-size:${sz};line-height:1.2;display:block">${esc(val)}</span>`;
+  // If HTML content
+  if(/<[a-z]/i.test(val)){
+    return `<div class="card-front-html">${val}</div>`;
+  }
+  // Plain text – auto-size
+  const len=val.length;
+  let sz;
+  if(big){sz=len<=3?'72px':len<=6?'52px':len<=12?'36px':len<=24?'24px':'17px'}
+  else{sz=len<=8?'22px':len<=30?'17px':'14px'}
+  return `<span style="font-size:${sz};line-height:1.2;display:block">${esc(val)}</span>`;
 }
 
 // ══════════════════════════════════════════════
 //  HELPERS
 // ══════════════════════════════════════════════
-function esc(s){return String(s||’’).replace(/&/g,’&’).replace(/</g,’<’).replace(/>/g,’>’).replace(/”/g,’"’)}
-function shuffle(a){for(let i=a.length-1;i>0;i–){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}}
-function showScreen(id){document.querySelectorAll(’.screen’).forEach(s=>s.classList.toggle(‘hidden’,s.id!==id))}
-function goHome(){showScreen(‘homeScreen’);renderHome()}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}}
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('hidden',s.id!==id))}
+function goHome(){showScreen('homeScreen');renderHome()}
 
 function openModal(id){
-const m=document.getElementById(id);
-m.classList.remove(‘hidden’);
-m.style.display=‘flex’;
+  const m=document.getElementById(id);
+  m.classList.remove('hidden');
+  m.style.display='flex';
 }
 function closeModal(id){
-const m=document.getElementById(id);
-m.classList.add(‘hidden’);
+  const m=document.getElementById(id);
+  m.classList.add('hidden');
 }
 // Close modals on backdrop click
-document.querySelectorAll(’.modal-bg’).forEach(bg=>{
-bg.addEventListener(‘click’,e=>{if(e.target===bg)closeModal(bg.id)});
+document.querySelectorAll('.modal-bg').forEach(bg=>{
+  bg.addEventListener('click',e=>{if(e.target===bg)closeModal(bg.id)});
 });
 
 let toastT;
 function toast(msg){
-const el=document.getElementById(‘toast’);
-el.textContent=msg;el.classList.add(‘show’);
-clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove(‘show’),3200);
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),3200);
 }
 
 function showLoader(msg){
-const ol=document.getElementById(‘loaderOverlay’);
-ol.classList.remove(‘gone’);
-setMsg(msg);
+  const ol=document.getElementById('loaderOverlay');
+  ol.classList.remove('gone');
+  setMsg(msg);
 }
-function hideLoader(){document.getElementById(‘loaderOverlay’).classList.add(‘gone’)}
-function setMsg(m){const el=document.getElementById(‘loaderMsg’);if(el)el.textContent=m}
+function hideLoader(){document.getElementById('loaderOverlay').classList.add('gone')}
+function setMsg(m){const el=document.getElementById('loaderMsg');if(el)el.textContent=m}
 
 // Drag & drop
-document.addEventListener(‘dragover’,e=>e.preventDefault());
-document.addEventListener(‘drop’,async e=>{
-e.preventDefault();
-const f=e.dataTransfer.files[0];
-if(f&&(f.name.endsWith(’.apkg’)||f.name.endsWith(’.colpkg’))) await importApkg(f);
+document.addEventListener('dragover',e=>e.preventDefault());
+document.addEventListener('drop',async e=>{
+  e.preventDefault();
+  const f=e.dataTransfer.files[0];
+  if(f&&(f.name.endsWith('.apkg')||f.name.endsWith('.colpkg'))) await importApkg(f);
 });
 
 // ══════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════
-(async()=>{
-try {
-loadLocal();
-applyTheme();
-// Listen for system theme changes
-window.matchMedia(’(prefers-color-scheme: dark)’).addEventListener(‘change’, ()=>{
-if(userSettings.theme === ‘auto’) applyTheme();
-});
-setMsg(‘SQL laden…’);
-await initSQL();
-setMsg(‘Bereit’);
-hideLoader();
-renderHome();
-if(ghConfig.token && ghConfig.repo && ghConfig.user){
-ghPull().then(()=>renderHome()).catch(e=>console.warn(‘GH pull failed:’, e));
+async function runApp() {
+  try {
+    loadLocal();
+    applyTheme();
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ()=>{
+      if(userSettings.theme === 'auto') applyTheme();
+    });
+    // Check libraries loaded
+    if(typeof initSqlJs === 'undefined') throw new Error('sql.js nicht geladen – bitte Seite neu laden');
+    if(typeof JSZip === 'undefined') throw new Error('JSZip nicht geladen – bitte Seite neu laden');
+    setMsg('SQL laden…');
+    await initSQL();
+    setMsg('Bereit');
+    hideLoader();
+    renderHome();
+    if(ghConfig.token && ghConfig.repo && ghConfig.user){
+      ghPull().then(()=>renderHome()).catch(e=>console.warn('GH pull failed:', e));
+    }
+  } catch(err) {
+    const ol = document.getElementById('loaderOverlay');
+    const msg = document.getElementById('loaderMsg');
+    if(msg) msg.textContent = '❌ ' + err.message;
+    if(ol) {
+      const btn = document.createElement('button');
+      btn.textContent = '🔄 Neu laden';
+      btn.style.cssText = 'margin-top:16px;padding:14px 28px;background:#6e66ff;color:#fff;border:none;border-radius:16px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit';
+      btn.onclick = ()=>location.reload();
+      ol.appendChild(btn);
+    }
+    console.error('Init error:', err);
+  }
 }
-} catch(err) {
-// Show error instead of infinite spinner
-const ol = document.getElementById(‘loaderOverlay’);
-const msg = document.getElementById(‘loaderMsg’);
-if(msg) msg.textContent = ’Fehler: ’ + err.message;
-if(ol) {
-ol.style.background = ‘#0d0d14’;
-// Add retry button
-const btn = document.createElement(‘button’);
-btn.textContent = ‘🔄 Neu laden’;
-btn.style.cssText = ‘margin-top:16px;padding:14px 28px;background:#6e66ff;color:#fff;border:none;border-radius:16px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit’;
-btn.onclick = ()=>location.reload();
-ol.appendChild(btn);
+
+// Wait for everything to be ready
+if(document.readyState === 'complete') {
+  runApp();
+} else {
+  window.addEventListener('load', runApp);
 }
-console.error(‘Init error:’, err);
-}
-})();
 
 </script>
 </body>
