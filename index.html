@@ -427,6 +427,7 @@ html,body{height:100%;overflow:hidden;user-select:none;-webkit-user-select:none;
         <div class="sync-dot" id="syncDot"></div>
         <span id="syncLabel"></span>
       </div>
+      <button class="icon-btn" id="editModeBtn" onclick="toggleEditMode()" title="Bearbeiten" style="font-size:14px">✏️</button>
       <button class="icon-btn" onclick="showSettings()" title="Einstellungen">⚙️</button>
       <button class="icon-btn" onclick="triggerImport()" title="Importieren">＋</button>
     </div>
@@ -470,6 +471,7 @@ let userSettings = {
   theme: 'auto',       // 'auto' | 'dark' | 'light'
   newPerDeck: 20,      // max new cards per session
   newOrder: 'ordered', // 'ordered' | 'random'
+  editMode: false,     // show field config buttons
 };
 
 const PROGRESS_KEY  = 'kj_progress_v3';
@@ -833,10 +835,10 @@ function renderDeckNode(node, depth=0) {
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
         <div style="display:flex;gap:6px;align-items:center">
-          <button onclick="event.stopPropagation();showFieldModalForGroup('${esc(node.fullName)}')"
+          ${userSettings.editMode ? `<button onclick="event.stopPropagation();showFieldModalForGroup('${esc(node.fullName)}')"
             style="background:#20202c;color:#a89fff;border:1.5px solid #2c2c3e;border-radius:10px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">
             ⚙️ Felder
-          </button>
+          </button>` : ''}
           <button onclick="event.stopPropagation();startStudyCards(getAllCardsForNodeByName('${esc(node.fullName)}'),'${esc(node.displayName)}')"
             style="background:#6e66ff;color:#fff;border:none;border-radius:10px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">
             ▶ Alle lernen
@@ -872,7 +874,7 @@ function renderLeafDeck(did, deck, depth=0) {
     <span class="deck-emoji" style="font-size:22px">${emoji}</span>
     <div class="deck-info">
       <div class="deck-name" style="font-size:14px">${esc(name)}</div>
-      <div class="deck-sub">${deck.cards.length} Karten · <span style="cursor:pointer;color:#a89fff;text-decoration:underline" onclick="event.stopPropagation();showFieldModal('${did}')">Felder</span></div>
+      <div class="deck-sub">${deck.cards.length} Karten${userSettings.editMode ? ' · <span style="cursor:pointer;color:#a89fff;text-decoration:underline" onclick="event.stopPropagation();showFieldModal(\'' + did + '\')">Felder</span>' : ''}</div>
       <div class="deck-pills">
         <span class="pill ${newC?'pill-new':'pill-0'}">${newC} neu</span>
         <span class="pill ${lrnC?'pill-lrn':'pill-0'}">${lrnC} lernen</span>
@@ -932,6 +934,25 @@ function startStudyCards(cards, name) {
   document.getElementById('studyTitle').textContent=name;
   showScreen('studyScreen');
   nextCard();
+}
+
+function toggleEditMode(){
+  userSettings.editMode = !userSettings.editMode;
+  saveLocal();
+  const btn = document.getElementById('editModeBtn');
+  if(btn){
+    btn.style.background = userSettings.editMode ? '#6e66ff' : '';
+    btn.style.color = userSettings.editMode ? '#fff' : '';
+    btn.title = userSettings.editMode ? 'Bearbeiten aktiv' : 'Bearbeiten';
+  }
+  renderHome();
+}
+
+function applyEditModeBtn(){
+  const btn = document.getElementById('editModeBtn');
+  if(!btn) return;
+  btn.style.background = userSettings.editMode ? '#6e66ff' : '';
+  btn.style.color = userSettings.editMode ? '#fff' : '';
 }
 
 function renderHome(){
@@ -1834,6 +1855,7 @@ async function runApp() {
     setMsg('Bereit');
     hideLoader();
     renderHome();
+    applyEditModeBtn();
     if(ghConfig.token && ghConfig.repo && ghConfig.user){
       ghPull().then(()=>renderHome()).catch(e=>console.warn('GH pull failed:', e));
     }
