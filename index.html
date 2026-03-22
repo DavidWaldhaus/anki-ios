@@ -544,6 +544,16 @@ color-scheme: dark;
 
 </head>
 <body>
+<div id="debugBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#1a1a2e;color:#00ff88;font-family:monospace;font-size:11px;padding:8px 12px;border-bottom:1px solid #00ff8844;line-height:1.7">
+  <div><b>🔍 DEBUG MODE</b></div>
+  <div id="dbTheme"></div>
+  <div id="dbColorScheme"></div>
+  <div id="dbDataTheme"></div>
+  <div id="dbBgColor"></div>
+  <div id="dbStorage"></div>
+  <div id="dbUA"></div>
+  <button onclick="document.getElementById('debugBanner').style.display='none'" style="margin-top:4px;background:#ff4466;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer">Schließen</button>
+</div>
 
 <div id="loaderOverlay">
   <div class="loader-logo">漢<em>字</em></div>
@@ -1656,6 +1666,40 @@ document.addEventListener('drop',async e=>{
     ghPull().then(()=>renderHome());
   }
 })();
+</script>
+
+<script>
+// Debug mode: activate with ?debug=1 in URL
+if(new URLSearchParams(location.search).get('debug') === '1') {
+  document.getElementById('debugBanner').style.display = 'block';
+  // Pad top of screens for banner
+  document.querySelectorAll('.screen').forEach(s => s.style.paddingTop = '140px');
+  
+  function updateDebug() {
+    var root = document.documentElement;
+    var dataTheme = root.getAttribute('data-theme') || '(nicht gesetzt)';
+    var storedSettings = localStorage.getItem('kj_settings_v1') || '(leer)';
+    var bgColor = getComputedStyle(root).getPropertyValue('--bg').trim();
+    var textColor = getComputedStyle(root).getPropertyValue('--text').trim();
+    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+    
+    document.getElementById('dbTheme').textContent        = '🎨 userSettings.theme: ' + (typeof userSettings !== 'undefined' ? userSettings.theme : '(JS noch nicht geladen)');
+    document.getElementById('dbColorScheme').textContent  = '📱 prefers-color-scheme: ' + (prefersDark ? 'dark' : prefersLight ? 'light' : 'unbekannt');
+    document.getElementById('dbDataTheme').textContent    = '🏷  data-theme Attribut: ' + dataTheme;
+    document.getElementById('dbBgColor').textContent      = '🖌  --bg CSS Variable: ' + bgColor + ' | --text: ' + textColor;
+    document.getElementById('dbStorage').textContent      = '💾 localStorage kj_settings_v1: ' + storedSettings;
+    document.getElementById('dbUA').textContent           = '🌐 ' + navigator.userAgent.substring(0, 80);
+  }
+  
+  // Update immediately and after JS loads
+  updateDebug();
+  setTimeout(updateDebug, 500);
+  setTimeout(updateDebug, 1500);
+  
+  // Watch for theme changes
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateDebug);
+}
 </script>
 
 </body>
