@@ -1491,10 +1491,6 @@ function flipCard(){
   card.appendChild(divider);
   card.appendChild(backEl);
 
-  // Auto-play back audio
-  const firstBackAudio=backFields.map(f=>extractAudio(c.fields[f])).find(Boolean);
-  if(firstBackAudio) setTimeout(()=>playAudio(firstBackAudio),300);
-
   renderAns(true,st);
 }
 
@@ -1575,7 +1571,6 @@ function removeAudioTags(val){
   return val?val.replace(/\[sound:[^\]]+\]/g,''):val;
 }
 function playAudio(filename){
-  // Try exact match first, then decoded, then just the basename
   const decoded = decodeURIComponent(filename);
   const basename = filename.split('/').pop();
   const decodedBasename = decoded.split('/').pop();
@@ -1586,25 +1581,54 @@ function playAudio(filename){
            || mediaFiles[decodedBasename];
 
   if(!url){
-    // Show which filenames we tried vs what's available
-    const available = Object.keys(mediaFiles).slice(0,5).join(', ');
-    toast('🔇 ' + basename + ' nicht gefunden');
+    toast('🔇 Datei nicht gefunden: ' + basename);
     console.warn('Audio not found:', filename, '| Available:', Object.keys(mediaFiles).join(', '));
+    return;
+  }
+  
+  // Check if format is supported on iOS
+  const ext = basename.split('.').pop().toLowerCase();
+  const supported = ['mp3','m4a','aac','wav','mp4','caf'];
+  if(!supported.includes(ext)){
+    toast('⚠️ Format nicht unterstützt: .' + ext + ' (iOS braucht .mp3/.m4a)');
+    console.warn('Unsupported format:', ext, filename);
     return;
   }
   
   // Stop any currently playing audio
   if(window._currentAudio){
     window._currentAudio.pause();
+    window._currentAudio.src = '';
     window._currentAudio = null;
   }
-  
-  const audio = new Audio(url);
+
+  // iOS Safari requires AudioContext to be resumed from a user gesture.
+  // Since playAudio is always called from a tap handler, this should work.
+  // Use a fresh Audio object each time.
+  const audio = new Audio();
+  audio.preload = 'auto';
   window._currentAudio = audio;
-  audio.play().catch(e => {
-    toast('🔇 Wiedergabe fehlgeschlagen: ' + e.message);
-    console.warn('Audio play failed:', e);
-  });
+  
+  // Set source and play
+  audio.src = url;
+  const playPromise = audio.play();
+  if(playPromise !== undefined){
+    playPromise.catch(e => {
+      // Last resort: try via AudioContext
+      fetch(url)
+        .then(r => r.arrayBuffer())
+        .then(buf => {
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          return ctx.decodeAudioData(buf).then(decoded => {
+            const src = ctx.createBufferSource();
+            src.buffer = decoded;
+            src.connect(ctx.destination);
+            src.start(0);
+          });
+        })
+        .catch(() => toast('🔇 Wiedergabe fehlgeschlagen'));
+    });
+  }
 }
 
 // ══════════════════════════════════════════════
