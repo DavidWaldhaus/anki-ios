@@ -646,7 +646,7 @@ async function importApkg(file){
     if(!dbEntry) throw new Error('Keine Anki-Datenbank gefunden.');
     setMsg('Datenbank lesen…');
     const buf = await dbEntry.async('arraybuffer');
-    db = parseSQLite(new Uint8Array(buf));
+    db = new SQL.Database(new Uint8Array(buf));
 
     // Media files
     setMsg('Medien laden…');
