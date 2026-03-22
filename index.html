@@ -1563,17 +1563,48 @@ function showDone(allDone){
 // ══════════════════════════════════════════════
 function extractAudio(val){
   if(!val) return null;
-  const m=val.match(/\[sound:([^\]]+)\]/);
-  return m?m[1]:null;
+  // Handle [sound:file.mp3] format
+  const m = val.match(/\[sound:([^\]]+)\]/);
+  if(m) return m[1].trim();
+  // Handle <audio src="..."> HTML format
+  const m2 = val.match(/<audio[^>]+src="([^"]+)"/i);
+  if(m2) return m2[1].trim();
+  return null;
 }
 function removeAudioTags(val){
   return val?val.replace(/\[sound:[^\]]+\]/g,''):val;
 }
 function playAudio(filename){
-  const url=mediaFiles[filename];
-  if(!url){toast('🔇 Audio nicht gefunden');return}
-  const audio=new Audio(url);
-  audio.play().catch(()=>toast('🔇 Wiedergabe fehlgeschlagen'));
+  // Try exact match first, then decoded, then just the basename
+  const decoded = decodeURIComponent(filename);
+  const basename = filename.split('/').pop();
+  const decodedBasename = decoded.split('/').pop();
+  
+  const url = mediaFiles[filename] 
+           || mediaFiles[decoded]
+           || mediaFiles[basename]
+           || mediaFiles[decodedBasename];
+
+  if(!url){
+    // Show which filenames we tried vs what's available
+    const available = Object.keys(mediaFiles).slice(0,5).join(', ');
+    toast('🔇 ' + basename + ' nicht gefunden');
+    console.warn('Audio not found:', filename, '| Available:', Object.keys(mediaFiles).join(', '));
+    return;
+  }
+  
+  // Stop any currently playing audio
+  if(window._currentAudio){
+    window._currentAudio.pause();
+    window._currentAudio = null;
+  }
+  
+  const audio = new Audio(url);
+  window._currentAudio = audio;
+  audio.play().catch(e => {
+    toast('🔇 Wiedergabe fehlgeschlagen: ' + e.message);
+    console.warn('Audio play failed:', e);
+  });
 }
 
 // ══════════════════════════════════════════════
