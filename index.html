@@ -832,10 +832,16 @@ function renderDeckNode(node, depth=0) {
         </div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
-        <button onclick="event.stopPropagation();startStudyCards(getAllCardsForNodeByName('${esc(node.fullName)}'),'${esc(node.displayName)}')"
-          style="background:#6e66ff;color:#fff;border:none;border-radius:10px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">
-          ▶ Alle lernen
-        </button>
+        <div style="display:flex;gap:6px;align-items:center">
+          <button onclick="event.stopPropagation();showFieldModalForGroup('${esc(node.fullName)}')"
+            style="background:#20202c;color:#a89fff;border:1.5px solid #2c2c3e;border-radius:10px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">
+            ⚙️ Felder
+          </button>
+          <button onclick="event.stopPropagation();startStudyCards(getAllCardsForNodeByName('${esc(node.fullName)}'),'${esc(node.displayName)}')"
+            style="background:#6e66ff;color:#fff;border:none;border-radius:10px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">
+            ▶ Alle lernen
+          </button>
+        </div>
         <span class="deck-arr" id="${nodeId}_arrow">›</span>
       </div>
     </div>`;
@@ -993,11 +999,72 @@ function getCounts(cards){
 let editingDid = null;
 let tempConfig = null;
 
+function getSubDeckIds(fullName) {
+  // Get all leaf deck IDs under a given node path
+  const ids = [];
+  for(const [did, deck] of Object.entries(decks)){
+    if(deck.name === fullName || deck.name.startsWith(fullName + '::')) {
+      ids.push(did);
+    }
+  }
+  return ids;
+}
+
+function showFieldModalForGroup(fullName) {
+  // Find all sub-deck IDs under this node
+  const subIds = getSubDeckIds(fullName);
+  if(!subIds.length) return;
+
+  // Use fields from first sub-deck as template
+  const firstDeck = decks[subIds[0]];
+  if(!firstDeck) return;
+
+  // Use existing config of first deck as starting point
+  const cfg = getFieldConfig(subIds[0]);
+  editingDid = subIds[0]; // temp, overridden on save
+  tempConfig = JSON.parse(JSON.stringify(cfg));
+
+  // Store group IDs for saving
+  window._editingGroupIds = subIds;
+
+  const groupName = fullName.split('::').pop();
+  document.getElementById('fieldModalTitle').textContent = '⚙️ Felder für alle: ' + groupName;
+  renderFieldModal(firstDeck.fields);
+
+  // Override save button to apply to all
+  const footer = document.getElementById('fieldModal').querySelector('.modal-footer');
+  footer.innerHTML = '<div style="font-size:12px;color:#8888aa;margin-bottom:10px;text-align:center">Gilt für alle ' + subIds.length + ' Unterdecks</div>' +
+    '<button class="primary-btn" style="width:100%" onclick="saveFieldConfigForGroup()">Für alle speichern</button>';
+
+  openModal('fieldModal');
+}
+
+function saveFieldConfigForGroup() {
+  const ids = window._editingGroupIds || [];
+  for(const did of ids) {
+    fieldConfigs[did] = JSON.parse(JSON.stringify(tempConfig));
+  }
+  window._editingGroupIds = null;
+  saveLocal();
+  closeModal('fieldModal');
+  // Reset footer back to normal
+  const footer = document.getElementById('fieldModal').querySelector('.modal-footer');
+  footer.innerHTML = '<button class="primary-btn" style="width:100%" onclick="saveFieldConfig()">Speichern</button>';
+  toast('✅ Felder für alle Unterdecks gespeichert');
+  renderHome();
+  schedulePush();
+}
+
 function showFieldModal(did){
   editingDid = did;
+  window._editingGroupIds = null;
   const deck = decks[did];
   const cfg = getFieldConfig(did);
   tempConfig = JSON.parse(JSON.stringify(cfg));
+
+  // Reset footer to normal
+  const footer = document.getElementById('fieldModal').querySelector('.modal-footer');
+  footer.innerHTML = '<button class="primary-btn" style="width:100%" onclick="saveFieldConfig()">Speichern</button>';
 
   document.getElementById('fieldModalTitle').textContent = '⚙️ Felder: '+deck.name.split('::').pop();
   renderFieldModal(deck.fields);
