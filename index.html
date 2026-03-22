@@ -7,612 +7,387 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="漢字">
-<meta name="theme-color" content="#0a0a0f">
+<meta name="theme-color" content="#0d0d14">
 <title>漢字 — Anki für iOS</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/sql-wasm.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<style>
-/* ══ THEME TOKENS ══════════════════════════════════ */
-:root {
-  color-scheme: light dark;
-  --bg:            #0d0d14;
-  --bg2:           #12121a;
-  --surface:       #1a1a24;
-  --surface2:      #20202c;
-  --surface3:      #272734;
-  --surface-solid: #1a1a24;
-  --border:        #2c2c3e;
-  --border2:       #222230;
-  --text:          #f0f0f8;
-  --text-muted:    #8888aa;
-  --text-dim:      #4a4a66;
-  --accent:        #6e66ff;
-  --accent2:       #a89fff;
-  --accent-soft:   #1e1b3a;
-  --accent-glow:   rgba(110,102,255,0.30);
-  --again:         #ff4d6d; --again-soft: #2d1020; --again-border: #7a2035;
-  --hard:          #ffaa44; --hard-soft:  #2d2010; --hard-border:  #7a5510;
-  --good:          #3ecf8e; --good-soft:  #0e2a1e; --good-border:  #1a6644;
-  --easy:          #4db8ff; --easy-soft:  #0e2030; --easy-border:  #1a5577;
-  --shadow:        0 8px 32px rgba(0,0,0,0.55);
-  --shadow-sm:     0 2px 12px rgba(0,0,0,0.35);
-  --r: 22px; --r-sm: 16px; --r-xs: 11px;
-  --safe-t: env(safe-area-inset-top,0px);
-  --safe-b: env(safe-area-inset-bottom,0px);
-  --safe-l: env(safe-area-inset-left,0px);
-  --safe-r: env(safe-area-inset-right,0px);
-}
-[data-theme="light"] {
-  color-scheme: light;
-  --bg:            #f2f2f7;
-  --bg2:           #e5e5ec;
-  --surface:       #ffffff;
-  --surface2:      #f5f5fa;
-  --surface3:      #ededf4;
-  --surface-solid: #ffffff;
-  --border:        #d8d8e8;
-  --border2:       #e8e8f0;
-  --text:          #1c1c1e;
-  --text-muted:    #6b6b80;
-  --text-dim:      #aaaabb;
-  --accent:        #5856d6;
-  --accent2:       #7370e0;
-  --accent-soft:   #eeeeff;
-  --accent-glow:   rgba(88,86,214,0.20);
-  --again:         #e0001e; --again-soft: #fff0f2; --again-border: #ffb3be;
-  --hard:          #c07000; --hard-soft:  #fff8ee; --hard-border:  #ffd699;
-  --good:          #008055; --good-soft:  #edfff7; --good-border:  #99e8cc;
-  --easy:          #0065c0; --easy-soft:  #eef6ff; --easy-border:  #99ccff;
-  --shadow:        0 4px 20px rgba(0,0,0,0.10);
-  --shadow-sm:     0 1px 6px rgba(0,0,0,0.08);
-}
-[data-theme="dark"] {
-  color-scheme: dark;
-  --bg:            #0d0d14;
-  --bg2:           #12121a;
-  --surface:       #1a1a24;
-  --surface2:      #20202c;
-  --surface3:      #272734;
-  --surface-solid: #1a1a24;
-  --border:        #2c2c3e;
-  --border2:       #222230;
-  --text:          #f0f0f8;
-  --text-muted:    #8888aa;
-  --text-dim:      #4a4a66;
-  --accent:        #6e66ff;
-  --accent2:       #a89fff;
-  --accent-soft:   #1e1b3a;
-  --accent-glow:   rgba(110,102,255,0.30);
-  --again:         #ff4d6d; --again-soft: #2d1020; --again-border: #7a2035;
-  --hard:          #ffaa44; --hard-soft:  #2d2010; --hard-border:  #7a5510;
-  --good:          #3ecf8e; --good-soft:  #0e2a1e; --good-border:  #1a6644;
-  --easy:          #4db8ff; --easy-soft:  #0e2030; --easy-border:  #1a5577;
-  --shadow:        0 8px 32px rgba(0,0,0,0.55);
-  --shadow-sm:     0 2px 12px rgba(0,0,0,0.35);
-}
 
-/* ══ RESET ══════════════════════════════════════════ */
+<!-- TWO COMPLETE STYLESHEETS - JS swaps them, no CSS variables needed -->
 
-- { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  html, body {
-  height: 100%;
-  background: var(–bg);
-  color: var(–text);
-  font-family: -apple-system, “SF Pro Display”, “Hiragino Sans”, “Yu Gothic UI”, BlinkMacSystemFont, sans-serif;
-  overflow: hidden;
-  user-select: none;
-  -webkit-user-select: none;
-  transition: background .3s, color .3s;
-  }
+<style id="theme-dark">
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;user-select:none;-webkit-user-select:none;
+  font-family:-apple-system,'Hiragino Sans','Yu Gothic UI',BlinkMacSystemFont,sans-serif;
+  background:#0d0d14;color:#f0f0f8;transition:background .3s,color .3s}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;
+  padding-top:calc(env(safe-area-inset-top,0px) + 12px);
+  padding-bottom:calc(env(safe-area-inset-bottom,0px) + 8px);
+  padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);
+  transition:opacity .22s ease,transform .22s ease}
+.screen.hidden{opacity:0;pointer-events:none;transform:translateY(16px)}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px}
+.scroll::-webkit-scrollbar{display:none}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:4px 20px 16px;flex-shrink:0}
+.nav-title{font-size:28px;font-weight:800;letter-spacing:-1.2px;color:#f0f0f8}
+.nav-title em{color:#6e66ff;font-style:normal}
+.nav-actions{display:flex;gap:8px;align-items:center}
+.icon-btn{background:#20202c;border:1.5px solid #2c2c3e;color:#f0f0f8;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.icon-btn:active{transform:scale(0.88);background:#272734}
+.stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:0 16px 16px;flex-shrink:0}
+.stat-box{background:#1a1a24;border:1.5px solid #2c2c3e;border-radius:16px;padding:14px 10px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.stat-val{font-size:24px;font-weight:800;letter-spacing:-0.5px;color:#f0f0f8}
+.stat-lbl{font-size:10px;color:#8888aa;text-transform:uppercase;letter-spacing:.7px;margin-top:3px}
+.sect{font-size:13px;font-weight:600;color:#8888aa;padding:2px 4px 10px}
+.deck-card{background:#1a1a24;border:1.5px solid #2c2c3e;border-radius:22px;padding:16px 18px;margin-bottom:10px;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.deck-card::after{content:'';position:absolute;left:0;top:14px;bottom:14px;width:4px;background:#6e66ff;border-radius:0 3px 3px 0}
+.deck-card:active{transform:scale(0.975);background:#20202c}
+.deck-emoji{font-size:28px;flex-shrink:0}
+.deck-info{flex:1;min-width:0}
+.deck-name{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;letter-spacing:-.2px;color:#f0f0f8}
+.deck-sub{font-size:12px;color:#8888aa}
+.deck-pills{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.pill{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px}
+.pill-new{background:#0e2030;color:#4db8ff;border:1px solid #1a5577}
+.pill-lrn{background:#2d2010;color:#ffaa44;border:1px solid #7a5510}
+.pill-rev{background:#0e2a1e;color:#3ecf8e;border:1px solid #1a6644}
+.pill-0{background:#20202c;color:#4a4a66;border:1px solid #2c2c3e}
+.deck-arr{color:#4a4a66;font-size:18px;flex-shrink:0}
+.import-strip{display:flex;align-items:center;gap:14px;background:#1a1a24;border:1.5px solid #2c2c3e;border-radius:16px;padding:15px 18px;cursor:pointer;transition:all .15s;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.import-strip:active{background:#20202c;transform:scale(0.98)}
+.import-strip-icon{font-size:24px}
+.import-strip-text{flex:1}
+.import-strip-title{font-size:14px;font-weight:600;color:#f0f0f8}
+.import-strip-sub{font-size:11px;color:#8888aa;margin-top:2px}
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:40px;text-align:center;color:#8888aa}
+.empty-icon{font-size:56px;margin-bottom:8px;opacity:.6}
+.empty h3{font-size:18px;font-weight:700;color:#f0f0f8}
+.empty p{font-size:14px;line-height:1.65}
+.study-bar{display:flex;align-items:center;padding:4px 16px 12px;gap:12px;flex-shrink:0}
+.back-btn{background:#20202c;border:1.5px solid #2c2c3e;color:#f0f0f8;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;transition:all .15s;flex-shrink:0}
+.back-btn:active{transform:scale(0.88)}
+.study-title{flex:1;font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#f0f0f8}
+.study-count{font-size:13px;color:#8888aa;font-weight:600;flex-shrink:0}
+.prog-wrap{padding:0 16px 14px;flex-shrink:0}
+.prog-track{height:4px;background:#20202c;border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;background:#6e66ff;border-radius:4px;transition:width .4s cubic-bezier(.4,0,.2,1)}
+.card-stage{flex:1;padding:0 16px;display:flex;flex-direction:column;min-height:0}
+.flashcard{flex:1;background:#1a1a24;border:1.5px solid #2c2c3e;border-radius:26px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;cursor:pointer;transition:transform .18s ease,box-shadow .2s;position:relative;overflow:hidden;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+.flashcard:active{transform:scale(0.982)}
+.card-type-badge{position:absolute;top:16px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:#4a4a66;background:#20202c;padding:4px 12px;border-radius:20px;border:1px solid #2c2c3e;white-space:nowrap}
+.card-audio-btn{position:absolute;top:13px;right:15px;background:#20202c;border:1.5px solid #2c2c3e;color:#a89fff;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;transition:all .15s}
+.card-audio-btn:active{transform:scale(0.88)}
+.card-main{width:100%;display:flex;flex-direction:column;align-items:center;gap:10px}
+.card-front-html{max-width:100%;word-break:break-word;color:#f0f0f8}
+.card-front-html img{max-width:100%;border-radius:14px}
+.card-divider{width:40px;height:1px;background:#2c2c3e;margin:16px auto;flex-shrink:0}
+.back-fields{width:100%;display:flex;flex-direction:column;gap:14px;max-height:40vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.back-fields::-webkit-scrollbar{display:none}
+.back-field{text-align:center}
+.back-field-label{font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#4a4a66;margin-bottom:5px}
+.back-field-val{font-size:clamp(14px,4vw,20px);color:#f0f0f8;line-height:1.45;word-break:break-word}
+.back-field-val.big{font-size:clamp(22px,6vw,36px)}
+.tap-hint{position:absolute;bottom:18px;font-size:11px;color:#4a4a66;display:flex;align-items:center;gap:6px}
+.tap-dot{width:5px;height:5px;border-radius:50%;background:#6e66ff;animation:pdot 2s infinite}
+@keyframes pdot{0%,100%{opacity:.3;transform:scale(1)}50%{opacity:1;transform:scale(1.5)}}
+.ans-wrap{padding:12px 16px 0;flex-shrink:0}
+.show-btn{display:block;width:100%;padding:17px;background:#6e66ff;color:#ffffff;border:none;border-radius:22px;font-size:16px;font-weight:700;letter-spacing:-.2px;cursor:pointer;font-family:inherit;transition:all .15s;box-shadow:0 4px 20px rgba(110,102,255,.4);-webkit-appearance:none;appearance:none}
+.show-btn:active{transform:scale(0.98);opacity:.88}
+.rating-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px}
+.r-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 4px 12px;border:2px solid;border-radius:16px;font-family:inherit;cursor:pointer;transition:all .15s;-webkit-appearance:none;appearance:none;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.r-btn:active{transform:scale(0.92)}
+.r-lbl{font-size:12px;font-weight:800;letter-spacing:.2px}
+.r-int{font-size:10px;font-weight:600;opacity:.75}
+.btn-again{background:#2d1020;border-color:#7a2035;color:#ff4d6d}
+.btn-hard{background:#2d2010;border-color:#7a5510;color:#ffaa44}
+.btn-good{background:#0e2a1e;border-color:#1a6644;color:#3ecf8e}
+.btn-easy{background:#0e2030;border-color:#1a5577;color:#4db8ff}
+.done-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;gap:16px;text-align:center}
+.done-icon{font-size:72px;animation:bncin .65s cubic-bezier(.36,.07,.19,.97)}
+@keyframes bncin{0%,100%{transform:translateY(0)}35%{transform:translateY(-20px)}65%{transform:translateY(-8px)}}
+.done-title{font-size:28px;font-weight:800;letter-spacing:-.8px;color:#f0f0f8}
+.done-sub{font-size:14px;color:#8888aa;max-width:230px;line-height:1.6}
+.done-row{display:flex;gap:30px;margin-top:6px}
+.done-stat{text-align:center}
+.done-stat-val{font-size:28px;font-weight:800;color:#f0f0f8}
+.done-stat-lbl{font-size:11px;color:#8888aa;margin-top:3px}
+.primary-btn{display:inline-block;padding:18px 36px;background:#6e66ff;color:#ffffff;border:none;border-radius:22px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;box-shadow:0 4px 24px rgba(110,102,255,.4);margin-top:8px;min-width:220px;-webkit-appearance:none;appearance:none}
+.primary-btn:active{transform:scale(0.97)}
+.modal-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:500;display:flex;align-items:flex-end;transition:opacity .25s}
+.modal-bg.hidden{opacity:0;pointer-events:none}
+.modal{background:#12121a;border-top:2px solid #2c2c3e;border-left:2px solid #2c2c3e;border-right:2px solid #2c2c3e;border-radius:30px 30px 0 0;width:100%;max-height:90vh;display:flex;flex-direction:column;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 10px);transform:translateY(0);transition:transform .3s cubic-bezier(.4,0,.2,1);box-shadow:0 -8px 40px rgba(0,0,0,.6)}
+.modal-bg.hidden .modal{transform:translateY(100%)}
+.modal-handle{width:38px;height:4px;background:#2c2c3e;border-radius:2px;margin:14px auto 8px;flex-shrink:0}
+.modal-title{font-size:18px;font-weight:700;padding:8px 22px 16px;flex-shrink:0;border-bottom:1.5px solid #2c2c3e;letter-spacing:-.3px;color:#f0f0f8}
+.modal-scroll{overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;padding:18px 22px}
+.modal-scroll::-webkit-scrollbar{display:none}
+.modal-footer{padding:16px 22px 6px;flex-shrink:0;border-top:1.5px solid #2c2c3e}
+.sort-section-label{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#4a4a66;margin-bottom:8px;padding-left:2px}
+.sortable-list{display:flex;flex-direction:column;border:1.5px solid #2c2c3e;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.sortable-item{display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid #222230;background:#1a1a24;transition:background .15s,opacity .15s;cursor:default;touch-action:none}
+.sortable-item:last-child{border-bottom:none}
+.sortable-item.drag-over-item{background:#1e1b3a}
+.field-drag{color:#4a4a66;font-size:20px;cursor:grab;flex-shrink:0;padding:2px 4px;line-height:1;touch-action:none}
+.field-drag:active{cursor:grabbing}
+.field-info{flex:1;min-width:0}
+.field-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#f0f0f8}
+.field-role{font-size:10px;margin-top:2px}
+.field-role-front{color:#a89fff}
+.field-role-back{color:#3ecf8e}
+.field-role-hidden{color:#4a4a66}
+.field-actions{display:flex;gap:5px;flex-shrink:0}
+.field-action-btn{background:#20202c;border:1.5px solid #2c2c3e;color:#8888aa;border-radius:8px;padding:5px 9px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap;-webkit-appearance:none}
+.field-action-btn:active{transform:scale(0.9)}
+.field-action-btn.active-front{background:#1e1b3a;border-color:#6e66ff;color:#a89fff}
+.field-action-btn.active-back{background:#0e2a1e;border-color:#1a6644;color:#3ecf8e}
+.field-action-btn.active-hide{background:#272734;border-color:#2c2c3e;color:#4a4a66}
+.settings-group{margin-bottom:24px}
+.settings-group-title{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#4a4a66;margin-bottom:10px}
+.settings-card{background:#1a1a24;border:1.5px solid #2c2c3e;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #222230;gap:12px;background:#1a1a24}
+.settings-row:last-child{border-bottom:none}
+.settings-row-info{flex:1}
+.settings-row-title{font-size:14px;font-weight:600;color:#f0f0f8}
+.settings-row-sub{font-size:12px;color:#8888aa;margin-top:2px;line-height:1.45}
+.toggle{width:51px;height:31px;background:#272734;border:2px solid #2c2c3e;border-radius:15.5px;position:relative;cursor:pointer;transition:background .22s,border-color .22s;flex-shrink:0;-webkit-appearance:none;appearance:none}
+.toggle.on{background:#34c759;border-color:#34c759}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:23px;height:23px;background:#fff;border-radius:50%;transition:transform .22s cubic-bezier(.4,0,.2,1);box-shadow:0 2px 6px rgba(0,0,0,.4)}
+.toggle.on::after{transform:translateX(20px)}
+.stepper{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.stepper-val{font-size:16px;font-weight:700;min-width:28px;text-align:center;color:#f0f0f8}
+.stepper-btn{background:#20202c;border:1.5px solid #2c2c3e;color:#f0f0f8;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;transition:all .15s;-webkit-appearance:none;font-family:inherit;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.stepper-btn:active{transform:scale(0.88);background:#272734}
+.segment{display:flex;background:#20202c;border:1.5px solid #2c2c3e;border-radius:10px;padding:3px;gap:3px;flex-shrink:0}
+.seg-btn{padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all .18s;color:#8888aa;background:transparent;border:none;font-family:inherit;-webkit-appearance:none;white-space:nowrap}
+.seg-btn.active{background:#1a1a24;color:#f0f0f8;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.s-input{background:#20202c;border:1.5px solid #2c2c3e;color:#f0f0f8;border-radius:11px;padding:12px 14px;font-size:14px;width:100%;font-family:inherit;outline:none;transition:border-color .15s;-webkit-appearance:none}
+.s-input:focus{border-color:#6e66ff}
+.s-input::placeholder{color:#4a4a66}
+.s-btn{display:block;width:100%;padding:14px;background:#20202c;border:1.5px solid #2c2c3e;color:#f0f0f8;border-radius:16px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;margin-top:8px;-webkit-appearance:none}
+.s-btn:active{transform:scale(0.97)}
+.s-btn.accent{background:#6e66ff;border-color:#6e66ff;color:#ffffff;box-shadow:0 3px 16px rgba(110,102,255,.4)}
+.s-btn.danger{color:#ff4d6d}
+.s-label{font-size:12px;color:#8888aa;font-weight:500;margin-bottom:5px;display:block}
+.s-hint{font-size:11px;color:#4a4a66;margin-top:5px;line-height:1.5}
+.status-badge{font-size:12px;padding:10px 14px;border-radius:11px;margin-top:8px;font-weight:500}
+.status-ok{background:#0e2a1e;color:#3ecf8e;border:1px solid #1a6644}
+.status-err{background:#2d1020;color:#ff4d6d;border:1px solid #7a2035}
+.status-info{background:#1e1b3a;color:#a89fff;border:1px solid #6e66ff}
+.sync-indicator{display:flex;align-items:center;gap:5px}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#4a4a66;flex-shrink:0;transition:background .3s}
+.sync-dot.syncing{background:#ffaa44;animation:pdot 1s infinite}
+.sync-dot.synced{background:#3ecf8e}
+.sync-dot.error{background:#ff4d6d}
+.sync-lbl{font-size:11px;color:#4a4a66}
+#toast{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 96px);left:50%;transform:translateX(-50%) translateY(14px);background:#1a1a24;border:1.5px solid #2c2c3e;color:#f0f0f8;padding:12px 22px;border-radius:40px;font-size:13px;font-weight:600;z-index:600;opacity:0;transition:all .28s;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#loaderOverlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#0d0d14;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:700;gap:16px;transition:opacity .3s}
+#loaderOverlay.gone{opacity:0;pointer-events:none}
+.loader-logo{font-size:40px;font-weight:800;letter-spacing:-1.5px;color:#f0f0f8}
+.loader-logo em{color:#6e66ff;font-style:normal}
+.spinner{width:32px;height:32px;border:3px solid #2c2c3e;border-top-color:#6e66ff;border-radius:50%;animation:spin .75s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-msg{font-size:13px;color:#4a4a66;min-height:18px}
+@keyframes cardOut{to{transform:translateX(-115%);opacity:0}}
+@keyframes cardIn{from{transform:translateX(115%);opacity:0}}
+.c-out{animation:cardOut .22s ease forwards}
+.c-in{animation:cardIn .22s ease forwards}
+</style>
 
-/* ══ SCREENS ════════════════════════════════════════ */
-.screen {
-position: absolute; inset: 0;
-display: flex; flex-direction: column;
-padding-top: calc(var(–safe-t) + 8px);
-padding-bottom: calc(var(–safe-b) + 8px);
-padding-left: var(–safe-l); padding-right: var(–safe-r);
-transition: opacity .22s ease, transform .22s ease;
-}
-.screen.hidden { opacity: 0; pointer-events: none; transform: translateY(16px); }
-@supports (padding-top: env(safe-area-inset-top)) {
-.screen { padding-top: calc(env(safe-area-inset-top) + 12px); }
-}
-
-/* ══ SCROLL ═════════════════════════════════════════ */
-.scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0 16px; }
-.scroll::-webkit-scrollbar { display: none; }
-
-/* ══ NAV ════════════════════════════════════════════ */
-.nav { display: flex; align-items: center; justify-content: space-between; padding: 4px 20px 16px; flex-shrink: 0; }
-.nav-title { font-size: 28px; font-weight: 800; letter-spacing: -1.2px; }
-.nav-title em { color: var(–accent); font-style: normal; }
-.nav-actions { display: flex; gap: 8px; align-items: center; }
-.icon-btn {
-background: var(–surface2);
-border: 1.5px solid var(–border);
-color: var(–text);
-border-radius: 50%; width: 40px; height: 40px;
-display: flex; align-items: center; justify-content: center;
-font-size: 17px; cursor: pointer;
-transition: all .15s;
-box-shadow: var(–shadow-sm);
-}
-.icon-btn:active { transform: scale(0.88); background: var(–surface3); }
-
-/* ══ STATS ROW ══════════════════════════════════════ */
-.stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 0 16px 16px; flex-shrink: 0; }
-.stat-box {
-background: var(–surface);
-border: 1.5px solid var(–border);
-border-radius: var(–r-sm);
-padding: 14px 10px; text-align: center;
-box-shadow: var(–shadow-sm);
-}
-.stat-val { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
-.stat-lbl { font-size: 10px; color: var(–text-muted); text-transform: uppercase; letter-spacing: .7px; margin-top: 3px; }
-
-/* ══ SECTION LABEL ══════════════════════════════════ */
-.sect { font-size: 13px; font-weight: 600; color: var(–text-muted); padding: 2px 4px 10px; }
-
-/* ══ DECK CARD ══════════════════════════════════════ */
-.deck-card {
-background: var(–surface);
-border: 1.5px solid var(–border);
-border-radius: var(–r);
-padding: 16px 18px; margin-bottom: 10px;
-cursor: pointer; transition: all .18s;
-display: flex; align-items: center; gap: 14px;
-position: relative; overflow: hidden;
-box-shadow: var(–shadow-sm);
-}
-.deck-card::after {
-content: ‘’; position: absolute; left: 0; top: 14px; bottom: 14px;
-width: 4px; background: var(–accent); border-radius: 0 3px 3px 0;
-}
-.deck-card:active { transform: scale(0.975); box-shadow: none; background: var(–surface2); }
-.deck-emoji { font-size: 28px; flex-shrink: 0; }
-.deck-info { flex: 1; min-width: 0; }
-.deck-name { font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; letter-spacing: -.2px; }
-.deck-sub { font-size: 12px; color: var(–text-muted); }
-.deck-pills { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
-.pill { font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; }
-.pill-new { background: var(–easy-soft); color: var(–easy); border: 1px solid var(–easy-border); }
-.pill-lrn { background: var(–hard-soft); color: var(–hard); border: 1px solid var(–hard-border); }
-.pill-rev { background: var(–good-soft); color: var(–good); border: 1px solid var(–good-border); }
-.pill-0   { background: var(–surface2); color: var(–text-dim); border: 1px solid var(–border); }
-.deck-arr { color: var(–text-dim); font-size: 18px; flex-shrink: 0; }
-
-/* ══ IMPORT STRIP ═══════════════════════════════════ */
-.import-strip {
-display: flex; align-items: center; gap: 14px;
-background: var(–surface); border: 1.5px solid var(–border);
-border-radius: var(–r-sm); padding: 15px 18px; cursor: pointer;
-transition: all .15s; margin-bottom: 14px;
-box-shadow: var(–shadow-sm);
-}
-.import-strip:active { background: var(–surface2); transform: scale(0.98); }
-.import-strip-icon { font-size: 24px; }
-.import-strip-text { flex: 1; }
-.import-strip-title { font-size: 14px; font-weight: 600; }
-.import-strip-sub { font-size: 11px; color: var(–text-muted); margin-top: 2px; }
-
-/* ══ EMPTY STATE ════════════════════════════════════ */
-.empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 40px; text-align: center; color: var(–text-muted); }
-.empty-icon { font-size: 56px; margin-bottom: 8px; opacity: .6; }
-.empty h3 { font-size: 18px; font-weight: 700; color: var(–text); }
-.empty p { font-size: 14px; line-height: 1.65; }
-
-/* ══ STUDY BAR ══════════════════════════════════════ */
-.study-bar { display: flex; align-items: center; padding: 4px 16px 12px; gap: 12px; flex-shrink: 0; }
-.back-btn {
-background: var(–surface2); border: 1.5px solid var(–border);
-color: var(–text); border-radius: 50%; width: 38px; height: 38px;
-display: flex; align-items: center; justify-content: center;
-font-size: 16px; cursor: pointer; transition: all .15s; flex-shrink: 0;
-}
-.back-btn:active { transform: scale(0.88); }
-.study-title { flex: 1; font-size: 15px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: -.2px; }
-.study-count { font-size: 13px; color: var(–text-muted); font-weight: 600; flex-shrink: 0; }
-
-/* ══ PROGRESS BAR ═══════════════════════════════════ */
-.prog-wrap { padding: 0 16px 14px; flex-shrink: 0; }
-.prog-track { height: 4px; background: var(–surface2); border-radius: 4px; overflow: hidden; }
-.prog-fill { height: 100%; background: var(–accent); border-radius: 4px; transition: width .4s cubic-bezier(.4,0,.2,1); }
-
-/* ══ FLASHCARD ══════════════════════════════════════ */
-.card-stage { flex: 1; padding: 0 16px; display: flex; flex-direction: column; min-height: 0; }
-.flashcard {
-flex: 1;
-background: var(–surface);
-border: 1.5px solid var(–border);
-border-radius: 26px;
-display: flex; flex-direction: column; align-items: center; justify-content: center;
-padding: 32px 24px; cursor: pointer;
-transition: transform .18s ease, box-shadow .2s;
-position: relative; overflow: hidden; text-align: center;
-box-shadow: var(–shadow);
-}
-.flashcard:active { transform: scale(0.982); box-shadow: var(–shadow-sm); }
-.card-type-badge {
-position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
-font-size: 9px; font-weight: 800; letter-spacing: 1.4px; text-transform: uppercase;
-color: var(–text-dim); background: var(–surface2);
-padding: 4px 12px; border-radius: 20px; border: 1px solid var(–border);
-white-space: nowrap;
-}
-.card-audio-btn {
-position: absolute; top: 13px; right: 15px;
-background: var(–surface2); border: 1.5px solid var(–border);
-color: var(–accent2); border-radius: 50%; width: 36px; height: 36px;
-display: flex; align-items: center; justify-content: center;
-font-size: 16px; cursor: pointer; transition: all .15s;
-}
-.card-audio-btn:active { transform: scale(0.88); }
-.card-main { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-.card-front-html { max-width: 100%; word-break: break-word; }
-.card-front-html img { max-width: 100%; border-radius: 14px; }
-.card-divider { width: 40px; height: 1px; background: var(–border); margin: 16px auto; flex-shrink: 0; }
-.back-fields { width: 100%; display: flex; flex-direction: column; gap: 14px; max-height: 40vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-.back-fields::-webkit-scrollbar { display: none; }
-.back-field { text-align: center; }
-.back-field-label { font-size: 9px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(–text-dim); margin-bottom: 5px; }
-.back-field-val { font-size: clamp(14px,4vw,20px); color: var(–text); line-height: 1.45; word-break: break-word; }
-.back-field-val.big { font-size: clamp(22px,6vw,36px); }
-.tap-hint { position: absolute; bottom: 18px; font-size: 11px; color: var(–text-dim); display: flex; align-items: center; gap: 6px; }
-.tap-dot { width: 5px; height: 5px; border-radius: 50%; background: var(–accent); animation: pdot 2s infinite; }
-@keyframes pdot { 0%,100%{opacity:.3;transform:scale(1)} 50%{opacity:1;transform:scale(1.5)} }
-
-/* ══ ANSWER BUTTONS ═════════════════════════════════ */
-.ans-wrap { padding: 12px 16px 0; flex-shrink: 0; }
-
-.show-btn {
-display: block; width: 100%; padding: 17px;
-background: var(–accent);
-color: #ffffff;
-border: none; border-radius: var(–r);
-font-size: 16px; font-weight: 700; letter-spacing: -.2px;
-cursor: pointer; font-family: inherit;
-transition: all .15s;
-box-shadow: 0 4px 20px var(–accent-glow);
--webkit-appearance: none; appearance: none;
-}
-.show-btn:active { transform: scale(0.98); opacity: .88; }
-
-.rating-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; }
-.r-btn {
-display: flex; flex-direction: column; align-items: center; gap: 4px;
-padding: 14px 4px 12px;
-border: 2px solid;
-border-radius: var(–r-sm);
-font-family: inherit; cursor: pointer;
-transition: all .15s;
--webkit-appearance: none; appearance: none;
-box-shadow: var(–shadow-sm);
-}
-.r-btn:active { transform: scale(0.92); }
-.r-lbl { font-size: 12px; font-weight: 800; letter-spacing: .2px; }
-.r-int { font-size: 10px; font-weight: 600; opacity: .75; }
-.btn-again { background: var(–again-soft); border-color: var(–again-border); color: var(–again); }
-.btn-hard  { background: var(–hard-soft);  border-color: var(–hard-border);  color: var(–hard);  }
-.btn-good  { background: var(–good-soft);  border-color: var(–good-border);  color: var(–good);  }
-.btn-easy  { background: var(–easy-soft);  border-color: var(–easy-border);  color: var(–easy);  }
-
-/* ══ DONE SCREEN ════════════════════════════════════ */
-.done-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px; gap: 16px; text-align: center; }
-.done-icon { font-size: 72px; animation: bncin .65s cubic-bezier(.36,.07,.19,.97); }
-@keyframes bncin { 0%,100%{transform:translateY(0)} 35%{transform:translateY(-20px)} 65%{transform:translateY(-8px)} }
-.done-title { font-size: 28px; font-weight: 800; letter-spacing: -.8px; }
-.done-sub { font-size: 14px; color: var(–text-muted); max-width: 230px; line-height: 1.6; }
-.done-row { display: flex; gap: 30px; margin-top: 6px; }
-.done-stat { text-align: center; }
-.done-stat-val { font-size: 28px; font-weight: 800; }
-.done-stat-lbl { font-size: 11px; color: var(–text-muted); margin-top: 3px; }
-.primary-btn {
-display: inline-block; padding: 18px 36px;
-background: var(–accent);
-color: #ffffff;
-border: none; border-radius: var(–r);
-font-size: 16px; font-weight: 700; letter-spacing: -.2px;
-cursor: pointer; font-family: inherit;
-transition: all .15s;
-box-shadow: 0 4px 24px var(–accent-glow);
-margin-top: 8px; min-width: 220px;
--webkit-appearance: none; appearance: none;
-}
-.primary-btn:active { transform: scale(0.97); }
-
-/* ══ MODAL ══════════════════════════════════════════ */
-.modal-bg {
-position: fixed;
-top: 0; left: 0; right: 0; bottom: 0;
-background: rgba(0,0,0,0.65);
-z-index: 500;
-display: flex;
-align-items: flex-end;
-transition: opacity .25s;
--webkit-overflow-scrolling: touch;
-}
-.modal-bg.hidden { opacity: 0; pointer-events: none; }
-.modal {
-background: #12121a;
-border-top: 1.5px solid #2c2c3e;
-border-left: 1.5px solid #2c2c3e;
-border-right: 1.5px solid #2c2c3e;
-border-radius: 30px 30px 0 0;
-width: 100%;
-max-height: 90vh;
-display: flex;
-flex-direction: column;
-padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
-transform: translateY(0);
-transition: transform .3s cubic-bezier(.4,0,.2,1);
-box-shadow: 0 -8px 40px rgba(0,0,0,.5);
-position: relative;
-z-index: 501;
-}
-.modal-bg.hidden .modal { transform: translateY(100%); }
-[data-theme=“light”] .modal {
-background: #f2f2f7;
-border-color: #d8d8e8;
-}
-.modal-handle { width: 38px; height: 4px; background: var(–border); border-radius: 2px; margin: 14px auto 8px; flex-shrink: 0; }
-.modal-title {
-font-size: 18px; font-weight: 700;
-padding: 8px 22px 16px; flex-shrink: 0;
-border-bottom: 1.5px solid #2c2c3e;
-letter-spacing: -.3px;
-color: var(–text);
-}
-[data-theme=“light”] .modal-title { border-color: #d8d8e8; }
-.modal-scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1; padding: 18px 22px; }
-.modal-scroll::-webkit-scrollbar { display: none; }
-.modal-footer {
-padding: 16px 22px 6px; flex-shrink: 0;
-border-top: 1.5px solid #2c2c3e;
-}
-[data-theme=“light”] .modal-footer { border-top-color: #d8d8e8; }
-
-/* ══ FIELD SORT ═════════════════════════════════════ */
-.sort-section-label { font-size: 11px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(–text-dim); margin-bottom: 8px; padding-left: 2px; }
-.sortable-list {
-display: flex; flex-direction: column;
-border: 1.5px solid #2c2c3e;
-border-radius: 16px; overflow: hidden;
-box-shadow: 0 2px 12px rgba(0,0,0,0.35);
-}
-[data-theme=“light”] .sortable-list { border-color: #d8d8e8; }
-.sortable-item {
-display: flex; align-items: center; gap: 12px; padding: 13px 14px;
-border-bottom: 1px solid #222230;
-background: #1a1a24;
-transition: background .15s, opacity .15s;
-cursor: default; touch-action: none;
-}
-[data-theme=“light”] .sortable-item { background: #ffffff; border-color: #e8e8f0; }
-.sortable-item:last-child { border-bottom: none; }
-.sortable-item.drag-over-item { background: var(–accent-soft); }
-.field-drag { color: var(–text-dim); font-size: 20px; cursor: grab; flex-shrink: 0; padding: 2px 4px; line-height: 1; touch-action: none; }
-.field-drag:active { cursor: grabbing; }
-.field-info { flex: 1; min-width: 0; }
-.field-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.field-role { font-size: 10px; margin-top: 2px; }
-.field-role-front  { color: var(–accent2); }
-.field-role-back   { color: var(–good); }
-.field-role-hidden { color: var(–text-dim); }
-.field-actions { display: flex; gap: 5px; flex-shrink: 0; }
-.field-action-btn {
-background: var(–surface2); border: 1.5px solid var(–border);
-color: var(–text-muted); border-radius: 8px; padding: 5px 9px;
-font-size: 10px; font-weight: 700; cursor: pointer; font-family: inherit;
-transition: all .15s; white-space: nowrap; -webkit-appearance: none;
-}
-.field-action-btn:active { transform: scale(0.9); }
-.field-action-btn.active-front { background: var(–accent-soft); border-color: var(–accent); color: var(–accent2); }
-.field-action-btn.active-back  { background: var(–good-soft);   border-color: var(–good-border); color: var(–good); }
-.field-action-btn.active-hide  { background: var(–surface3);    border-color: var(–border2);     color: var(–text-dim); }
-
-/* ══ SETTINGS ═══════════════════════════════════════ */
-.settings-group { margin-bottom: 24px; }
-.settings-group-title { font-size: 11px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(–text-dim); margin-bottom: 10px; }
-.settings-card {
-background: #1a1a24;
-border: 1.5px solid #2c2c3e;
-border-radius: 16px;
-overflow: hidden;
-box-shadow: 0 2px 12px rgba(0,0,0,0.35);
-}
-[data-theme=“light”] .settings-card {
-background: #ffffff;
-border-color: #d8d8e8;
-box-shadow: 0 1px 6px rgba(0,0,0,0.08);
-}
-.settings-row {
-display: flex; align-items: center; justify-content: space-between;
-padding: 14px 16px;
-border-bottom: 1px solid #222230;
-gap: 12px;
-background: #1a1a24;
-}
-[data-theme=“light”] .settings-row { background: #ffffff; border-color: #e8e8f0; }
-.settings-row:last-child { border-bottom: none; }
-.settings-row-info { flex: 1; }
-.settings-row-title { font-size: 14px; font-weight: 600; }
-.settings-row-sub { font-size: 12px; color: var(–text-muted); margin-top: 2px; line-height: 1.45; }
-
-/* iOS-style toggle */
-.toggle {
-width: 51px; height: 31px;
-background: var(–surface3);
-border: 2px solid var(–border);
-border-radius: 15.5px; position: relative;
-cursor: pointer; transition: background .22s, border-color .22s;
-flex-shrink: 0; -webkit-appearance: none; appearance: none;
-}
-.toggle.on { background: #34c759; border-color: #34c759; }
-.toggle::after {
-content: ‘’; position: absolute; top: 2px; left: 2px;
-width: 23px; height: 23px; background: #fff;
-border-radius: 50%; transition: transform .22s cubic-bezier(.4,0,.2,1);
-box-shadow: 0 2px 6px rgba(0,0,0,.3);
-}
-.toggle.on::after { transform: translateX(20px); }
-
-/* Stepper */
-.stepper { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.stepper-val { font-size: 16px; font-weight: 700; min-width: 28px; text-align: center; }
-.stepper-btn {
-background: #20202c;
-border: 1.5px solid #2c2c3e;
-color: #f0f0f8;
-border-radius: 50%; width: 32px; height: 32px;
-display: flex; align-items: center; justify-content: center;
-font-size: 18px; cursor: pointer; transition: all .15s;
--webkit-appearance: none; font-family: inherit;
-box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-}
-[data-theme=“light”] .stepper-btn { background: #f5f5fa; border-color: #d8d8e8; color: #1c1c1e; }
-.stepper-btn:active { transform: scale(0.88); background: var(–surface3); }
-
-/* Segmented control */
-.segment {
-display: flex;
-background: #20202c;
-border: 1.5px solid #2c2c3e;
-border-radius: 10px;
-padding: 3px; gap: 3px; flex-shrink: 0;
-}
-[data-theme=“light”] .segment { background: #ededf4; border-color: #d8d8e8; }
-.seg-btn {
-padding: 6px 12px; border-radius: 8px;
-font-size: 12px; font-weight: 600;
-cursor: pointer; transition: all .18s;
-color: var(–text-muted);
-background: transparent; border: none; font-family: inherit;
--webkit-appearance: none; white-space: nowrap;
-}
-.seg-btn.active {
-background: #1a1a24;
-color: #f0f0f8;
-box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-}
-[data-theme=“light”] .seg-btn.active {
-background: #ffffff;
-color: #1c1c1e;
-}
-
-/* Settings inputs & buttons */
-.s-input {
-background: var(–surface2); border: 1.5px solid var(–border);
-color: var(–text); border-radius: var(–r-xs); padding: 12px 14px;
-font-size: 14px; width: 100%; font-family: inherit;
-outline: none; transition: border-color .15s; -webkit-appearance: none;
-}
-.s-input:focus { border-color: var(–accent); }
-.s-input::placeholder { color: var(–text-dim); }
-.s-btn {
-display: block; width: 100%; padding: 14px;
-background: var(–surface2); border: 1.5px solid var(–border);
-color: var(–text); border-radius: var(–r-sm);
-font-size: 14px; font-weight: 700;
-cursor: pointer; font-family: inherit; transition: all .15s;
-margin-top: 8px; -webkit-appearance: none;
-}
-.s-btn:active { transform: scale(0.97); }
-.s-btn.accent { background: var(–accent); border-color: var(–accent); color: #ffffff; box-shadow: 0 3px 16px var(–accent-glow); }
-.s-btn.danger { color: var(–again); }
-.s-label { font-size: 12px; color: var(–text-muted); font-weight: 500; margin-bottom: 5px; display: block; }
-.s-hint { font-size: 11px; color: var(–text-dim); margin-top: 5px; line-height: 1.5; }
-.status-badge { font-size: 12px; padding: 10px 14px; border-radius: var(–r-xs); margin-top: 8px; font-weight: 500; }
-.status-ok   { background: var(–good-soft);   color: var(–good);   border: 1px solid var(–good-border); }
-.status-err  { background: var(–again-soft);  color: var(–again);  border: 1px solid var(–again-border); }
-.status-info { background: var(–accent-soft); color: var(–accent2); border: 1px solid var(–accent); }
-
-/* ══ SYNC INDICATOR ══════════════════════════════════ */
-.sync-indicator { display: flex; align-items: center; gap: 5px; }
-.sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(–text-dim); flex-shrink: 0; transition: background .3s; }
-.sync-dot.syncing { background: var(–hard); animation: pdot 1s infinite; }
-.sync-dot.synced  { background: var(–good); }
-.sync-dot.error   { background: var(–again); }
-.sync-lbl { font-size: 11px; color: var(–text-dim); }
-
-/* ══ TOAST ══════════════════════════════════════════ */
-#toast {
-position: fixed; bottom: calc(var(–safe-b) + 96px); left: 50%;
-transform: translateX(-50%) translateY(14px);
-background: var(–surface-solid); border: 1.5px solid var(–border);
-color: var(–text); padding: 12px 22px; border-radius: 40px;
-font-size: 13px; font-weight: 600; z-index: 300; opacity: 0;
-transition: all .28s; white-space: nowrap;
-box-shadow: var(–shadow);
-}
-#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-/* ══ LOADER ══════════════════════════════════════════ */
-#loaderOverlay {
-position: fixed; inset: 0; background: var(–bg);
-display: flex; flex-direction: column; align-items: center; justify-content: center;
-z-index: 100; gap: 16px; transition: opacity .3s;
-}
-#loaderOverlay.gone { opacity: 0; pointer-events: none; }
-.loader-logo { font-size: 40px; font-weight: 800; letter-spacing: -1.5px; }
-.loader-logo em { color: var(–accent); font-style: normal; }
-.spinner { width: 32px; height: 32px; border: 3px solid var(–border); border-top-color: var(–accent); border-radius: 50%; animation: spin .75s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.loader-msg { font-size: 13px; color: var(–text-dim); min-height: 18px; }
-
-/* ══ CARD ANIMATION ══════════════════════════════════ */
-@keyframes cardOut { to { transform: translateX(-115%); opacity: 0; } }
-@keyframes cardIn  { from { transform: translateX(115%); opacity: 0; } }
-.c-out { animation: cardOut .22s ease forwards; }
-.c-in  { animation: cardIn  .22s ease forwards; }
-
-/* Auto mode: follow iOS system setting when no data-theme is set */
-@media (prefers-color-scheme: dark) {
-:root:not([data-theme=“light”]) {
-color-scheme: dark;
-–bg:            #0d0d14;
-–bg2:           #12121a;
-–surface:       #1a1a24;
-–surface2:      #20202c;
-–surface3:      #272734;
-–surface-solid: #1a1a24;
-–border:        #2c2c3e;
-–border2:       #222230;
-–text:          #f0f0f8;
-–text-muted:    #8888aa;
-–text-dim:      #4a4a66;
-–accent:        #6e66ff;
-–accent2:       #a89fff;
-–accent-soft:   #1e1b3a;
-–accent-glow:   rgba(110,102,255,0.30);
-–again:         #ff4d6d; –again-soft: #2d1020; –again-border: #7a2035;
-–hard:          #ffaa44; –hard-soft:  #2d2010; –hard-border:  #7a5510;
-–good:          #3ecf8e; –good-soft:  #0e2a1e; –good-border:  #1a6644;
-–easy:          #4db8ff; –easy-soft:  #0e2030; –easy-border:  #1a5577;
-–shadow:        0 8px 32px rgba(0,0,0,0.55);
-–shadow-sm:     0 2px 12px rgba(0,0,0,0.35);
-}
-}
+<style id="theme-light" disabled>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;user-select:none;-webkit-user-select:none;
+  font-family:-apple-system,'Hiragino Sans','Yu Gothic UI',BlinkMacSystemFont,sans-serif;
+  background:#f2f2f7;color:#1c1c1e;transition:background .3s,color .3s}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;
+  padding-top:calc(env(safe-area-inset-top,0px) + 12px);
+  padding-bottom:calc(env(safe-area-inset-bottom,0px) + 8px);
+  padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);
+  transition:opacity .22s ease,transform .22s ease}
+.screen.hidden{opacity:0;pointer-events:none;transform:translateY(16px)}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px}
+.scroll::-webkit-scrollbar{display:none}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:4px 20px 16px;flex-shrink:0}
+.nav-title{font-size:28px;font-weight:800;letter-spacing:-1.2px;color:#1c1c1e}
+.nav-title em{color:#5856d6;font-style:normal}
+.nav-actions{display:flex;gap:8px;align-items:center}
+.icon-btn{background:#f5f5fa;border:1.5px solid #d8d8e8;color:#1c1c1e;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;transition:all .15s;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.icon-btn:active{transform:scale(0.88);background:#ededf4}
+.stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:0 16px 16px;flex-shrink:0}
+.stat-box{background:#ffffff;border:1.5px solid #d8d8e8;border-radius:16px;padding:14px 10px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.stat-val{font-size:24px;font-weight:800;letter-spacing:-0.5px;color:#1c1c1e}
+.stat-lbl{font-size:10px;color:#6b6b80;text-transform:uppercase;letter-spacing:.7px;margin-top:3px}
+.sect{font-size:13px;font-weight:600;color:#6b6b80;padding:2px 4px 10px}
+.deck-card{background:#ffffff;border:1.5px solid #d8d8e8;border-radius:22px;padding:16px 18px;margin-bottom:10px;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.deck-card::after{content:'';position:absolute;left:0;top:14px;bottom:14px;width:4px;background:#5856d6;border-radius:0 3px 3px 0}
+.deck-card:active{transform:scale(0.975);background:#f5f5fa}
+.deck-emoji{font-size:28px;flex-shrink:0}
+.deck-info{flex:1;min-width:0}
+.deck-name{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;letter-spacing:-.2px;color:#1c1c1e}
+.deck-sub{font-size:12px;color:#6b6b80}
+.deck-pills{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.pill{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px}
+.pill-new{background:#eef6ff;color:#0065c0;border:1px solid #1a5577}
+.pill-lrn{background:#fff8ee;color:#c07000;border:1px solid #7a5510}
+.pill-rev{background:#edfff7;color:#008055;border:1px solid #1a6644}
+.pill-0{background:#f5f5fa;color:#aaaabb;border:1px solid #d8d8e8}
+.deck-arr{color:#aaaabb;font-size:18px;flex-shrink:0}
+.import-strip{display:flex;align-items:center;gap:14px;background:#ffffff;border:1.5px solid #d8d8e8;border-radius:16px;padding:15px 18px;cursor:pointer;transition:all .15s;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.import-strip:active{background:#f5f5fa;transform:scale(0.98)}
+.import-strip-icon{font-size:24px}
+.import-strip-text{flex:1}
+.import-strip-title{font-size:14px;font-weight:600;color:#1c1c1e}
+.import-strip-sub{font-size:11px;color:#6b6b80;margin-top:2px}
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:40px;text-align:center;color:#6b6b80}
+.empty-icon{font-size:56px;margin-bottom:8px;opacity:.6}
+.empty h3{font-size:18px;font-weight:700;color:#1c1c1e}
+.empty p{font-size:14px;line-height:1.65}
+.study-bar{display:flex;align-items:center;padding:4px 16px 12px;gap:12px;flex-shrink:0}
+.back-btn{background:#f5f5fa;border:1.5px solid #d8d8e8;color:#1c1c1e;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;transition:all .15s;flex-shrink:0}
+.back-btn:active{transform:scale(0.88)}
+.study-title{flex:1;font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#1c1c1e}
+.study-count{font-size:13px;color:#6b6b80;font-weight:600;flex-shrink:0}
+.prog-wrap{padding:0 16px 14px;flex-shrink:0}
+.prog-track{height:4px;background:#f5f5fa;border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;background:#5856d6;border-radius:4px;transition:width .4s cubic-bezier(.4,0,.2,1)}
+.card-stage{flex:1;padding:0 16px;display:flex;flex-direction:column;min-height:0}
+.flashcard{flex:1;background:#ffffff;border:1.5px solid #d8d8e8;border-radius:26px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;cursor:pointer;transition:transform .18s ease,box-shadow .2s;position:relative;overflow:hidden;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.08)}
+.flashcard:active{transform:scale(0.982)}
+.card-type-badge{position:absolute;top:16px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:#aaaabb;background:#f5f5fa;padding:4px 12px;border-radius:20px;border:1px solid #d8d8e8;white-space:nowrap}
+.card-audio-btn{position:absolute;top:13px;right:15px;background:#f5f5fa;border:1.5px solid #d8d8e8;color:#7370e0;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;transition:all .15s}
+.card-audio-btn:active{transform:scale(0.88)}
+.card-main{width:100%;display:flex;flex-direction:column;align-items:center;gap:10px}
+.card-front-html{max-width:100%;word-break:break-word;color:#1c1c1e}
+.card-front-html img{max-width:100%;border-radius:14px}
+.card-divider{width:40px;height:1px;background:#2c2c3e;margin:16px auto;flex-shrink:0}
+.back-fields{width:100%;display:flex;flex-direction:column;gap:14px;max-height:40vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.back-fields::-webkit-scrollbar{display:none}
+.back-field{text-align:center}
+.back-field-label{font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#aaaabb;margin-bottom:5px}
+.back-field-val{font-size:clamp(14px,4vw,20px);color:#1c1c1e;line-height:1.45;word-break:break-word}
+.back-field-val.big{font-size:clamp(22px,6vw,36px)}
+.tap-hint{position:absolute;bottom:18px;font-size:11px;color:#aaaabb;display:flex;align-items:center;gap:6px}
+.tap-dot{width:5px;height:5px;border-radius:50%;background:#5856d6;animation:pdot 2s infinite}
+@keyframes pdot{0%,100%{opacity:.3;transform:scale(1)}50%{opacity:1;transform:scale(1.5)}}
+.ans-wrap{padding:12px 16px 0;flex-shrink:0}
+.show-btn{display:block;width:100%;padding:17px;background:#5856d6;color:#ffffff;border:none;border-radius:22px;font-size:16px;font-weight:700;letter-spacing:-.2px;cursor:pointer;font-family:inherit;transition:all .15s;box-shadow:0 4px 16px rgba(88,86,214,.3);-webkit-appearance:none;appearance:none}
+.show-btn:active{transform:scale(0.98);opacity:.88}
+.rating-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px}
+.r-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 4px 12px;border:2px solid;border-radius:16px;font-family:inherit;cursor:pointer;transition:all .15s;-webkit-appearance:none;appearance:none;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.r-btn:active{transform:scale(0.92)}
+.r-lbl{font-size:12px;font-weight:800;letter-spacing:.2px}
+.r-int{font-size:10px;font-weight:600;opacity:.75}
+.btn-again{background:#fff0f2;border-color:#7a2035;color:#e0001e}
+.btn-hard{background:#fff8ee;border-color:#7a5510;color:#c07000}
+.btn-good{background:#edfff7;border-color:#1a6644;color:#008055}
+.btn-easy{background:#eef6ff;border-color:#1a5577;color:#0065c0}
+.done-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;gap:16px;text-align:center}
+.done-icon{font-size:72px;animation:bncin .65s cubic-bezier(.36,.07,.19,.97)}
+@keyframes bncin{0%,100%{transform:translateY(0)}35%{transform:translateY(-20px)}65%{transform:translateY(-8px)}}
+.done-title{font-size:28px;font-weight:800;letter-spacing:-.8px;color:#1c1c1e}
+.done-sub{font-size:14px;color:#6b6b80;max-width:230px;line-height:1.6}
+.done-row{display:flex;gap:30px;margin-top:6px}
+.done-stat{text-align:center}
+.done-stat-val{font-size:28px;font-weight:800;color:#1c1c1e}
+.done-stat-lbl{font-size:11px;color:#6b6b80;margin-top:3px}
+.primary-btn{display:inline-block;padding:18px 36px;background:#5856d6;color:#ffffff;border:none;border-radius:22px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;box-shadow:0 4px 16px rgba(88,86,214,.3);margin-top:8px;min-width:220px;-webkit-appearance:none;appearance:none}
+.primary-btn:active{transform:scale(0.97)}
+.modal-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:500;display:flex;align-items:flex-end;transition:opacity .25s}
+.modal-bg.hidden{opacity:0;pointer-events:none}
+.modal{background:#f2f2f7;border-top:2px solid #d8d8e8;border-left:2px solid #d8d8e8;border-right:2px solid #d8d8e8;border-radius:30px 30px 0 0;width:100%;max-height:90vh;display:flex;flex-direction:column;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 10px);transform:translateY(0);transition:transform .3s cubic-bezier(.4,0,.2,1);box-shadow:0 -4px 20px rgba(0,0,0,.12)}
+.modal-bg.hidden .modal{transform:translateY(100%)}
+.modal-handle{width:38px;height:4px;background:#2c2c3e;border-radius:2px;margin:14px auto 8px;flex-shrink:0}
+.modal-title{font-size:18px;font-weight:700;padding:8px 22px 16px;flex-shrink:0;border-bottom:1.5px solid #d8d8e8;letter-spacing:-.3px;color:#1c1c1e}
+.modal-scroll{overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;padding:18px 22px}
+.modal-scroll::-webkit-scrollbar{display:none}
+.modal-footer{padding:16px 22px 6px;flex-shrink:0;border-top:1.5px solid #d8d8e8}
+.sort-section-label{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#aaaabb;margin-bottom:8px;padding-left:2px}
+.sortable-list{display:flex;flex-direction:column;border:1.5px solid #d8d8e8;border-radius:16px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.sortable-item{display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid #e8e8f0;background:#ffffff;transition:background .15s,opacity .15s;cursor:default;touch-action:none}
+.sortable-item:last-child{border-bottom:none}
+.sortable-item.drag-over-item{background:#eeeeff}
+.field-drag{color:#aaaabb;font-size:20px;cursor:grab;flex-shrink:0;padding:2px 4px;line-height:1;touch-action:none}
+.field-drag:active{cursor:grabbing}
+.field-info{flex:1;min-width:0}
+.field-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#1c1c1e}
+.field-role{font-size:10px;margin-top:2px}
+.field-role-front{color:#7370e0}
+.field-role-back{color:#008055}
+.field-role-hidden{color:#aaaabb}
+.field-actions{display:flex;gap:5px;flex-shrink:0}
+.field-action-btn{background:#f5f5fa;border:1.5px solid #d8d8e8;color:#6b6b80;border-radius:8px;padding:5px 9px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap;-webkit-appearance:none}
+.field-action-btn:active{transform:scale(0.9)}
+.field-action-btn.active-front{background:#eeeeff;border-color:#5856d6;color:#7370e0}
+.field-action-btn.active-back{background:#edfff7;border-color:#1a6644;color:#008055}
+.field-action-btn.active-hide{background:#ededf4;border-color:#2c2c3e;color:#aaaabb}
+.settings-group{margin-bottom:24px}
+.settings-group-title{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#aaaabb;margin-bottom:10px}
+.settings-card{background:#ffffff;border:1.5px solid #d8d8e8;border-radius:16px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #e8e8f0;gap:12px;background:#ffffff}
+.settings-row:last-child{border-bottom:none}
+.settings-row-info{flex:1}
+.settings-row-title{font-size:14px;font-weight:600;color:#1c1c1e}
+.settings-row-sub{font-size:12px;color:#6b6b80;margin-top:2px;line-height:1.45}
+.toggle{width:51px;height:31px;background:#ededf4;border:2px solid #d8d8e8;border-radius:15.5px;position:relative;cursor:pointer;transition:background .22s,border-color .22s;flex-shrink:0;-webkit-appearance:none;appearance:none}
+.toggle.on{background:#34c759;border-color:#34c759}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:23px;height:23px;background:#fff;border-radius:50%;transition:transform .22s cubic-bezier(.4,0,.2,1);box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.toggle.on::after{transform:translateX(20px)}
+.stepper{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.stepper-val{font-size:16px;font-weight:700;min-width:28px;text-align:center;color:#1c1c1e}
+.stepper-btn{background:#f5f5fa;border:1.5px solid #d8d8e8;color:#1c1c1e;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;transition:all .15s;-webkit-appearance:none;font-family:inherit;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.stepper-btn:active{transform:scale(0.88);background:#ededf4}
+.segment{display:flex;background:#f5f5fa;border:1.5px solid #d8d8e8;border-radius:10px;padding:3px;gap:3px;flex-shrink:0}
+.seg-btn{padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all .18s;color:#6b6b80;background:transparent;border:none;font-family:inherit;-webkit-appearance:none;white-space:nowrap}
+.seg-btn.active{background:#ffffff;color:#1c1c1e;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.s-input{background:#f5f5fa;border:1.5px solid #d8d8e8;color:#1c1c1e;border-radius:11px;padding:12px 14px;font-size:14px;width:100%;font-family:inherit;outline:none;transition:border-color .15s;-webkit-appearance:none}
+.s-input:focus{border-color:#5856d6}
+.s-input::placeholder{color:#aaaabb}
+.s-btn{display:block;width:100%;padding:14px;background:#f5f5fa;border:1.5px solid #d8d8e8;color:#1c1c1e;border-radius:16px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;margin-top:8px;-webkit-appearance:none}
+.s-btn:active{transform:scale(0.97)}
+.s-btn.accent{background:#5856d6;border-color:#5856d6;color:#ffffff;box-shadow:0 3px 12px rgba(88,86,214,.25)}
+.s-btn.danger{color:#e0001e}
+.s-label{font-size:12px;color:#6b6b80;font-weight:500;margin-bottom:5px;display:block}
+.s-hint{font-size:11px;color:#aaaabb;margin-top:5px;line-height:1.5}
+.status-badge{font-size:12px;padding:10px 14px;border-radius:11px;margin-top:8px;font-weight:500}
+.status-ok{background:#edfff7;color:#008055;border:1px solid #1a6644}
+.status-err{background:#fff0f2;color:#e0001e;border:1px solid #7a2035}
+.status-info{background:#eeeeff;color:#7370e0;border:1px solid #5856d6}
+.sync-indicator{display:flex;align-items:center;gap:5px}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#4a4a66;flex-shrink:0;transition:background .3s}
+.sync-dot.syncing{background:#ffaa44;animation:pdot 1s infinite}
+.sync-dot.synced{background:#3ecf8e}
+.sync-dot.error{background:#ff4d6d}
+.sync-lbl{font-size:11px;color:#aaaabb}
+#toast{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 96px);left:50%;transform:translateX(-50%) translateY(14px);background:#ffffff;border:1.5px solid #d8d8e8;color:#1c1c1e;padding:12px 22px;border-radius:40px;font-size:13px;font-weight:600;z-index:600;opacity:0;transition:all .28s;white-space:nowrap;box-shadow:0 2px 12px rgba(0,0,0,.1)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#loaderOverlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#f2f2f7;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:700;gap:16px;transition:opacity .3s}
+#loaderOverlay.gone{opacity:0;pointer-events:none}
+.loader-logo{font-size:40px;font-weight:800;letter-spacing:-1.5px;color:#1c1c1e}
+.loader-logo em{color:#5856d6;font-style:normal}
+.spinner{width:32px;height:32px;border:3px solid #2c2c3e;border-top-color:#5856d6;border-radius:50%;animation:spin .75s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-msg{font-size:13px;color:#aaaabb;min-height:18px}
+@keyframes cardOut{to{transform:translateX(-115%);opacity:0}}
+@keyframes cardIn{from{transform:translateX(115%);opacity:0}}
+.c-out{animation:cardOut .22s ease forwards}
+.c-in{animation:cardIn .22s ease forwards}
 </style>
 
 <script>
-// Apply theme synchronously before first paint to avoid flash
+// Apply theme before first paint - no flash
 (function(){
   try {
     var s = JSON.parse(localStorage.getItem('kj_settings_v1') || '{}');
     var t = s.theme || 'auto';
-    if (t === 'light') document.documentElement.setAttribute('data-theme','light');
-    else if (t === 'dark') document.documentElement.setAttribute('data-theme','dark');
-    // 'auto' = no attribute = CSS uses prefers-color-scheme via :root defaults
+    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var useDark = t === 'dark' || (t === 'auto' && prefersDark);
+    document.getElementById('theme-dark').disabled = !useDark;
+    document.getElementById('theme-light').disabled = useDark;
   } catch(e) {}
 })();
 </script>
 
 </head>
 <body>
-<div id="debugBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#1a1a2e;color:#00ff88;font-family:monospace;font-size:11px;padding:8px 12px;border-bottom:1px solid #00ff8844;line-height:1.7">
-  <div><b>🔍 DEBUG MODE</b></div>
   <div id="dbTheme"></div>
   <div id="dbColorScheme"></div>
   <div id="dbDataTheme"></div>
@@ -673,9 +448,9 @@ color-scheme: dark;
   <input type="file" id="fileInput" accept=".apkg,.colpkg" style="display:none" onchange="handleFile(event)">
 
   <div class="stats-row" id="statsRow" style="display:none">
-    <div class="stat-box"><div class="stat-val" id="sNew" style="color:var(--easy)">0</div><div class="stat-lbl">Neu</div></div>
-    <div class="stat-box"><div class="stat-val" id="sLrn" style="color:var(--hard)">0</div><div class="stat-lbl">Lernen</div></div>
-    <div class="stat-box"><div class="stat-val" id="sRev" style="color:var(--good)">0</div><div class="stat-lbl">Wdh.</div></div>
+    <div class="stat-box"><div class="stat-val" id="sNew" style="color:#4db8ff">0</div><div class="stat-lbl">Neu</div></div>
+    <div class="stat-box"><div class="stat-val" id="sLrn" style="color:#ffaa44">0</div><div class="stat-lbl">Lernen</div></div>
+    <div class="stat-box"><div class="stat-val" id="sRev" style="color:#3ecf8e">0</div><div class="stat-lbl">Wdh.</div></div>
   </div>
 
   <div class="scroll" id="deckListEl"></div>
@@ -693,29 +468,29 @@ color-scheme: dark;
   <div class="card-stage" id="cardStage"></div>
   <div class="ans-wrap" id="ansWrap"></div>
 </div>
-
 <script>
+
 // ══════════════════════════════════════════════
 //  GLOBALS
 // ══════════════════════════════════════════════
 let SQL = null, db = null;
 let decks = {};           // did -> {name, cards[]}
 let mediaFiles = {};      // filename -> base64 url
-let fieldConfigs = {};    // did -> {front: fieldName, back: [fieldName...], hidden: [fieldName...]}
+let fieldConfigs = {};    // did -> {front: fieldName, back: [fieldName…], hidden: [fieldName…]}
 let studyQueue = [], studyIdx = 0, curCard = null, flipped = false;
 let sessionStats = {again:0,hard:0,good:0,easy:0};
-let ghConfig = {token:'', repo:'', user:''};
-let syncState = 'idle';
+let ghConfig = {token:’’, repo:’’, user:’’};
+let syncState = ‘idle’;
 let userSettings = {
-  theme: 'auto',       // 'auto' | 'dark' | 'light'
-  newPerDeck: 20,      // max new cards per session
-  newOrder: 'ordered', // 'ordered' | 'random'
+theme: ‘auto’,       // ‘auto’ | ‘dark’ | ‘light’
+newPerDeck: 20,      // max new cards per session
+newOrder: ‘ordered’, // ‘ordered’ | ‘random’
 };
 
-const PROGRESS_KEY  = 'kj_progress_v3';
-const FIELDCFG_KEY  = 'kj_fields_v3';
-const GH_KEY        = 'kj_github_v2';
-const SETTINGS_KEY  = 'kj_settings_v1';
+const PROGRESS_KEY  = ‘kj_progress_v3’;
+const FIELDCFG_KEY  = ‘kj_fields_v3’;
+const GH_KEY        = ‘kj_github_v2’;
+const SETTINGS_KEY  = ‘kj_settings_v1’;
 let progress = {};
 
 // ══════════════════════════════════════════════
@@ -723,56 +498,53 @@ let progress = {};
 // ══════════════════════════════════════════════
 const R={again:1,hard:2,good:3,easy:4};
 function schedule(st={},rating){
-  let{interval=0,ease=2.5,reps=0,lapses=0,type=0}=st;
-  if(type<2){
-    if(rating===1){interval=0;type=1}
-    else if(rating===2){interval=1/24/6;type=1}   // 10 min
-    else if(rating===3){interval=1/24;type=1}      // 1 hour -> enters review
-    else{interval=1;type=2;reps=1}
-  }else{
-    if(rating===1){lapses++;interval=1;ease=Math.max(1.3,ease-.2);type=1}
-    else{
-      let ni=rating===2?interval*ease*.8:rating===3?interval*ease:interval*ease*1.3;
-      ease=rating===2?Math.max(1.3,ease-.15):rating===4?Math.min(3,ease+.15):ease;
-      interval=Math.max(1,Math.round(ni));reps++;type=2;
-    }
-  }
-  const ms=interval<1?interval*86400000:interval*86400000;
-  return{interval,ease,reps,lapses,type,due:Date.now()+ms};
+let{interval=0,ease=2.5,reps=0,lapses=0,type=0}=st;
+if(type<2){
+if(rating===1){interval=0;type=1}
+else if(rating===2){interval=1/24/6;type=1}   // 10 min
+else if(rating===3){interval=1/24;type=1}      // 1 hour -> enters review
+else{interval=1;type=2;reps=1}
+}else{
+if(rating===1){lapses++;interval=1;ease=Math.max(1.3,ease-.2);type=1}
+else{
+let ni=rating===2?interval*ease*.8:rating===3?interval*ease:interval*ease*1.3;
+ease=rating===2?Math.max(1.3,ease-.15):rating===4?Math.min(3,ease+.15):ease;
+interval=Math.max(1,Math.round(ni));reps++;type=2;
+}
+}
+const ms=interval<1?interval*86400000:interval*86400000;
+return{interval,ease,reps,lapses,type,due:Date.now()+ms};
 }
 function isDue(st){return!st||Date.now()>=st.due}
 function intervalLabel(st,r){
-  const s=schedule(st||{},r),ms=s.due-Date.now();
-  if(ms<60000)return '<1m';
-  if(ms<3600000)return Math.round(ms/60000)+'m';
-  if(ms<86400000)return Math.round(ms/3600000)+'h';
-  return Math.round(ms/86400000)+'d';
+const s=schedule(st||{},r),ms=s.due-Date.now();
+if(ms<60000)return ‘<1m’;
+if(ms<3600000)return Math.round(ms/60000)+‘m’;
+if(ms<86400000)return Math.round(ms/3600000)+‘h’;
+return Math.round(ms/86400000)+‘d’;
 }
 
 // ══════════════════════════════════════════════
 //  LOCAL STORAGE
 // ══════════════════════════════════════════════
 function loadLocal(){
-  try{progress=JSON.parse(localStorage.getItem(PROGRESS_KEY)||'{}')}catch{progress={}}
-  try{fieldConfigs=JSON.parse(localStorage.getItem(FIELDCFG_KEY)||'{}')}catch{fieldConfigs={}}
-  try{ghConfig=JSON.parse(localStorage.getItem(GH_KEY)||'{}')}catch{ghConfig={}}
-  try{userSettings={...userSettings,...JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}')};}catch{}
-  ghConfig={token:'',repo:'',user:'',...ghConfig};
+try{progress=JSON.parse(localStorage.getItem(PROGRESS_KEY)||’{}’)}catch{progress={}}
+try{fieldConfigs=JSON.parse(localStorage.getItem(FIELDCFG_KEY)||’{}’)}catch{fieldConfigs={}}
+try{ghConfig=JSON.parse(localStorage.getItem(GH_KEY)||’{}’)}catch{ghConfig={}}
+try{userSettings={…userSettings,…JSON.parse(localStorage.getItem(SETTINGS_KEY)||’{}’)};}catch{}
+ghConfig={token:’’,repo:’’,user:’’,…ghConfig};
 }
 function saveLocal(){
-  try{localStorage.setItem(PROGRESS_KEY,JSON.stringify(progress))}catch{}
-  try{localStorage.setItem(FIELDCFG_KEY,JSON.stringify(fieldConfigs))}catch{}
-  try{localStorage.setItem(GH_KEY,JSON.stringify(ghConfig))}catch{}
-  try{localStorage.setItem(SETTINGS_KEY,JSON.stringify(userSettings))}catch{}
+try{localStorage.setItem(PROGRESS_KEY,JSON.stringify(progress))}catch{}
+try{localStorage.setItem(FIELDCFG_KEY,JSON.stringify(fieldConfigs))}catch{}
+try{localStorage.setItem(GH_KEY,JSON.stringify(ghConfig))}catch{}
+try{localStorage.setItem(SETTINGS_KEY,JSON.stringify(userSettings))}catch{}
 }
 function applyTheme(){
-  const t = userSettings.theme;
-  const root = document.documentElement;
-  if(t==='auto'){
-    root.removeAttribute('data-theme');
-  } else {
-    root.setAttribute('data-theme', t);
-  }
+const t = userSettings.theme;
+const isDark = t===‘dark’ || (t===‘auto’ && window.matchMedia(’(prefers-color-scheme: dark)’).matches);
+document.getElementById(‘theme-dark’).disabled = !isDark;
+document.getElementById(‘theme-light’).disabled = isDark;
 }
 function cardKey(nid,ord){return`${nid}_${ord}`}
 function getState(nid,ord){return progress[cardKey(nid,ord)]||null}
@@ -781,266 +553,242 @@ function setState(nid,ord,st){progress[cardKey(nid,ord)]=st;saveLocal()}
 // ══════════════════════════════════════════════
 //  GITHUB SYNC
 // ══════════════════════════════════════════════
-const GH_FILE = 'kanji-progress.json';
+const GH_FILE = ‘kanji-progress.json’;
 
 async function ghRequest(method, path, body=null){
-  const {token, repo, user} = ghConfig;
-  if(!token||!repo||!user) throw new Error('GitHub nicht konfiguriert');
-  const url = `https://api.github.com/repos/${user}/${repo}/contents/${path}`;
-  const headers = {
-    'Authorization': `token ${token}`,
-    'Content-Type': 'application/json',
-    'X-GitHub-Api-Version': '2022-11-28'
-  };
-  const opts = {method, headers};
-  if(body) opts.body = JSON.stringify(body);
-  const res = await fetch(url, opts);
-  if(!res.ok && res.status !== 404) throw new Error(`GitHub ${res.status}: ${res.statusText}`);
-  if(res.status === 404) return null;
-  return res.json();
+const {token, repo, user} = ghConfig;
+if(!token||!repo||!user) throw new Error(‘GitHub nicht konfiguriert’);
+const url = `https://api.github.com/repos/${user}/${repo}/contents/${path}`;
+const headers = {
+‘Authorization’: `token ${token}`,
+‘Content-Type’: ‘application/json’,
+‘X-GitHub-Api-Version’: ‘2022-11-28’
+};
+const opts = {method, headers};
+if(body) opts.body = JSON.stringify(body);
+const res = await fetch(url, opts);
+if(!res.ok && res.status !== 404) throw new Error(`GitHub ${res.status}: ${res.statusText}`);
+if(res.status === 404) return null;
+return res.json();
 }
 
 async function ghPush(){
-  if(!ghConfig.token) return;
-  setSyncState('syncing');
-  try{
-    const content = btoa(unescape(encodeURIComponent(JSON.stringify(progress))));
-    const existing = await ghRequest('GET', GH_FILE);
-    const sha = existing?.sha;
-    await ghRequest('PUT', GH_FILE, {
-      message: `Sync ${new Date().toISOString()}`,
-      content,
-      ...(sha ? {sha} : {})
-    });
-    setSyncState('synced');
-  }catch(e){
-    setSyncState('error');
-    console.warn('GitHub push failed:', e);
-  }
+if(!ghConfig.token) return;
+setSyncState(‘syncing’);
+try{
+const content = btoa(unescape(encodeURIComponent(JSON.stringify(progress))));
+const existing = await ghRequest(‘GET’, GH_FILE);
+const sha = existing?.sha;
+await ghRequest(‘PUT’, GH_FILE, {
+message: `Sync ${new Date().toISOString()}`,
+content,
+…(sha ? {sha} : {})
+});
+setSyncState(‘synced’);
+}catch(e){
+setSyncState(‘error’);
+console.warn(‘GitHub push failed:’, e);
+}
 }
 
 async function ghPull(){
-  if(!ghConfig.token) return;
-  setSyncState('syncing');
-  try{
-    const file = await ghRequest('GET', GH_FILE);
-    if(file?.content){
-      const json = decodeURIComponent(escape(atob(file.content.replace(/\n/g,''))));
-      const remote = JSON.parse(json);
-      // Merge: take the later due date for each card
-      for(const [k,v] of Object.entries(remote)){
-        if(!progress[k]||progress[k].due<v.due) progress[k]=v;
-      }
-      saveLocal();
-      setSyncState('synced');
-      toast('☁️ Fortschritt synchronisiert!');
-    } else {
-      setSyncState('synced');
-    }
-  }catch(e){
-    setSyncState('error');
-    console.warn('GitHub pull failed:', e);
-  }
+if(!ghConfig.token) return;
+setSyncState(‘syncing’);
+try{
+const file = await ghRequest(‘GET’, GH_FILE);
+if(file?.content){
+const json = decodeURIComponent(escape(atob(file.content.replace(/\n/g,’’))));
+const remote = JSON.parse(json);
+// Merge: take the later due date for each card
+for(const [k,v] of Object.entries(remote)){
+if(!progress[k]||progress[k].due<v.due) progress[k]=v;
+}
+saveLocal();
+setSyncState(‘synced’);
+toast(‘☁️ Fortschritt synchronisiert!’);
+} else {
+setSyncState(‘synced’);
+}
+}catch(e){
+setSyncState(‘error’);
+console.warn(‘GitHub pull failed:’, e);
+}
 }
 
 function setSyncState(state){
-  syncState = state;
-  const dot = document.getElementById('syncDot');
-  const lbl = document.getElementById('syncLabel');
-  if(!dot) return;
-  dot.className = 'sync-dot ' + (state==='idle'?'':state);
-  lbl.textContent = state==='syncing'?'…':state==='synced'?'Sync ✓':state==='error'?'Sync ✗':'';
+syncState = state;
+const dot = document.getElementById(‘syncDot’);
+const lbl = document.getElementById(‘syncLabel’);
+if(!dot) return;
+dot.className = ‘sync-dot ’ + (state===‘idle’?’’:state);
+lbl.textContent = state===‘syncing’?’…’:state===‘synced’?‘Sync ✓’:state===‘error’?‘Sync ✗’:’’;
 }
 
 // Auto-push after rating with debounce
 let pushTimer;
 function schedulePush(){
-  if(!ghConfig.token) return;
-  clearTimeout(pushTimer);
-  pushTimer = setTimeout(ghPush, 3000);
+if(!ghConfig.token) return;
+clearTimeout(pushTimer);
+pushTimer = setTimeout(ghPush, 3000);
 }
 
 // ══════════════════════════════════════════════
 //  SQL.JS
 // ══════════════════════════════════════════════
 async function initSQL(){
-  setMsg('Engine laden…');
-  SQL = await initSqlJs({locateFile:f=>`https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/${f}`});
+setMsg(‘Engine laden…’);
+SQL = await initSqlJs({locateFile:f=>`https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/${f}`});
 }
 
 // ══════════════════════════════════════════════
 //  IMPORT
 // ══════════════════════════════════════════════
-function triggerImport(){document.getElementById('fileInput').click()}
+function triggerImport(){document.getElementById(‘fileInput’).click()}
 async function handleFile(e){
-  const f=e.target.files[0];
-  if(f) await importApkg(f);
-  e.target.value='';
+const f=e.target.files[0];
+if(f) await importApkg(f);
+e.target.value=’’;
 }
 
 async function importApkg(file){
-  showLoader('Importieren…');
-  try{
-    setMsg('Entpacken…');
-    const zip = await JSZip.loadAsync(file);
+showLoader(‘Importieren…’);
+try{
+setMsg(‘Entpacken…’);
+const zip = await JSZip.loadAsync(file);
 
-    // Database
-    const dbEntry = zip.file('collection.anki21') || zip.file('collection.anki2') || zip.file('collection.anki21b');
-    if(!dbEntry) throw new Error('Keine Anki-Datenbank gefunden.');
-    setMsg('Datenbank lesen…');
-    const buf = await dbEntry.async('arraybuffer');
-    db = new SQL.Database(new Uint8Array(buf));
+```
+// Database
+const dbEntry = zip.file('collection.anki21') || zip.file('collection.anki2') || zip.file('collection.anki21b');
+if(!dbEntry) throw new Error('Keine Anki-Datenbank gefunden.');
+setMsg('Datenbank lesen…');
+const buf = await dbEntry.async('arraybuffer');
+db = new SQL.Database(new Uint8Array(buf));
 
-    // Media files
-    setMsg('Medien laden…');
-    const mediaJson = zip.file('media');
-    if(mediaJson){
-      const mediaMap = JSON.parse(await mediaJson.async('string'));
-      for(const [idx, name] of Object.entries(mediaMap)){
-        const entry = zip.file(idx);
-        if(entry){
-          const blob = await entry.async('blob');
-          mediaFiles[name] = URL.createObjectURL(blob);
-        }
-      }
+// Media files
+setMsg('Medien laden…');
+const mediaJson = zip.file('media');
+if(mediaJson){
+  const mediaMap = JSON.parse(await mediaJson.async('string'));
+  for(const [idx, name] of Object.entries(mediaMap)){
+    const entry = zip.file(idx);
+    if(entry){
+      const blob = await entry.async('blob');
+      mediaFiles[name] = URL.createObjectURL(blob);
     }
-
-    setMsg('Karten laden…');
-    loadDecks();
-    hideLoader();
-    renderHome();
-    toast('✅ '+Object.keys(decks).length+' Deck(s) importiert');
-  }catch(err){
-    hideLoader();
-    toast('❌ '+err.message);
-    console.error(err);
   }
+}
+
+setMsg('Karten laden…');
+loadDecks();
+hideLoader();
+renderHome();
+toast('✅ '+Object.keys(decks).length+' Deck(s) importiert');
+```
+
+}catch(err){
+hideLoader();
+toast(’❌ ’+err.message);
+console.error(err);
+}
 }
 
 // ══════════════════════════════════════════════
 //  DECK PARSING
 // ══════════════════════════════════════════════
 function loadDecks(){
-  decks = {};
-  const col = db.exec('SELECT decks,models FROM col LIMIT 1');
-  if(!col.length) return;
-  const deckDef = JSON.parse(col[0].values[0][0]);
-  const modelDef = JSON.parse(col[0].values[0][1]);
+decks = {};
+const col = db.exec(‘SELECT decks,models FROM col LIMIT 1’);
+if(!col.length) return;
+const deckDef = JSON.parse(col[0].values[0][0]);
+const modelDef = JSON.parse(col[0].values[0][1]);
 
-  const models = {};
-  for(const[mid,m] of Object.entries(modelDef)){
-    models[mid] = {name:m.name, fields:m.flds.map(f=>f.name)};
-  }
+const models = {};
+for(const[mid,m] of Object.entries(modelDef)){
+models[mid] = {name:m.name, fields:m.flds.map(f=>f.name)};
+}
 
-  const rows = db.exec(`
-    SELECT c.id,c.nid,c.did,c.ord,c.type,n.mid,n.flds,n.tags
-    FROM cards c JOIN notes n ON c.nid=n.id
-  `);
-  if(!rows.length) return;
+const rows = db.exec(`SELECT c.id,c.nid,c.did,c.ord,c.type,n.mid,n.flds,n.tags FROM cards c JOIN notes n ON c.nid=n.id`);
+if(!rows.length) return;
 
-  for(const[cid,nid,did,ord,type,mid,flds,tags] of rows[0].values){
-    const dn = deckDef[did]?.name || 'Unbekannt';
-    if(!decks[did]) decks[did]={name:dn,cards:[],fields:[]};
-    const model = models[mid]||{fields:[]};
-    const vals = flds.split('\x1f');
-    const fields={};
-    model.fields.forEach((n,i)=>fields[n]=vals[i]||'');
-    if(!decks[did].fields.length) decks[did].fields=model.fields;
-    decks[did].cards.push({cid,nid,did,ord,type,fields,tags:tags||''});
-  }
+for(const[cid,nid,did,ord,type,mid,flds,tags] of rows[0].values){
+const dn = deckDef[did]?.name || ‘Unbekannt’;
+if(!decks[did]) decks[did]={name:dn,cards:[],fields:[]};
+const model = models[mid]||{fields:[]};
+const vals = flds.split(’\x1f’);
+const fields={};
+model.fields.forEach((n,i)=>fields[n]=vals[i]||’’);
+if(!decks[did].fields.length) decks[did].fields=model.fields;
+decks[did].cards.push({cid,nid,did,ord,type,fields,tags:tags||’’});
+}
 }
 
 // ══════════════════════════════════════════════
 //  FIELD CONFIG
 // ══════════════════════════════════════════════
 function getFieldConfig(did){
-  if(fieldConfigs[did]){
-    const cfg = fieldConfigs[did];
-    // Migrate old single-string front to array
-    if(typeof cfg.front === 'string') cfg.front = cfg.front ? [cfg.front] : [];
-    return cfg;
-  }
-  const deck = decks[did];
-  if(!deck) return {front:[],back:[],hidden:[]};
-  const fields = deck.fields;
-  const frontCandidates = ['Expression','Front','Word','Vocab','単語','表現','Kanji','漢字','Question','Term'];
-  const hiddenCandidates = ['Index','Frequency','optimized voc index','voc index','Optimized Voc Index','Note ID','ID','Notes','Diagram','Stroke Order','Stroke','KanjiReadings'];
-  let front = fields[0];
-  for(const c of frontCandidates){ if(fields.includes(c)){front=c;break} }
-  const hidden = fields.filter(f=>hiddenCandidates.some(h=>f.toLowerCase().includes(h.toLowerCase())));
-  const back = fields.filter(f=>f!==front && !hidden.includes(f));
-  return {front:[front], back, hidden};
+if(fieldConfigs[did]){
+const cfg = fieldConfigs[did];
+// Migrate old single-string front to array
+if(typeof cfg.front === ‘string’) cfg.front = cfg.front ? [cfg.front] : [];
+return cfg;
+}
+const deck = decks[did];
+if(!deck) return {front:[],back:[],hidden:[]};
+const fields = deck.fields;
+const frontCandidates = [‘Expression’,‘Front’,‘Word’,‘Vocab’,‘単語’,‘表現’,‘Kanji’,‘漢字’,‘Question’,‘Term’];
+const hiddenCandidates = [‘Index’,‘Frequency’,‘optimized voc index’,‘voc index’,‘Optimized Voc Index’,‘Note ID’,‘ID’,‘Notes’,‘Diagram’,‘Stroke Order’,‘Stroke’,‘KanjiReadings’];
+let front = fields[0];
+for(const c of frontCandidates){ if(fields.includes(c)){front=c;break} }
+const hidden = fields.filter(f=>hiddenCandidates.some(h=>f.toLowerCase().includes(h.toLowerCase())));
+const back = fields.filter(f=>f!==front && !hidden.includes(f));
+return {front:[front], back, hidden};
 }
 
 // ══════════════════════════════════════════════
 //  HOME
 // ══════════════════════════════════════════════
 function renderHome(){
-  const el = document.getElementById('deckListEl');
-  if(!db||!Object.keys(decks).length){
-    el.innerHTML=`
-      <div class="import-strip" onclick="triggerImport()">
-        <div class="import-strip-icon">🎌</div>
-        <div class="import-strip-text">
-          <div class="import-strip-title">Anki-Deck importieren</div>
-          <div class="import-strip-sub">.apkg Datei aus Anki Desktop exportieren</div>
-        </div>
-        <span style="color:var(--text-dim);font-size:18px">›</span>
-      </div>
-      <div class="empty">
-        <div class="empty-icon">📚</div>
-        <h3>Noch keine Decks</h3>
-        <p>Exportiere dein Deck in Anki Desktop über<br><b>Datei → Exportieren → .apkg</b></p>
-      </div>`;
-    document.getElementById('statsRow').style.display='none';
-    return;
-  }
+const el = document.getElementById(‘deckListEl’);
+if(!db||!Object.keys(decks).length){
+el.innerHTML=` <div class="import-strip" onclick="triggerImport()"> <div class="import-strip-icon">🎌</div> <div class="import-strip-text"> <div class="import-strip-title">Anki-Deck importieren</div> <div class="import-strip-sub">.apkg Datei aus Anki Desktop exportieren</div> </div> <span style="color:#4a4a66;font-size:18px">›</span> </div> <div class="empty"> <div class="empty-icon">📚</div> <h3>Noch keine Decks</h3> <p>Exportiere dein Deck in Anki Desktop über<br><b>Datei → Exportieren → .apkg</b></p> </div>`;
+document.getElementById(‘statsRow’).style.display=‘none’;
+return;
+}
 
-  let tNew=0,tLrn=0,tRev=0;
-  const EMOJIS=['🎌','📖','✍️','🗾','📝','🎋','⛩️','🌸','📚','🈳'];
-  let html=`<div class="import-strip" onclick="triggerImport()" style="margin-bottom:14px">
-    <div class="import-strip-icon">📦</div>
-    <div class="import-strip-text">
-      <div class="import-strip-title">Weiteres Deck laden</div>
-      <div class="import-strip-sub">.apkg importieren</div>
-    </div>
+let tNew=0,tLrn=0,tRev=0;
+const EMOJIS=[‘🎌’,‘📖’,‘✍️’,‘🗾’,‘📝’,‘🎋’,‘⛩️’,‘🌸’,‘📚’,‘🈳’];
+let html=`<div class="import-strip" onclick="triggerImport()" style="margin-bottom:14px">
+<div class="import-strip-icon">📦</div>
+<div class="import-strip-text">
+<div class="import-strip-title">Weiteres Deck laden</div>
+<div class="import-strip-sub">.apkg importieren</div>
+</div>
+
   </div><div class="sect">Meine Decks</div>`;
 
-  for(const[did,deck] of Object.entries(decks)){
-    const{newC,lrnC,revC}=getCounts(deck.cards);
-    tNew+=newC;tLrn+=lrnC;tRev+=revC;
-    const emoji=EMOJIS[parseInt(did)%EMOJIS.length];
-    const name=deck.name.split('::').pop();
-    html+=`<div class="deck-card" onclick="startStudy('${did}')">
-      <span class="deck-emoji">${emoji}</span>
-      <div class="deck-info">
-        <div class="deck-name">${esc(name)}</div>
-        <div class="deck-sub">${deck.cards.length} Karten · <span style="cursor:pointer;color:var(--accent2);text-decoration:underline" onclick="event.stopPropagation();showFieldModal('${did}')">Felder konfigurieren</span></div>
-        <div class="deck-pills">
-          <span class="pill ${newC?'pill-new':'pill-0'}">${newC} neu</span>
-          <span class="pill ${lrnC?'pill-lrn':'pill-0'}">${lrnC} lernen</span>
-          <span class="pill ${revC?'pill-rev':'pill-0'}">${revC} wdh.</span>
-        </div>
-      </div>
-      <span class="deck-arr">›</span>
-    </div>`;
-  }
-  el.innerHTML=html;
-  document.getElementById('statsRow').style.display='grid';
-  document.getElementById('sNew').textContent=tNew;
-  document.getElementById('sLrn').textContent=tLrn;
-  document.getElementById('sRev').textContent=tRev;
+for(const[did,deck] of Object.entries(decks)){
+const{newC,lrnC,revC}=getCounts(deck.cards);
+tNew+=newC;tLrn+=lrnC;tRev+=revC;
+const emoji=EMOJIS[parseInt(did)%EMOJIS.length];
+const name=deck.name.split(’::’).pop();
+html+=`<div class="deck-card" onclick="startStudy('${did}')"> <span class="deck-emoji">${emoji}</span> <div class="deck-info"> <div class="deck-name">${esc(name)}</div> <div class="deck-sub">${deck.cards.length} Karten · <span style="cursor:pointer;color:#a89fff;text-decoration:underline" onclick="event.stopPropagation();showFieldModal('${did}')">Felder konfigurieren</span></div> <div class="deck-pills"> <span class="pill ${newC?'pill-new':'pill-0'}">${newC} neu</span> <span class="pill ${lrnC?'pill-lrn':'pill-0'}">${lrnC} lernen</span> <span class="pill ${revC?'pill-rev':'pill-0'}">${revC} wdh.</span> </div> </div> <span class="deck-arr">›</span> </div>`;
+}
+el.innerHTML=html;
+document.getElementById(‘statsRow’).style.display=‘grid’;
+document.getElementById(‘sNew’).textContent=tNew;
+document.getElementById(‘sLrn’).textContent=tLrn;
+document.getElementById(‘sRev’).textContent=tRev;
 }
 
 function getCounts(cards){
-  let newC=0,lrnC=0,revC=0;
-  for(const c of cards){
-    const st=getState(c.nid,c.ord);
-    if(!st){newC++;continue}
-    if(!isDue(st)) continue;
-    if(st.type===2) revC++; else lrnC++;
-  }
-  return{newC,lrnC,revC};
+let newC=0,lrnC=0,revC=0;
+for(const c of cards){
+const st=getState(c.nid,c.ord);
+if(!st){newC++;continue}
+if(!isDue(st)) continue;
+if(st.type===2) revC++; else lrnC++;
+}
+return{newC,lrnC,revC};
 }
 
 // ══════════════════════════════════════════════
@@ -1050,104 +798,82 @@ let editingDid = null;
 let tempConfig = null;
 
 function showFieldModal(did){
-  editingDid = did;
-  const deck = decks[did];
-  const cfg = getFieldConfig(did);
-  tempConfig = JSON.parse(JSON.stringify(cfg));
+editingDid = did;
+const deck = decks[did];
+const cfg = getFieldConfig(did);
+tempConfig = JSON.parse(JSON.stringify(cfg));
 
-  document.getElementById('fieldModalTitle').textContent = '⚙️ Felder: '+deck.name.split('::').pop();
-  renderFieldModal(deck.fields);
-  openModal('fieldModal');
+document.getElementById(‘fieldModalTitle’).textContent = ‘⚙️ Felder: ‘+deck.name.split(’::’).pop();
+renderFieldModal(deck.fields);
+openModal(‘fieldModal’);
 }
 
 function renderFieldModal(fields){
-  // Build ordered lists: front fields in order, then back fields in order, then hidden
-  if(!Array.isArray(tempConfig.front)) tempConfig.front = tempConfig.front ? [tempConfig.front] : [];
-  if(!Array.isArray(tempConfig.back)) tempConfig.back = tempConfig.back || [];
+// Build ordered lists: front fields in order, then back fields in order, then hidden
+if(!Array.isArray(tempConfig.front)) tempConfig.front = tempConfig.front ? [tempConfig.front] : [];
+if(!Array.isArray(tempConfig.back)) tempConfig.back = tempConfig.back || [];
 
-  const allAssigned = [...tempConfig.front, ...tempConfig.back, ...tempConfig.hidden];
-  // Add any unassigned fields to back
-  for(const f of fields){ if(!allAssigned.includes(f)) tempConfig.back.push(f); }
+const allAssigned = […tempConfig.front, …tempConfig.back, …tempConfig.hidden];
+// Add any unassigned fields to back
+for(const f of fields){ if(!allAssigned.includes(f)) tempConfig.back.push(f); }
 
-  function fieldRow(f, role, idx, listId){
-    return `<div class="field-row sortable-item" data-field="${esc(f)}" data-role="${role}" data-idx="${idx}" data-list="${listId}"
-      draggable="true"
-      ondragstart="dragStart(event)"
-      ondragover="dragOver(event)"
-      ondrop="dragDrop(event)"
-      ondragend="dragEnd(event)"
-      ontouchstart="touchStart(event)"
-      ontouchmove="touchMove(event)"
-      ontouchend="touchEnd(event)">
-      <span class="field-drag">⠿</span>
-      <div class="field-info">
-        <div class="field-name">${esc(f)}</div>
-        <div class="field-role field-role-${role}">${roleLabel(role)}</div>
-      </div>
-      <div class="field-actions">
-        <button class="field-action-btn ${role==='front'?'active-front':''}" onclick="setFieldRole('${esc(f)}','front')">Vorne</button>
-        <button class="field-action-btn ${role==='back'?'active-back':''}" onclick="setFieldRole('${esc(f)}','back')">Hinten</button>
-        <button class="field-action-btn ${role==='hidden'?'active-hide':''}" onclick="setFieldRole('${esc(f)}','hidden')">Aus</button>
-      </div>
-    </div>`;
-  }
-
-  let html = `<div style="margin-bottom:14px;font-size:13px;color:var(--text-muted);line-height:1.5">
-    Tippe auf <b>Vorne/Hinten/Aus</b> um Felder zuzuweisen.<br>
-    Ziehe <b>⠿</b> um die Reihenfolge anzupassen.
-  </div>`;
-
-  if(tempConfig.front.length){
-    html += `<div class="sort-section-label">▶ Vorderseite</div>
-    <div class="sortable-list" id="list-front">`;
-    tempConfig.front.forEach((f,i) => html += fieldRow(f,'front',i,'front'));
-    html += `</div>`;
-  }
-
-  if(tempConfig.back.length){
-    html += `<div class="sort-section-label" style="margin-top:14px">↩ Rückseite</div>
-    <div class="sortable-list" id="list-back">`;
-    tempConfig.back.forEach((f,i) => html += fieldRow(f,'back',i,'back'));
-    html += `</div>`;
-  }
-
-  if(tempConfig.hidden.length){
-    html += `<div class="sort-section-label" style="margin-top:14px">✕ Versteckt</div>
-    <div class="sortable-list" id="list-hidden">`;
-    tempConfig.hidden.forEach((f,i) => html += fieldRow(f,'hidden',i,'hidden'));
-    html += `</div>`;
-  }
-
-  document.getElementById('fieldContent').innerHTML = html;
+function fieldRow(f, role, idx, listId){
+return `<div class="field-row sortable-item" data-field="${esc(f)}" data-role="${role}" data-idx="${idx}" data-list="${listId}" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="dragDrop(event)" ondragend="dragEnd(event)" ontouchstart="touchStart(event)" ontouchmove="touchMove(event)" ontouchend="touchEnd(event)"> <span class="field-drag">⠿</span> <div class="field-info"> <div class="field-name">${esc(f)}</div> <div class="field-role field-role-${role}">${roleLabel(role)}</div> </div> <div class="field-actions"> <button class="field-action-btn ${role==='front'?'active-front':''}" onclick="setFieldRole('${esc(f)}','front')">Vorne</button> <button class="field-action-btn ${role==='back'?'active-back':''}" onclick="setFieldRole('${esc(f)}','back')">Hinten</button> <button class="field-action-btn ${role==='hidden'?'active-hide':''}" onclick="setFieldRole('${esc(f)}','hidden')">Aus</button> </div> </div>`;
 }
 
+let html = `<div style="margin-bottom:14px;font-size:13px;color:#8888aa;line-height:1.5">
+Tippe auf <b>Vorne/Hinten/Aus</b> um Felder zuzuweisen.<br>
+Ziehe <b>⠿</b> um die Reihenfolge anzupassen.
 
-function roleLabel(r){return r==='front'?'▶ Vorderseite':r==='back'?'↩ Rückseite':'✕ Versteckt'}
+  </div>`;
+
+if(tempConfig.front.length){
+html += `<div class="sort-section-label">▶ Vorderseite</div> <div class="sortable-list" id="list-front">`;
+tempConfig.front.forEach((f,i) => html += fieldRow(f,‘front’,i,‘front’));
+html += `</div>`;
+}
+
+if(tempConfig.back.length){
+html += `<div class="sort-section-label" style="margin-top:14px">↩ Rückseite</div> <div class="sortable-list" id="list-back">`;
+tempConfig.back.forEach((f,i) => html += fieldRow(f,‘back’,i,‘back’));
+html += `</div>`;
+}
+
+if(tempConfig.hidden.length){
+html += `<div class="sort-section-label" style="margin-top:14px">✕ Versteckt</div> <div class="sortable-list" id="list-hidden">`;
+tempConfig.hidden.forEach((f,i) => html += fieldRow(f,‘hidden’,i,‘hidden’));
+html += `</div>`;
+}
+
+document.getElementById(‘fieldContent’).innerHTML = html;
+}
+
+function roleLabel(r){return r===‘front’?‘▶ Vorderseite’:r===‘back’?‘↩ Rückseite’:‘✕ Versteckt’}
 
 function setFieldRole(field, role){
-  const deck = decks[editingDid];
-  if(!Array.isArray(tempConfig.front)) tempConfig.front = tempConfig.front ? [tempConfig.front] : [];
-  if(role==='front'){
-    // Add to front array (toggle: if already front, remove it)
-    if(tempConfig.front.includes(field)){
-      // Already front - move to back instead
-      tempConfig.front = tempConfig.front.filter(f=>f!==field);
-      if(!tempConfig.back.includes(field)) tempConfig.back.push(field);
-    } else {
-      tempConfig.front.push(field);
-      tempConfig.back = tempConfig.back.filter(f=>f!==field);
-      tempConfig.hidden = tempConfig.hidden.filter(f=>f!==field);
-    }
-  } else if(role==='back'){
-    tempConfig.front = tempConfig.front.filter(f=>f!==field);
-    tempConfig.hidden = tempConfig.hidden.filter(f=>f!==field);
-    if(!tempConfig.back.includes(field)) tempConfig.back.push(field);
-  } else {
-    tempConfig.front = tempConfig.front.filter(f=>f!==field);
-    tempConfig.back = tempConfig.back.filter(f=>f!==field);
-    if(!tempConfig.hidden.includes(field)) tempConfig.hidden.push(field);
-  }
-  renderFieldModal(deck.fields);
+const deck = decks[editingDid];
+if(!Array.isArray(tempConfig.front)) tempConfig.front = tempConfig.front ? [tempConfig.front] : [];
+if(role===‘front’){
+// Add to front array (toggle: if already front, remove it)
+if(tempConfig.front.includes(field)){
+// Already front - move to back instead
+tempConfig.front = tempConfig.front.filter(f=>f!==field);
+if(!tempConfig.back.includes(field)) tempConfig.back.push(field);
+} else {
+tempConfig.front.push(field);
+tempConfig.back = tempConfig.back.filter(f=>f!==field);
+tempConfig.hidden = tempConfig.hidden.filter(f=>f!==field);
+}
+} else if(role===‘back’){
+tempConfig.front = tempConfig.front.filter(f=>f!==field);
+tempConfig.hidden = tempConfig.hidden.filter(f=>f!==field);
+if(!tempConfig.back.includes(field)) tempConfig.back.push(field);
+} else {
+tempConfig.front = tempConfig.front.filter(f=>f!==field);
+tempConfig.back = tempConfig.back.filter(f=>f!==field);
+if(!tempConfig.hidden.includes(field)) tempConfig.hidden.push(field);
+}
+renderFieldModal(deck.fields);
 }
 
 // ══════════════════════════════════════════════
@@ -1156,482 +882,471 @@ function setFieldRole(field, role){
 let dragSrc = null, dragSrcList = null;
 
 function getListArray(listId){
-  if(listId==='front') return tempConfig.front;
-  if(listId==='back') return tempConfig.back;
-  return tempConfig.hidden;
+if(listId===‘front’) return tempConfig.front;
+if(listId===‘back’) return tempConfig.back;
+return tempConfig.hidden;
 }
 
 function dragStart(e){
-  dragSrc = e.currentTarget;
-  dragSrcList = dragSrc.dataset.list;
-  e.dataTransfer.effectAllowed = 'move';
-  setTimeout(()=>dragSrc.style.opacity='0.4', 0);
+dragSrc = e.currentTarget;
+dragSrcList = dragSrc.dataset.list;
+e.dataTransfer.effectAllowed = ‘move’;
+setTimeout(()=>dragSrc.style.opacity=‘0.4’, 0);
 }
 function dragEnd(e){
-  e.currentTarget.style.opacity='1';
-  document.querySelectorAll('.sortable-item').forEach(el=>el.classList.remove('drag-over-item'));
+e.currentTarget.style.opacity=‘1’;
+document.querySelectorAll(’.sortable-item’).forEach(el=>el.classList.remove(‘drag-over-item’));
 }
 function dragOver(e){
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
-  document.querySelectorAll('.sortable-item').forEach(el=>el.classList.remove('drag-over-item'));
-  e.currentTarget.classList.add('drag-over-item');
+e.preventDefault();
+e.dataTransfer.dropEffect = ‘move’;
+document.querySelectorAll(’.sortable-item’).forEach(el=>el.classList.remove(‘drag-over-item’));
+e.currentTarget.classList.add(‘drag-over-item’);
 }
 function dragDrop(e){
-  e.preventDefault();
-  const target = e.currentTarget;
-  if(target===dragSrc) return;
-  const srcField = dragSrc.dataset.field;
-  const tgtField = target.dataset.field;
-  const srcList = dragSrc.dataset.list;
-  const tgtList = target.dataset.list;
-  // Remove from source
-  const srcArr = getListArray(srcList);
-  const srcIdx = srcArr.indexOf(srcField);
-  if(srcIdx>-1) srcArr.splice(srcIdx,1);
-  // Insert into target list at target position
-  const tgtArr = getListArray(tgtList);
-  const tgtIdx = tgtArr.indexOf(tgtField);
-  tgtArr.splice(tgtIdx,0,srcField);
-  // Update role if moved to different list
-  if(srcList!==tgtList){
-    // Already handled by array move above; role determined by which list
-  }
-  renderFieldModal(decks[editingDid].fields);
+e.preventDefault();
+const target = e.currentTarget;
+if(target===dragSrc) return;
+const srcField = dragSrc.dataset.field;
+const tgtField = target.dataset.field;
+const srcList = dragSrc.dataset.list;
+const tgtList = target.dataset.list;
+// Remove from source
+const srcArr = getListArray(srcList);
+const srcIdx = srcArr.indexOf(srcField);
+if(srcIdx>-1) srcArr.splice(srcIdx,1);
+// Insert into target list at target position
+const tgtArr = getListArray(tgtList);
+const tgtIdx = tgtArr.indexOf(tgtField);
+tgtArr.splice(tgtIdx,0,srcField);
+// Update role if moved to different list
+if(srcList!==tgtList){
+// Already handled by array move above; role determined by which list
+}
+renderFieldModal(decks[editingDid].fields);
 }
 
 // Touch support for iOS
 let touchItem=null, touchClone=null, touchList=null, touchStartY=0;
 function touchStart(e){
-  const item = e.currentTarget;
-  // Only start drag if touching the handle
-  const handle = item.querySelector('.field-drag');
-  const touch = e.touches[0];
-  const hr = handle.getBoundingClientRect();
-  if(touch.clientX < hr.left-10 || touch.clientX > hr.right+10) return;
-  e.preventDefault();
-  touchItem = item;
-  touchList = item.dataset.list;
-  touchStartY = touch.clientY;
-  // Create visual clone
-  touchClone = item.cloneNode(true);
-  touchClone.style.cssText = `position:fixed;left:${item.getBoundingClientRect().left}px;top:${item.getBoundingClientRect().top}px;width:${item.offsetWidth}px;opacity:0.85;z-index:999;pointer-events:none;background:var(--surface3);border:1px solid var(--accent);border-radius:14px;transition:none`;
-  document.body.appendChild(touchClone);
-  item.style.opacity='0.3';
+const item = e.currentTarget;
+// Only start drag if touching the handle
+const handle = item.querySelector(’.field-drag’);
+const touch = e.touches[0];
+const hr = handle.getBoundingClientRect();
+if(touch.clientX < hr.left-10 || touch.clientX > hr.right+10) return;
+e.preventDefault();
+touchItem = item;
+touchList = item.dataset.list;
+touchStartY = touch.clientY;
+// Create visual clone
+touchClone = item.cloneNode(true);
+touchClone.style.cssText = `position:fixed;left:${item.getBoundingClientRect().left}px;top:${item.getBoundingClientRect().top}px;width:${item.offsetWidth}px;opacity:0.85;z-index:999;pointer-events:none;background:#272734;border:1px solid #6e66ff;border-radius:14px;transition:none`;
+document.body.appendChild(touchClone);
+item.style.opacity=‘0.3’;
 }
 function touchMove(e){
-  if(!touchItem||!touchClone) return;
-  e.preventDefault();
-  const touch = e.touches[0];
-  const dy = touch.clientY - touchStartY;
-  const origTop = touchItem.getBoundingClientRect().top + dy - (touchClone.offsetTop - parseInt(touchClone.style.top));
-  touchClone.style.top = (parseInt(touchClone.style.top)||0) + (touch.clientY - touchStartY - (touch.clientY - e.touches[0].clientY||0)) + 'px';
-  // Recalc: just track absolute position
-  touchClone.style.top = (touchItem.getBoundingClientRect().top + window.scrollY + dy) + 'px';
-  // Find item under touch
-  touchClone.style.display='none';
-  const el = document.elementFromPoint(touch.clientX, touch.clientY);
-  touchClone.style.display='';
-  const overItem = el?.closest('.sortable-item');
-  document.querySelectorAll('.sortable-item').forEach(i=>i.classList.remove('drag-over-item'));
-  if(overItem && overItem!==touchItem) overItem.classList.add('drag-over-item');
+if(!touchItem||!touchClone) return;
+e.preventDefault();
+const touch = e.touches[0];
+const dy = touch.clientY - touchStartY;
+const origTop = touchItem.getBoundingClientRect().top + dy - (touchClone.offsetTop - parseInt(touchClone.style.top));
+touchClone.style.top = (parseInt(touchClone.style.top)||0) + (touch.clientY - touchStartY - (touch.clientY - e.touches[0].clientY||0)) + ‘px’;
+// Recalc: just track absolute position
+touchClone.style.top = (touchItem.getBoundingClientRect().top + window.scrollY + dy) + ‘px’;
+// Find item under touch
+touchClone.style.display=‘none’;
+const el = document.elementFromPoint(touch.clientX, touch.clientY);
+touchClone.style.display=’’;
+const overItem = el?.closest(’.sortable-item’);
+document.querySelectorAll(’.sortable-item’).forEach(i=>i.classList.remove(‘drag-over-item’));
+if(overItem && overItem!==touchItem) overItem.classList.add(‘drag-over-item’);
 }
 function touchEnd(e){
-  if(!touchItem||!touchClone) return;
-  const touch = e.changedTouches[0];
-  touchClone.style.display='none';
-  const el = document.elementFromPoint(touch.clientX, touch.clientY);
-  touchClone.remove();
-  touchClone=null;
-  touchItem.style.opacity='1';
-  const overItem = el?.closest('.sortable-item');
-  if(overItem && overItem!==touchItem){
-    const srcField = touchItem.dataset.field;
-    const tgtField = overItem.dataset.field;
-    const srcList = touchItem.dataset.list;
-    const tgtList = overItem.dataset.list;
-    const srcArr = getListArray(srcList);
-    const srcIdx = srcArr.indexOf(srcField);
-    if(srcIdx>-1) srcArr.splice(srcIdx,1);
-    const tgtArr = getListArray(tgtList);
-    const tgtIdx = tgtArr.indexOf(tgtField);
-    tgtArr.splice(tgtIdx,0,srcField);
-  }
-  touchItem=null;
-  renderFieldModal(decks[editingDid].fields);
+if(!touchItem||!touchClone) return;
+const touch = e.changedTouches[0];
+touchClone.style.display=‘none’;
+const el = document.elementFromPoint(touch.clientX, touch.clientY);
+touchClone.remove();
+touchClone=null;
+touchItem.style.opacity=‘1’;
+const overItem = el?.closest(’.sortable-item’);
+if(overItem && overItem!==touchItem){
+const srcField = touchItem.dataset.field;
+const tgtField = overItem.dataset.field;
+const srcList = touchItem.dataset.list;
+const tgtList = overItem.dataset.list;
+const srcArr = getListArray(srcList);
+const srcIdx = srcArr.indexOf(srcField);
+if(srcIdx>-1) srcArr.splice(srcIdx,1);
+const tgtArr = getListArray(tgtList);
+const tgtIdx = tgtArr.indexOf(tgtField);
+tgtArr.splice(tgtIdx,0,srcField);
+}
+touchItem=null;
+renderFieldModal(decks[editingDid].fields);
 }
 
 function saveFieldConfig(){
-  fieldConfigs[editingDid] = tempConfig;
-  saveLocal();
-  closeModal('fieldModal');
-  toast('✅ Felder gespeichert');
-  renderHome();
+fieldConfigs[editingDid] = tempConfig;
+saveLocal();
+closeModal(‘fieldModal’);
+toast(‘✅ Felder gespeichert’);
+renderHome();
 }
 
 // ══════════════════════════════════════════════
 //  SETTINGS MODAL
 // ══════════════════════════════════════════════
 function showSettings(){
-  const s = userSettings;
-  const syncOk = ghConfig.token && ghConfig.repo && ghConfig.user;
-  document.getElementById('settingsContent').innerHTML=`
-    <!-- APPEARANCE -->
-    <div class="settings-group">
-      <div class="settings-group-title">Erscheinungsbild</div>
-      <div class="settings-card">
-        <div class="settings-row">
-          <div class="settings-row-info">
-            <div class="settings-row-title">Darstellung</div>
-            <div class="settings-row-sub">Hell, Dunkel oder wie das iPhone</div>
-          </div>
-          <div class="segment" id="themeSegment">
-            <button class="seg-btn ${s.theme==='light'?'active':''}" onclick="setTheme('light')">Hell</button>
-            <button class="seg-btn ${s.theme==='auto'?'active':''}" onclick="setTheme('auto')">Auto</button>
-            <button class="seg-btn ${s.theme==='dark'?'active':''}" onclick="setTheme('dark')">Dunkel</button>
-          </div>
-        </div>
-      </div>
-    </div>
+const s = userSettings;
+const syncOk = ghConfig.token && ghConfig.repo && ghConfig.user;
+document.getElementById(‘settingsContent’).innerHTML=`
+<!-- APPEARANCE -->
+<div class="settings-group">
+<div class="settings-group-title">Erscheinungsbild</div>
+<div class="settings-card">
+<div class="settings-row">
+<div class="settings-row-info">
+<div class="settings-row-title">Darstellung</div>
+<div class="settings-row-sub">Hell, Dunkel oder wie das iPhone</div>
+</div>
+<div class="segment" id="themeSegment">
+<button class="seg-btn ${s.theme==='light'?'active':''}" onclick="setTheme('light')">Hell</button>
+<button class="seg-btn ${s.theme==='auto'?'active':''}" onclick="setTheme('auto')">Auto</button>
+<button class="seg-btn ${s.theme==='dark'?'active':''}" onclick="setTheme('dark')">Dunkel</button>
+</div>
+</div>
+</div>
+</div>
 
-    <!-- STUDY SETTINGS -->
-    <div class="settings-group">
-      <div class="settings-group-title">Lernen</div>
-      <div class="settings-card">
-        <div class="settings-row">
-          <div class="settings-row-info">
-            <div class="settings-row-title">Neue Karten pro Sitzung</div>
-            <div class="settings-row-sub">Pro Deck, zusätzlich zu fälligen Karten</div>
-          </div>
-          <div class="stepper">
-            <button class="stepper-btn" onclick="adjustNew(-5)">−</button>
-            <div class="stepper-val" id="newPerDeckVal">${s.newPerDeck}</div>
-            <button class="stepper-btn" onclick="adjustNew(+5)">+</button>
-          </div>
-        </div>
-        <div class="settings-row">
-          <div class="settings-row-info">
-            <div class="settings-row-title">Reihenfolge neue Karten</div>
-            <div class="settings-row-sub">Geordnet = Deck-Reihenfolge (empfohlen)</div>
-          </div>
-          <div class="segment" id="orderSegment">
-            <button class="seg-btn ${s.newOrder==='ordered'?'active':''}" onclick="setOrder('ordered')">Geordnet</button>
-            <button class="seg-btn ${s.newOrder==='random'?'active':''}" onclick="setOrder('random')">Zufällig</button>
-          </div>
-        </div>
+```
+<!-- STUDY SETTINGS -->
+<div class="settings-group">
+  <div class="settings-group-title">Lernen</div>
+  <div class="settings-card">
+    <div class="settings-row">
+      <div class="settings-row-info">
+        <div class="settings-row-title">Neue Karten pro Sitzung</div>
+        <div class="settings-row-sub">Pro Deck, zusätzlich zu fälligen Karten</div>
+      </div>
+      <div class="stepper">
+        <button class="stepper-btn" onclick="adjustNew(-5)">−</button>
+        <div class="stepper-val" id="newPerDeckVal">${s.newPerDeck}</div>
+        <button class="stepper-btn" onclick="adjustNew(+5)">+</button>
       </div>
     </div>
+    <div class="settings-row">
+      <div class="settings-row-info">
+        <div class="settings-row-title">Reihenfolge neue Karten</div>
+        <div class="settings-row-sub">Geordnet = Deck-Reihenfolge (empfohlen)</div>
+      </div>
+      <div class="segment" id="orderSegment">
+        <button class="seg-btn ${s.newOrder==='ordered'?'active':''}" onclick="setOrder('ordered')">Geordnet</button>
+        <button class="seg-btn ${s.newOrder==='random'?'active':''}" onclick="setOrder('random')">Zufällig</button>
+      </div>
+    </div>
+  </div>
+</div>
 
-    <!-- GITHUB SYNC -->
-    <div class="settings-group">
-      <div class="settings-group-title">☁️ GitHub Sync</div>
-      <div class="settings-card" style="padding:16px">
-        <div style="font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.6">
-          Fortschritt wird automatisch in deinem GitHub-Repo gespeichert und zwischen iPhone, iPad und Mac synchronisiert.
-        </div>
-        <div style="display:flex;flex-direction:column;gap:12px">
-          <div>
-            <label class="s-label">GitHub Benutzername</label>
-            <input class="s-input" id="ghUser" placeholder="deinusername" value="${esc(ghConfig.user||'')}">
-          </div>
-          <div>
-            <label class="s-label">Repository Name</label>
-            <input class="s-input" id="ghRepo" placeholder="kanji" value="${esc(ghConfig.repo||'')}">
-          </div>
-          <div>
-            <label class="s-label">Personal Access Token</label>
-            <input class="s-input" id="ghToken" type="password" placeholder="ghp_xxxxxxxxxxxx" value="${esc(ghConfig.token||'')}">
-            <div class="s-hint">GitHub → Settings → Developer settings → Personal access tokens → <b>repo</b> Berechtigung</div>
-          </div>
-        </div>
-        <button class="s-btn accent" onclick="saveGHConfig()">Speichern & verbinden</button>
-        ${syncOk?`
-        <button class="s-btn" onclick="ghPull().then(()=>renderHome())">⬇️ Jetzt synchronisieren</button>
-        <button class="s-btn" onclick="ghPush()">⬆️ Jetzt hochladen</button>`:''}
-        <div id="syncTestResult"></div>
+<!-- GITHUB SYNC -->
+<div class="settings-group">
+  <div class="settings-group-title">☁️ GitHub Sync</div>
+  <div class="settings-card" style="padding:16px">
+    <div style="font-size:13px;color:#8888aa;margin-bottom:14px;line-height:1.6">
+      Fortschritt wird automatisch in deinem GitHub-Repo gespeichert und zwischen iPhone, iPad und Mac synchronisiert.
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div>
+        <label class="s-label">GitHub Benutzername</label>
+        <input class="s-input" id="ghUser" placeholder="deinusername" value="${esc(ghConfig.user||'')}">
+      </div>
+      <div>
+        <label class="s-label">Repository Name</label>
+        <input class="s-input" id="ghRepo" placeholder="kanji" value="${esc(ghConfig.repo||'')}">
+      </div>
+      <div>
+        <label class="s-label">Personal Access Token</label>
+        <input class="s-input" id="ghToken" type="password" placeholder="ghp_xxxxxxxxxxxx" value="${esc(ghConfig.token||'')}">
+        <div class="s-hint">GitHub → Settings → Developer settings → Personal access tokens → <b>repo</b> Berechtigung</div>
       </div>
     </div>
+    <button class="s-btn accent" onclick="saveGHConfig()">Speichern & verbinden</button>
+    ${syncOk?`
+    <button class="s-btn" onclick="ghPull().then(()=>renderHome())">⬇️ Jetzt synchronisieren</button>
+    <button class="s-btn" onclick="ghPush()">⬆️ Jetzt hochladen</button>`:''}
+    <div id="syncTestResult"></div>
+  </div>
+</div>
 
-    <!-- DATA -->
-    <div class="settings-group">
-      <div class="settings-group-title">Daten</div>
-      <div class="settings-card" style="padding:16px;display:flex;flex-direction:column;gap:8px">
-        <button class="s-btn" onclick="exportProgress()">📤 Fortschritt exportieren (.json)</button>
-        <button class="s-btn" onclick="document.getElementById('importProgressInput').click()">📥 Fortschritt importieren</button>
-        <input type="file" id="importProgressInput" accept=".json" style="display:none" onchange="importProgressFile(event)">
-        <button class="s-btn danger" onclick="confirmReset()">🗑️ Fortschritt zurücksetzen</button>
-      </div>
-    </div>
-  `;
-  openModal('settingsModal');
+<!-- DATA -->
+<div class="settings-group">
+  <div class="settings-group-title">Daten</div>
+  <div class="settings-card" style="padding:16px;display:flex;flex-direction:column;gap:8px">
+    <button class="s-btn" onclick="exportProgress()">📤 Fortschritt exportieren (.json)</button>
+    <button class="s-btn" onclick="document.getElementById('importProgressInput').click()">📥 Fortschritt importieren</button>
+    <input type="file" id="importProgressInput" accept=".json" style="display:none" onchange="importProgressFile(event)">
+    <button class="s-btn danger" onclick="confirmReset()">🗑️ Fortschritt zurücksetzen</button>
+  </div>
+</div>
+```
+
+`;
+openModal(‘settingsModal’);
 }
 
 function setTheme(t){
-  userSettings.theme = t;
-  saveLocal();
-  applyTheme();
-  // Update segment buttons
-  document.querySelectorAll('#themeSegment .seg-btn').forEach((b,i)=>{
-    b.classList.toggle('active', ['light','auto','dark'][i]===t);
-  });
+userSettings.theme = t;
+saveLocal();
+applyTheme();
+// Update segment buttons
+document.querySelectorAll(’#themeSegment .seg-btn’).forEach((b,i)=>{
+b.classList.toggle(‘active’, [‘light’,‘auto’,‘dark’][i]===t);
+});
 }
 function adjustNew(delta){
-  userSettings.newPerDeck = Math.max(1, Math.min(100, (userSettings.newPerDeck||20) + delta));
-  saveLocal();
-  const el = document.getElementById('newPerDeckVal');
-  if(el) el.textContent = userSettings.newPerDeck;
+userSettings.newPerDeck = Math.max(1, Math.min(100, (userSettings.newPerDeck||20) + delta));
+saveLocal();
+const el = document.getElementById(‘newPerDeckVal’);
+if(el) el.textContent = userSettings.newPerDeck;
 }
 function setOrder(o){
-  userSettings.newOrder = o;
-  saveLocal();
-  document.querySelectorAll('#orderSegment .seg-btn').forEach((b,i)=>{
-    b.classList.toggle('active', ['ordered','random'][i]===o);
-  });
+userSettings.newOrder = o;
+saveLocal();
+document.querySelectorAll(’#orderSegment .seg-btn’).forEach((b,i)=>{
+b.classList.toggle(‘active’, [‘ordered’,‘random’][i]===o);
+});
 }
 
-
 async function saveGHConfig(){
-  ghConfig.user = document.getElementById('ghUser').value.trim();
-  ghConfig.repo = document.getElementById('ghRepo').value.trim();
-  ghConfig.token = document.getElementById('ghToken').value.trim();
-  saveLocal();
-  const res = document.getElementById('syncTestResult');
-  res.innerHTML='<div class="sync-status sync-info">Verbindung testen…</div>';
-  try{
-    const r = await fetch(`https://api.github.com/repos/${ghConfig.user}/${ghConfig.repo}`,{
-      headers:{'Authorization':`token ${ghConfig.token}`}
-    });
-    if(r.ok){
-      res.innerHTML='<div class="sync-status sync-ok">✅ Verbindung erfolgreich!</div>';
-      // Re-render to show push/pull buttons
-      showSettings();
-      ghPull();
-    } else {
-      res.innerHTML=`<div class="sync-status sync-err">❌ Fehler ${r.status} – Token oder Repo prüfen</div>`;
-    }
-  }catch(e){
-    res.innerHTML='<div class="sync-status sync-err">❌ Netzwerkfehler</div>';
-  }
+ghConfig.user = document.getElementById(‘ghUser’).value.trim();
+ghConfig.repo = document.getElementById(‘ghRepo’).value.trim();
+ghConfig.token = document.getElementById(‘ghToken’).value.trim();
+saveLocal();
+const res = document.getElementById(‘syncTestResult’);
+res.innerHTML=’<div class="sync-status sync-info">Verbindung testen…</div>’;
+try{
+const r = await fetch(`https://api.github.com/repos/${ghConfig.user}/${ghConfig.repo}`,{
+headers:{‘Authorization’:`token ${ghConfig.token}`}
+});
+if(r.ok){
+res.innerHTML=’<div class="sync-status sync-ok">✅ Verbindung erfolgreich!</div>’;
+// Re-render to show push/pull buttons
+showSettings();
+ghPull();
+} else {
+res.innerHTML=`<div class="sync-status sync-err">❌ Fehler ${r.status} – Token oder Repo prüfen</div>`;
+}
+}catch(e){
+res.innerHTML=’<div class="sync-status sync-err">❌ Netzwerkfehler</div>’;
+}
 }
 
 function exportProgress(){
-  const blob = new Blob([JSON.stringify(progress,null,2)],{type:'application/json'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'kanji-progress.json';
-  a.click();
+const blob = new Blob([JSON.stringify(progress,null,2)],{type:‘application/json’});
+const a = document.createElement(‘a’);
+a.href = URL.createObjectURL(blob);
+a.download = ‘kanji-progress.json’;
+a.click();
 }
 
 function importProgressFile(e){
-  const f = e.target.files[0];
-  if(!f) return;
-  const r = new FileReader();
-  r.onload = ()=>{
-    try{
-      const data = JSON.parse(r.result);
-      Object.assign(progress, data);
-      saveLocal();
-      toast('✅ Fortschritt importiert');
-      renderHome();
-    }catch{toast('❌ Ungültige Datei')}
-  };
-  r.readAsText(f);
-  e.target.value='';
+const f = e.target.files[0];
+if(!f) return;
+const r = new FileReader();
+r.onload = ()=>{
+try{
+const data = JSON.parse(r.result);
+Object.assign(progress, data);
+saveLocal();
+toast(‘✅ Fortschritt importiert’);
+renderHome();
+}catch{toast(‘❌ Ungültige Datei’)}
+};
+r.readAsText(f);
+e.target.value=’’;
 }
 
 function confirmReset(){
-  if(confirm('Wirklich ALLEN Fortschritt löschen? Das kann nicht rückgängig gemacht werden.')){
-    progress={};
-    saveLocal();
-    toast('🗑️ Fortschritt gelöscht');
-    renderHome();
-    closeModal('settingsModal');
-  }
+if(confirm(‘Wirklich ALLEN Fortschritt löschen? Das kann nicht rückgängig gemacht werden.’)){
+progress={};
+saveLocal();
+toast(‘🗑️ Fortschritt gelöscht’);
+renderHome();
+closeModal(‘settingsModal’);
+}
 }
 
 // ══════════════════════════════════════════════
 //  STUDY
 // ══════════════════════════════════════════════
 function startStudy(did){
-  const deck = decks[did];
-  if(!deck) return;
-  sessionStats={again:0,hard:0,good:0,easy:0};
-  const due=[],newCards=[];
-  for(const c of deck.cards){
-    const st=getState(c.nid,c.ord);
-    if(!st) newCards.push(c);
-    else if(isDue(st)) due.push(c);
-  }
-  shuffle(due);
-  // New cards: ordered or random based on setting
-  if(userSettings.newOrder === 'random') shuffle(newCards);
-  const maxNew = userSettings.newPerDeck || 20;
-  studyQueue=[...due,...newCards.slice(0, maxNew)];
-  studyIdx=0;
+const deck = decks[did];
+if(!deck) return;
+sessionStats={again:0,hard:0,good:0,easy:0};
+const due=[],newCards=[];
+for(const c of deck.cards){
+const st=getState(c.nid,c.ord);
+if(!st) newCards.push(c);
+else if(isDue(st)) due.push(c);
+}
+shuffle(due);
+// New cards: ordered or random based on setting
+if(userSettings.newOrder === ‘random’) shuffle(newCards);
+const maxNew = userSettings.newPerDeck || 20;
+studyQueue=[…due,…newCards.slice(0, maxNew)];
+studyIdx=0;
 
-  if(!studyQueue.length){showDone(true);showScreen('studyScreen');return}
+if(!studyQueue.length){showDone(true);showScreen(‘studyScreen’);return}
 
-  document.getElementById('studyTitle').textContent=deck.name.split('::').pop();
-  showScreen('studyScreen');
-  nextCard();
+document.getElementById(‘studyTitle’).textContent=deck.name.split(’::’).pop();
+showScreen(‘studyScreen’);
+nextCard();
 }
 
 function nextCard(){
-  if(studyIdx>=studyQueue.length){showDone(false);return}
-  curCard=studyQueue[studyIdx];
-  flipped=false;
-  updateProgress();
-  renderCard();
-  renderAns(false);
+if(studyIdx>=studyQueue.length){showDone(false);return}
+curCard=studyQueue[studyIdx];
+flipped=false;
+updateProgress();
+renderCard();
+renderAns(false);
 }
 
 function updateProgress(){
-  const rem=studyQueue.length-studyIdx;
-  document.getElementById('studyCount').textContent=rem+' übrig';
-  const pct=studyIdx/studyQueue.length*100;
-  document.getElementById('progFill').style.width=pct+'%';
+const rem=studyQueue.length-studyIdx;
+document.getElementById(‘studyCount’).textContent=rem+’ übrig’;
+const pct=studyIdx/studyQueue.length*100;
+document.getElementById(‘progFill’).style.width=pct+’%’;
 }
 
 function renderCard(){
-  const c=curCard;
-  const st=getState(c.nid,c.ord);
-  const cfg=getFieldConfig(c.did);
-  if(!Array.isArray(cfg.front)) cfg.front = cfg.front ? [cfg.front] : [];
-  const frontFields = cfg.front.filter(f=>c.fields[f]!==undefined);
-  if(!frontFields.length) frontFields.push(Object.keys(c.fields)[0]);
-  const typeLabel=!st?'NEU':st.type===2?'WIEDERHOLUNG':'LERNEN';
+const c=curCard;
+const st=getState(c.nid,c.ord);
+const cfg=getFieldConfig(c.did);
+if(!Array.isArray(cfg.front)) cfg.front = cfg.front ? [cfg.front] : [];
+const frontFields = cfg.front.filter(f=>c.fields[f]!==undefined);
+if(!frontFields.length) frontFields.push(Object.keys(c.fields)[0]);
+const typeLabel=!st?‘NEU’:st.type===2?‘WIEDERHOLUNG’:‘LERNEN’;
 
-  // Detect audio in any front field
-  const frontAudio = frontFields.map(f=>extractAudio(c.fields[f]||'')).find(Boolean);
+// Detect audio in any front field
+const frontAudio = frontFields.map(f=>extractAudio(c.fields[f]||’’)).find(Boolean);
 
-  const div=document.createElement('div');
-  div.className='flashcard c-in';
-  div.id='fcard';
-  div.onclick=flipCard;
+const div=document.createElement(‘div’);
+div.className=‘flashcard c-in’;
+div.id=‘fcard’;
+div.onclick=flipCard;
 
-  // Render multiple front fields stacked
-  const frontHtml = frontFields.map((f,i)=>{
-    const val = removeAudioTags(c.fields[f]||'');
-    const big = i===0;
-    return '<div style="' + (i>0?'margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.07)':'') + '">' + renderField(val,big) + '</div>';
-  }).join('');
+// Render multiple front fields stacked
+const frontHtml = frontFields.map((f,i)=>{
+const val = removeAudioTags(c.fields[f]||’’);
+const big = i===0;
+return ‘<div style="' + (i>0?'margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.07)':'') + '">’ + renderField(val,big) + ‘</div>’;
+}).join(’’);
 
-  div.innerHTML=`
-    <div class="card-type-badge">${typeLabel}</div>
-    ${frontAudio?`<button class="card-audio-btn" onclick="event.stopPropagation();playAudio('${frontAudio}')">🔊</button>`:''}
-    <div class="card-main" style="width:100%">
-      ${frontHtml}
-    </div>
-    <div class="tap-hint"><div class="tap-dot"></div>Tippen zum Aufdecken</div>
-  `;
+div.innerHTML=` <div class="card-type-badge">${typeLabel}</div> ${frontAudio?`<button class="card-audio-btn" onclick="event.stopPropagation();playAudio('${frontAudio}')">🔊</button>`:''} <div class="card-main" style="width:100%"> ${frontHtml} </div> <div class="tap-hint"><div class="tap-dot"></div>Tippen zum Aufdecken</div> `;
 
-    const stage=document.getElementById('cardStage');
-  stage.innerHTML='';
-  stage.appendChild(div);
+```
+const stage=document.getElementById('cardStage');
+```
+
+stage.innerHTML=’’;
+stage.appendChild(div);
 }
 
 function flipCard(){
-  if(flipped) return;
-  flipped=true;
-  const c=curCard;
-  const cfg=getFieldConfig(c.did);
-  const st=getState(c.nid,c.ord);
+if(flipped) return;
+flipped=true;
+const c=curCard;
+const cfg=getFieldConfig(c.did);
+const st=getState(c.nid,c.ord);
 
-  const card=document.getElementById('fcard');
-  card.onclick=null;
-  card.querySelector('.tap-hint')?.remove();
+const card=document.getElementById(‘fcard’);
+card.onclick=null;
+card.querySelector(’.tap-hint’)?.remove();
 
-  // Build back
-  const backFields=cfg.back.filter(f=>!cfg.hidden.includes(f)&&c.fields[f]&&c.fields[f].trim());
-  let backHtml='';
-  for(const f of backFields){
-    const val=c.fields[f];
-    const audio=extractAudio(val);
-    const cleanVal=removeAudioTags(val);
-    const isBig=backFields.indexOf(f)===0;
-    backHtml+=`<div class="back-field">
-      <div class="back-field-label">${esc(f)}</div>
-      <div class="back-field-val ${isBig?'big':''}">
-        ${renderField(cleanVal,isBig)}
-        ${audio?`<button class="card-audio-btn" style="position:static;display:inline-flex;margin-left:8px;vertical-align:middle;width:28px;height:28px;font-size:13px" onclick="playAudio('${audio}')">🔊</button>`:''}
-      </div>
-    </div>`;
-  }
-  if(!backHtml) backHtml='<div style="color:var(--text-dim);font-size:14px">Keine weiteren Felder</div>';
+// Build back
+const backFields=cfg.back.filter(f=>!cfg.hidden.includes(f)&&c.fields[f]&&c.fields[f].trim());
+let backHtml=’’;
+for(const f of backFields){
+const val=c.fields[f];
+const audio=extractAudio(val);
+const cleanVal=removeAudioTags(val);
+const isBig=backFields.indexOf(f)===0;
+backHtml+=`<div class="back-field"> <div class="back-field-label">${esc(f)}</div> <div class="back-field-val ${isBig?'big':''}"> ${renderField(cleanVal,isBig)} ${audio?`<button class="card-audio-btn" style="position:static;display:inline-flex;margin-left:8px;vertical-align:middle;width:28px;height:28px;font-size:13px" onclick="playAudio('${audio}')">🔊</button>`:''} </div> </div>`;
+}
+if(!backHtml) backHtml=’<div style="color:#4a4a66;font-size:14px">Keine weiteren Felder</div>’;
 
-  const divider=document.createElement('div');
-  divider.className='card-divider';
-  const backEl=document.createElement('div');
-  backEl.className='back-fields';
-  backEl.innerHTML=backHtml;
+const divider=document.createElement(‘div’);
+divider.className=‘card-divider’;
+const backEl=document.createElement(‘div’);
+backEl.className=‘back-fields’;
+backEl.innerHTML=backHtml;
 
-  card.appendChild(divider);
-  card.appendChild(backEl);
+card.appendChild(divider);
+card.appendChild(backEl);
 
-  // Auto-play back audio
-  const firstBackAudio=backFields.map(f=>extractAudio(c.fields[f])).find(Boolean);
-  if(firstBackAudio) setTimeout(()=>playAudio(firstBackAudio),300);
+// Auto-play back audio
+const firstBackAudio=backFields.map(f=>extractAudio(c.fields[f])).find(Boolean);
+if(firstBackAudio) setTimeout(()=>playAudio(firstBackAudio),300);
 
-  renderAns(true,st);
+renderAns(true,st);
 }
 
 function renderAns(showRating,st){
-  const wrap=document.getElementById('ansWrap');
-  if(!showRating){
-    wrap.innerHTML=`<button class="show-btn" onclick="flipCard()">Antwort zeigen</button>`;
-    return;
-  }
-  const btns=[
-    {k:'again',cls:'btn-again',l:'Nochmal'},
-    {k:'hard', cls:'btn-hard', l:'Schwer'},
-    {k:'good', cls:'btn-good', l:'Gut'},
-    {k:'easy', cls:'btn-easy', l:'Leicht'},
-  ];
-  wrap.innerHTML=`<div class="rating-grid">${btns.map(b=>`
-    <button class="r-btn ${b.cls}" onclick="rateCard('${b.k}')">
-      <span class="r-lbl">${b.l}</span>
-      <span class="r-int">${intervalLabel(st,R[b.k])}</span>
-    </button>`).join('')}</div>`;
+const wrap=document.getElementById(‘ansWrap’);
+if(!showRating){
+wrap.innerHTML=`<button class="show-btn" onclick="flipCard()">Antwort zeigen</button>`;
+return;
+}
+const btns=[
+{k:‘again’,cls:‘btn-again’,l:‘Nochmal’},
+{k:‘hard’, cls:‘btn-hard’, l:‘Schwer’},
+{k:‘good’, cls:‘btn-good’, l:‘Gut’},
+{k:‘easy’, cls:‘btn-easy’, l:‘Leicht’},
+];
+wrap.innerHTML=`<div class="rating-grid">${btns.map(b=>`
+<button class="r-btn ${b.cls}" onclick="rateCard('${b.k}')">
+<span class="r-lbl">${b.l}</span>
+<span class="r-int">${intervalLabel(st,R[b.k])}</span>
+</button>`).join('')}</div>`;
 }
 
 function rateCard(rk){
-  const c=curCard;
-  const rating=R[rk];
-  const st=getState(c.nid,c.ord)||{};
-  setState(c.nid,c.ord,schedule(st,rating));
-  sessionStats[rk]++;
-  schedulePush();
+const c=curCard;
+const rating=R[rk];
+const st=getState(c.nid,c.ord)||{};
+setState(c.nid,c.ord,schedule(st,rating));
+sessionStats[rk]++;
+schedulePush();
 
-  // Re-queue if again
-  if(rk==='again'&&studyQueue.length-studyIdx<8){
-    studyQueue.splice(Math.min(studyIdx+3,studyQueue.length),0,c);
-  }
+// Re-queue if again
+if(rk===‘again’&&studyQueue.length-studyIdx<8){
+studyQueue.splice(Math.min(studyIdx+3,studyQueue.length),0,c);
+}
 
-  const card=document.getElementById('fcard');
-  if(card){card.classList.remove('c-in');card.classList.add('c-out');card.style.pointerEvents='none'}
-  studyIdx++;
-  setTimeout(nextCard,230);
+const card=document.getElementById(‘fcard’);
+if(card){card.classList.remove(‘c-in’);card.classList.add(‘c-out’);card.style.pointerEvents=‘none’}
+studyIdx++;
+setTimeout(nextCard,230);
 }
 
 // ══════════════════════════════════════════════
 //  DONE
 // ══════════════════════════════════════════════
 function showDone(allDone){
-  document.getElementById('progFill').style.width='100%';
-  document.getElementById('ansWrap').innerHTML='';
-  const total=sessionStats.again+sessionStats.hard+sessionStats.good+sessionStats.easy;
-  const correct=sessionStats.good+sessionStats.easy;
-  const pct=total?Math.round(correct/total*100):100;
-  document.getElementById('cardStage').innerHTML=`<div class="done-wrap">
-    <div class="done-icon">${allDone?'🎌':'🎉'}</div>
-    <div class="done-title">${allDone?'Alles erledigt!':'Sitzung beendet!'}</div>
-    <div class="done-sub">${allDone?'Für heute sind alle Karten fertig. Bis morgen!':total+' Karten gelernt'}</div>
-    ${total?`<div class="done-row">
-      <div class="done-stat"><div class="done-stat-val" style="color:var(--again)">${sessionStats.again}</div><div class="done-stat-lbl">Nochmal</div></div>
-      <div class="done-stat"><div class="done-stat-val" style="color:var(--good)">${correct}</div><div class="done-stat-lbl">Richtig</div></div>
-      <div class="done-stat"><div class="done-stat-val">${pct}%</div><div class="done-stat-lbl">Quote</div></div>
-    </div>`:''}
-    <button class="primary-btn" onclick="goHome()">Zurück zu Decks</button>
+document.getElementById(‘progFill’).style.width=‘100%’;
+document.getElementById(‘ansWrap’).innerHTML=’’;
+const total=sessionStats.again+sessionStats.hard+sessionStats.good+sessionStats.easy;
+const correct=sessionStats.good+sessionStats.easy;
+const pct=total?Math.round(correct/total*100):100;
+document.getElementById(‘cardStage’).innerHTML=`<div class="done-wrap"> <div class="done-icon">${allDone?'🎌':'🎉'}</div> <div class="done-title">${allDone?'Alles erledigt!':'Sitzung beendet!'}</div> <div class="done-sub">${allDone?'Für heute sind alle Karten fertig. Bis morgen!':total+' Karten gelernt'}</div> ${total?`<div class="done-row">
+<div class="done-stat"><div class="done-stat-val" style="color:#ff4d6d">${sessionStats.again}</div><div class="done-stat-lbl">Nochmal</div></div>
+<div class="done-stat"><div class="done-stat-val" style="color:#3ecf8e">${correct}</div><div class="done-stat-lbl">Richtig</div></div>
+<div class="done-stat"><div class="done-stat-val">${pct}%</div><div class="done-stat-lbl">Quote</div></div>
+</div>`:’’}
+<button class="primary-btn" onclick="goHome()">Zurück zu Decks</button>
+
   </div>`;
 }
 
@@ -1639,135 +1354,101 @@ function showDone(allDone){
 //  AUDIO
 // ══════════════════════════════════════════════
 function extractAudio(val){
-  if(!val) return null;
-  const m=val.match(/\[sound:([^\]]+)\]/);
-  return m?m[1]:null;
+if(!val) return null;
+const m=val.match(/[sound:([^]]+)]/);
+return m?m[1]:null;
 }
 function removeAudioTags(val){
-  return val?val.replace(/\[sound:[^\]]+\]/g,''):val;
+return val?val.replace(/[sound:[^]]+]/g,’’):val;
 }
 function playAudio(filename){
-  const url=mediaFiles[filename];
-  if(!url){toast('🔇 Audio nicht gefunden');return}
-  const audio=new Audio(url);
-  audio.play().catch(()=>toast('🔇 Wiedergabe fehlgeschlagen'));
+const url=mediaFiles[filename];
+if(!url){toast(‘🔇 Audio nicht gefunden’);return}
+const audio=new Audio(url);
+audio.play().catch(()=>toast(‘🔇 Wiedergabe fehlgeschlagen’));
 }
 
 // ══════════════════════════════════════════════
 //  FIELD RENDERING
 // ══════════════════════════════════════════════
 function renderField(val,big=false){
-  if(!val) return '';
-  // Remove audio tags for display
-  val=removeAudioTags(val);
-  if(!val.trim()) return '';
+if(!val) return ‘’;
+// Remove audio tags for display
+val=removeAudioTags(val);
+if(!val.trim()) return ‘’;
 
-  // If HTML content
-  if(/<[a-z]/i.test(val)){
-    return `<div class="card-front-html">${val}</div>`;
-  }
-  // Plain text – auto-size
-  const len=val.length;
-  let sz;
-  if(big){sz=len<=3?'72px':len<=6?'52px':len<=12?'36px':len<=24?'24px':'17px'}
-  else{sz=len<=8?'22px':len<=30?'17px':'14px'}
-  return `<span style="font-size:${sz};line-height:1.2;display:block">${esc(val)}</span>`;
+// If HTML content
+if(/<[a-z]/i.test(val)){
+return `<div class="card-front-html">${val}</div>`;
+}
+// Plain text – auto-size
+const len=val.length;
+let sz;
+if(big){sz=len<=3?‘72px’:len<=6?‘52px’:len<=12?‘36px’:len<=24?‘24px’:‘17px’}
+else{sz=len<=8?‘22px’:len<=30?‘17px’:‘14px’}
+return `<span style="font-size:${sz};line-height:1.2;display:block">${esc(val)}</span>`;
 }
 
 // ══════════════════════════════════════════════
 //  HELPERS
 // ══════════════════════════════════════════════
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}}
-function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('hidden',s.id!==id))}
-function goHome(){showScreen('homeScreen');renderHome()}
+function esc(s){return String(s||’’).replace(/&/g,’&’).replace(/</g,’<’).replace(/>/g,’>’).replace(/”/g,’"’)}
+function shuffle(a){for(let i=a.length-1;i>0;i–){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}}
+function showScreen(id){document.querySelectorAll(’.screen’).forEach(s=>s.classList.toggle(‘hidden’,s.id!==id))}
+function goHome(){showScreen(‘homeScreen’);renderHome()}
 
 function openModal(id){
-  const m=document.getElementById(id);
-  m.classList.remove('hidden');
-  m.style.display='flex';
+const m=document.getElementById(id);
+m.classList.remove(‘hidden’);
+m.style.display=‘flex’;
 }
 function closeModal(id){
-  const m=document.getElementById(id);
-  m.classList.add('hidden');
+const m=document.getElementById(id);
+m.classList.add(‘hidden’);
 }
 // Close modals on backdrop click
-document.querySelectorAll('.modal-bg').forEach(bg=>{
-  bg.addEventListener('click',e=>{if(e.target===bg)closeModal(bg.id)});
+document.querySelectorAll(’.modal-bg’).forEach(bg=>{
+bg.addEventListener(‘click’,e=>{if(e.target===bg)closeModal(bg.id)});
 });
 
 let toastT;
 function toast(msg){
-  const el=document.getElementById('toast');
-  el.textContent=msg;el.classList.add('show');
-  clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),3200);
+const el=document.getElementById(‘toast’);
+el.textContent=msg;el.classList.add(‘show’);
+clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove(‘show’),3200);
 }
 
 function showLoader(msg){
-  const ol=document.getElementById('loaderOverlay');
-  ol.classList.remove('gone');
-  setMsg(msg);
+const ol=document.getElementById(‘loaderOverlay’);
+ol.classList.remove(‘gone’);
+setMsg(msg);
 }
-function hideLoader(){document.getElementById('loaderOverlay').classList.add('gone')}
-function setMsg(m){const el=document.getElementById('loaderMsg');if(el)el.textContent=m}
+function hideLoader(){document.getElementById(‘loaderOverlay’).classList.add(‘gone’)}
+function setMsg(m){const el=document.getElementById(‘loaderMsg’);if(el)el.textContent=m}
 
 // Drag & drop
-document.addEventListener('dragover',e=>e.preventDefault());
-document.addEventListener('drop',async e=>{
-  e.preventDefault();
-  const f=e.dataTransfer.files[0];
-  if(f&&(f.name.endsWith('.apkg')||f.name.endsWith('.colpkg'))) await importApkg(f);
+document.addEventListener(‘dragover’,e=>e.preventDefault());
+document.addEventListener(‘drop’,async e=>{
+e.preventDefault();
+const f=e.dataTransfer.files[0];
+if(f&&(f.name.endsWith(’.apkg’)||f.name.endsWith(’.colpkg’))) await importApkg(f);
 });
 
 // ══════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════
 (async()=>{
-  loadLocal();
-  applyTheme();
-  await initSQL();
-  hideLoader();
-  renderHome();
-  // Pull progress from GitHub on startup if configured
-  if(ghConfig.token && ghConfig.repo && ghConfig.user){
-    ghPull().then(()=>renderHome());
-  }
-})();
-</script>
-
-<script>
-// Debug mode: activate with ?debug=1 in URL
-if(new URLSearchParams(location.search).get('debug') === '1') {
-  document.getElementById('debugBanner').style.display = 'block';
-  // Pad top of screens for banner
-  document.querySelectorAll('.screen').forEach(s => s.style.paddingTop = '140px');
-  
-  function updateDebug() {
-    var root = document.documentElement;
-    var dataTheme = root.getAttribute('data-theme') || '(nicht gesetzt)';
-    var storedSettings = localStorage.getItem('kj_settings_v1') || '(leer)';
-    var bgColor = getComputedStyle(root).getPropertyValue('--bg').trim();
-    var textColor = getComputedStyle(root).getPropertyValue('--text').trim();
-    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    var prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
-    
-    document.getElementById('dbTheme').textContent        = '🎨 userSettings.theme: ' + (typeof userSettings !== 'undefined' ? userSettings.theme : '(JS noch nicht geladen)');
-    document.getElementById('dbColorScheme').textContent  = '📱 prefers-color-scheme: ' + (prefersDark ? 'dark' : prefersLight ? 'light' : 'unbekannt');
-    document.getElementById('dbDataTheme').textContent    = '🏷  data-theme Attribut: ' + dataTheme;
-    document.getElementById('dbBgColor').textContent      = '🖌  --bg CSS Variable: ' + bgColor + ' | --text: ' + textColor;
-    document.getElementById('dbStorage').textContent      = '💾 localStorage kj_settings_v1: ' + storedSettings;
-    document.getElementById('dbUA').textContent           = '🌐 ' + navigator.userAgent.substring(0, 80);
-  }
-  
-  // Update immediately and after JS loads
-  updateDebug();
-  setTimeout(updateDebug, 500);
-  setTimeout(updateDebug, 1500);
-  
-  // Watch for theme changes
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateDebug);
+loadLocal();
+applyTheme();
+await initSQL();
+hideLoader();
+renderHome();
+// Pull progress from GitHub on startup if configured
+if(ghConfig.token && ghConfig.repo && ghConfig.user){
+ghPull().then(()=>renderHome());
 }
-</script>
+})();
 
+</script>
 </body>
 </html>
