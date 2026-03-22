@@ -641,14 +641,14 @@ async function importApkg(file){
     setMsg('Entpacken…');
     const zip = await JSZip.loadAsync(file);
 
-    // Database - parse SQLite directly without sql.js
     const dbEntry = zip.file('collection.anki21') || zip.file('collection.anki2') || zip.file('collection.anki21b');
     if(!dbEntry) throw new Error('Keine Anki-Datenbank gefunden.');
     setMsg('Datenbank lesen…');
     const buf = await dbEntry.async('arraybuffer');
-    db = new SQL.Database(new Uint8Array(buf));
+    // Use a temporary DB so we don't lose existing decks
+    const newDb = new SQL.Database(new Uint8Array(buf));
 
-    // Media files
+    // Media files – merge into existing
     setMsg('Medien laden…');
     const mediaJson = zip.file('media');
     if(mediaJson){
@@ -663,10 +663,22 @@ async function importApkg(file){
     }
 
     setMsg('Karten laden…');
-    loadDecks();
+    // Merge new decks into existing decks object
+    const newDecks = loadDecksFromDb(newDb);
+    const prevCount = Object.keys(decks).length;
+    for(const [did, deck] of Object.entries(newDecks)){
+      decks[did] = deck;
+    }
+    // Keep a reference to the latest db for future queries
+    // (store all dbs so we can query any of them)
+    if(!window.allDbs) window.allDbs = [];
+    window.allDbs.push(newDb);
+    db = newDb; // point to latest for new imports
+
+    const newCount = Object.keys(decks).length - prevCount;
     hideLoader();
     renderHome();
-    toast('✅ '+Object.keys(decks).length+' Deck(s) importiert');
+    toast('✅ ' + Object.keys(newDecks).length + ' Deck(s) importiert');
   }catch(err){
     hideLoader();
     toast('❌ '+err.message);
@@ -677,10 +689,11 @@ async function importApkg(file){
 // ══════════════════════════════════════════════
 //  DECK PARSING
 // ══════════════════════════════════════════════
-function loadDecks(){
-  decks = {};
-  const col = db.exec('SELECT decks,models FROM col LIMIT 1');
-  if(!col.length) return;
+function loadDecksFromDb(dbInst){
+  // Returns a decks object from a given SQL db instance
+  const result = {};
+  const col = dbInst.exec('SELECT decks,models FROM col LIMIT 1');
+  if(!col.length) return result;
   const deckDef = JSON.parse(col[0].values[0][0]);
   const modelDef = JSON.parse(col[0].values[0][1]);
 
@@ -689,23 +702,33 @@ function loadDecks(){
     models[mid] = {name:m.name, fields:m.flds.map(f=>f.name)};
   }
 
-  const rows = db.exec(`
+  const rows = dbInst.exec(`
     SELECT c.id,c.nid,c.did,c.ord,c.type,n.mid,n.flds,n.tags
     FROM cards c JOIN notes n ON c.nid=n.id
   `);
-  if(!rows.length) return;
+  if(!rows.length) return result;
 
   for(const[cid,nid,did,ord,type,mid,flds,tags] of rows[0].values){
     const dn = deckDef[did]?.name || 'Unbekannt';
-    if(!decks[did]) decks[did]={name:dn,cards:[],fields:[]};
+    if(!result[did]) result[did]={name:dn,cards:[],fields:[]};
     const model = models[mid]||{fields:[]};
     const vals = flds.split('\x1f');
     const fields={};
     model.fields.forEach((n,i)=>fields[n]=vals[i]||'');
-    if(!decks[did].fields.length) decks[did].fields=model.fields;
-    decks[did].cards.push({cid,nid,did,ord,type,fields,tags:tags||''});
+    if(!result[did].fields.length) result[did].fields=model.fields;
+    result[did].cards.push({cid,nid,did,ord,type,fields,tags:tags||''});
+  }
+  return result;
+}
+
+function loadDecks(){
+  // Load from current db and merge into global decks
+  const newDecks = loadDecksFromDb(db);
+  for(const [did, deck] of Object.entries(newDecks)){
+    decks[did] = deck;
   }
 }
+
 
 // ══════════════════════════════════════════════
 //  FIELD CONFIG
@@ -1557,20 +1580,28 @@ function playAudio(filename){
 //  FIELD RENDERING
 // ══════════════════════════════════════════════
 function sanitizeAnkiHtml(html) {
-  // Replace inline color/background styles that break dark mode
-  // Remove color:black, color:#000, background:white etc
-  return html
-    .replace(/\s*color\s*:\s*(black|#000000|#000|rgb\(0,0,0\)|white|#ffffff|#fff|rgb\(255,255,255\))[^;"']*/gi, '')
-    .replace(/\s*background(-color)?\s*:\s*(white|#ffffff|#fff|rgb\(255,255,255\)|black|#000000|#000)[^;"']*/gi, '')
-    .replace(/\s*font-size\s*:\s*[^;"']+/gi, '') // remove hardcoded font sizes
-    .replace(/style="\s*"/g, '') // remove empty style attrs
-    .replace(/style="\s*;/g, 'style="') // remove leading semicolons
-    // Replace <img src="filename"> with mediaFiles lookup
-    .replace(/<img([^>]*)src="([^"]+)"([^>]*)>/gi, (match, pre, src, post) => {
-      const url = mediaFiles[src] || mediaFiles[src.split('/').pop()] || '';
-      if(!url) return `<div style="font-size:11px;color:#8888aa;padding:4px;border:1px dashed #4a4a66;border-radius:6px">🖼 ${esc(src)}</div>`;
-      return `<img${pre}src="${url}"${post}>`;
-    });
+  // Aggressively strip all inline color/background/font styles from Anki HTML
+  // so dark mode colors apply correctly
+  
+  // 1. Remove all color and background style properties entirely
+  html = html.replace(/(?:color|background(?:-color)?|font-size|font-family)\s*:[^;"}]+[;]?/gi, '');
+  
+  // 2. Clean up leftover empty or broken style attributes
+  html = html.replace(/style="[\s;]*"/gi, '');
+  html = html.replace(/style="\s*;+\s*/gi, 'style="');
+  
+  // 3. Remove <font> tags entirely (old Anki format) but keep content
+  html = html.replace(/<font[^>]*>/gi, '').replace(/<\/font>/gi, '');
+  
+  // 4. Fix images – resolve from mediaFiles
+  html = html.replace(/<img([^>]*)src="([^"]+)"([^>]*?)\/?>/gi, (match, pre, src, post) => {
+    const filename = src.split('/').pop();
+    const url = mediaFiles[src] || mediaFiles[filename] || '';
+    if(!url) return `<div style="font-size:11px;color:#8888aa;padding:6px 10px;border:1px dashed #4a4a66;border-radius:8px;display:inline-block">🖼 Bild nicht gefunden: ${esc(filename)}</div>`;
+    return `<img${pre}src="${url}"${post} style="max-width:100%;border-radius:12px;display:block;margin:8px auto">`;
+  });
+
+  return html;
 }
 
 function renderField(val,big=false){
