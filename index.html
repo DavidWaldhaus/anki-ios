@@ -14,7 +14,7 @@
 <style>
 /* ══ THEME TOKENS ══════════════════════════════════ */
 :root {
-  color-scheme: dark;
+  color-scheme: light dark;
   --bg:            #0d0d14;
   --bg2:           #12121a;
   --surface:       #1a1a24;
@@ -65,6 +65,30 @@
   --easy:          #0065c0; --easy-soft:  #eef6ff; --easy-border:  #99ccff;
   --shadow:        0 4px 20px rgba(0,0,0,0.10);
   --shadow-sm:     0 1px 6px rgba(0,0,0,0.08);
+}
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg:            #0d0d14;
+  --bg2:           #12121a;
+  --surface:       #1a1a24;
+  --surface2:      #20202c;
+  --surface3:      #272734;
+  --surface-solid: #1a1a24;
+  --border:        #2c2c3e;
+  --border2:       #222230;
+  --text:          #f0f0f8;
+  --text-muted:    #8888aa;
+  --text-dim:      #4a4a66;
+  --accent:        #6e66ff;
+  --accent2:       #a89fff;
+  --accent-soft:   #1e1b3a;
+  --accent-glow:   rgba(110,102,255,0.30);
+  --again:         #ff4d6d; --again-soft: #2d1020; --again-border: #7a2035;
+  --hard:          #ffaa44; --hard-soft:  #2d2010; --hard-border:  #7a5510;
+  --good:          #3ecf8e; --good-soft:  #0e2a1e; --good-border:  #1a6644;
+  --easy:          #4db8ff; --easy-soft:  #0e2030; --easy-border:  #1a5577;
+  --shadow:        0 8px 32px rgba(0,0,0,0.55);
+  --shadow-sm:     0 2px 12px rgba(0,0,0,0.35);
 }
 
 /* ══ RESET ══════════════════════════════════════════ */
@@ -475,7 +499,48 @@ z-index: 100; gap: 16px; transition: opacity .3s;
 @keyframes cardIn  { from { transform: translateX(115%); opacity: 0; } }
 .c-out { animation: cardOut .22s ease forwards; }
 .c-in  { animation: cardIn  .22s ease forwards; }
+
+/* Auto mode: follow iOS system setting when no data-theme is set */
+@media (prefers-color-scheme: dark) {
+:root:not([data-theme=“light”]) {
+color-scheme: dark;
+–bg:            #0d0d14;
+–bg2:           #12121a;
+–surface:       #1a1a24;
+–surface2:      #20202c;
+–surface3:      #272734;
+–surface-solid: #1a1a24;
+–border:        #2c2c3e;
+–border2:       #222230;
+–text:          #f0f0f8;
+–text-muted:    #8888aa;
+–text-dim:      #4a4a66;
+–accent:        #6e66ff;
+–accent2:       #a89fff;
+–accent-soft:   #1e1b3a;
+–accent-glow:   rgba(110,102,255,0.30);
+–again:         #ff4d6d; –again-soft: #2d1020; –again-border: #7a2035;
+–hard:          #ffaa44; –hard-soft:  #2d2010; –hard-border:  #7a5510;
+–good:          #3ecf8e; –good-soft:  #0e2a1e; –good-border:  #1a6644;
+–easy:          #4db8ff; –easy-soft:  #0e2030; –easy-border:  #1a5577;
+–shadow:        0 8px 32px rgba(0,0,0,0.55);
+–shadow-sm:     0 2px 12px rgba(0,0,0,0.35);
+}
+}
 </style>
+
+<script>
+// Apply theme synchronously before first paint to avoid flash
+(function(){
+  try {
+    var s = JSON.parse(localStorage.getItem('kj_settings_v1') || '{}');
+    var t = s.theme || 'auto';
+    if (t === 'light') document.documentElement.setAttribute('data-theme','light');
+    else if (t === 'dark') document.documentElement.setAttribute('data-theme','dark');
+    // 'auto' = no attribute = CSS uses prefers-color-scheme via :root defaults
+  } catch(e) {}
+})();
+</script>
 
 </head>
 <body>
@@ -625,8 +690,12 @@ function saveLocal(){
 }
 function applyTheme(){
   const t = userSettings.theme;
-  if(t==='auto') document.documentElement.removeAttribute('data-theme');
-  else document.documentElement.setAttribute('data-theme', t);
+  const root = document.documentElement;
+  if(t==='auto'){
+    root.removeAttribute('data-theme');
+  } else {
+    root.setAttribute('data-theme', t);
+  }
 }
 function cardKey(nid,ord){return`${nid}_${ord}`}
 function getState(nid,ord){return progress[cardKey(nid,ord)]||null}
