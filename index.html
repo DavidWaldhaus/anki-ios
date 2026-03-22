@@ -561,14 +561,26 @@ async function ghPush(){
   if(!ghConfig.token) return;
   setSyncState('syncing');
   try{
-    const content = btoa(unescape(encodeURIComponent(JSON.stringify(progress))));
-    const existing = await ghRequest('GET', GH_FILE);
-    const sha = existing?.sha;
+    const ts = new Date().toISOString();
+
+    // Push progress
+    const progressContent = btoa(unescape(encodeURIComponent(JSON.stringify(progress))));
+    const existingProgress = await ghRequest('GET', GH_FILE);
     await ghRequest('PUT', GH_FILE, {
-      message: `Sync ${new Date().toISOString()}`,
-      content,
-      ...(sha ? {sha} : {})
+      message: `Sync ${ts}`,
+      content: progressContent,
+      ...(existingProgress?.sha ? {sha: existingProgress.sha} : {})
     });
+
+    // Push field configs
+    const fieldsContent = btoa(unescape(encodeURIComponent(JSON.stringify(fieldConfigs))));
+    const existingFields = await ghRequest('GET', 'kanji-fields.json');
+    await ghRequest('PUT', 'kanji-fields.json', {
+      message: `Fields sync ${ts}`,
+      content: fieldsContent,
+      ...(existingFields?.sha ? {sha: existingFields.sha} : {})
+    });
+
     setSyncState('synced');
   }catch(e){
     setSyncState('error');
@@ -580,20 +592,29 @@ async function ghPull(){
   if(!ghConfig.token) return;
   setSyncState('syncing');
   try{
+    // Pull progress
     const file = await ghRequest('GET', GH_FILE);
     if(file?.content){
       const json = decodeURIComponent(escape(atob(file.content.replace(/\n/g,''))));
       const remote = JSON.parse(json);
-      // Merge: take the later due date for each card
-      for(const [k,v] of Object.entries(remote)){
-        if(!progress[k]||progress[k].due<v.due) progress[k]=v;
+      for(const [k,rv] of Object.entries(remote)){
+        if(!progress[k]||progress[k].due<rv.due) progress[k]=rv;
       }
-      saveLocal();
-      setSyncState('synced');
-      toast('☁️ Fortschritt synchronisiert!');
-    } else {
-      setSyncState('synced');
     }
+
+    // Pull field configs
+    const fieldsFile = await ghRequest('GET', 'kanji-fields.json');
+    if(fieldsFile?.content){
+      const fieldsJson = decodeURIComponent(escape(atob(fieldsFile.content.replace(/\n/g,''))));
+      const remoteFields = JSON.parse(fieldsJson);
+      for(const [did, cfg] of Object.entries(remoteFields)){
+        fieldConfigs[did] = cfg;
+      }
+    }
+
+    saveLocal();
+    setSyncState('synced');
+    toast('☁️ Synchronisiert!');
   }catch(e){
     setSyncState('error');
     console.warn('GitHub pull failed:', e);
@@ -1190,6 +1211,8 @@ function saveFieldConfig(){
   closeModal('fieldModal');
   toast('✅ Felder gespeichert');
   renderHome();
+  // Sync field config to GitHub
+  schedulePush();
 }
 
 // ══════════════════════════════════════════════
