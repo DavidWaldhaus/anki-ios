@@ -1,5 +1,7 @@
 <!DOCTYPE html>
 
+<!-- v3.1 -->
+
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -9,8 +11,8 @@
 <meta name="apple-mobile-web-app-title" content="漢字">
 <meta name="theme-color" content="#0d0d14">
 <title>漢字 — Anki für iOS</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/sql-wasm.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/sql-wasm.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" crossorigin="anonymous"></script>
 
 <!-- TWO COMPLETE STYLESHEETS - JS swaps them, no CSS variables needed -->
 
@@ -1719,11 +1721,12 @@ applyTheme();
 window.matchMedia(’(prefers-color-scheme: dark)’).addEventListener(‘change’, ()=>{
 if(userSettings.theme===‘auto’) applyTheme();
 });
-if(typeof initSqlJs===‘undefined’) throw new Error(‘sql.js nicht geladen – bitte Seite neu laden’);
-if(typeof JSZip===‘undefined’) throw new Error(‘JSZip nicht geladen – bitte Seite neu laden’);
-setMsg(‘SQL laden…’);
+setMsg(‘Bibliotheken prüfen…’);
+if(typeof initSqlJs===‘undefined’) throw new Error(‘sql.js nicht geladen – Seite neu laden’);
+if(typeof JSZip===‘undefined’) throw new Error(‘JSZip nicht geladen – Seite neu laden’);
+setMsg(‘SQL-Engine laden…’);
 await initSQL();
-setMsg(‘Bereit’);
+setMsg(‘Bereit ✓’);
 hideLoader();
 renderHome();
 applyEditModeBtn();
