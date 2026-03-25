@@ -205,6 +205,12 @@ newSt = schedule(oldSt, rating);
 setState(c.nid, c.ord, newSt);
 recordStudied(1);
 schedulePush();
+}else{
+// Fun mode: keep asking until each card gets rated "Leicht" once.
+if(rating !== R.easy){
+const reinsertAt = Math.min(studyIdx + 4, studyQueue.length);
+studyQueue.splice(reinsertAt, 0, c);
+}
 }
 
 // Re-queue learning cards within session (until graduated)

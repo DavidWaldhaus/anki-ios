@@ -96,3 +96,28 @@ test('disabled subdeck is excluded from all-cards aggregation', () => {
   assert.equal(cards.length, 1);
   assert.equal(cards[0].cid, 1);
 });
+
+test('fun mode re-queues card unless rated easy', () => {
+  const {ctx} = createCtx();
+  vm.runInContext(`
+    sessionMode = 'fun-random';
+    const c1 = {cid:10,nid:10,ord:0,did:'1',fields:{Front:'A'}};
+    curCard = c1;
+    studyQueue = [c1];
+    studyIdx = 0;
+    rateCard('hard');
+  `, ctx);
+  const qLenAfterHard = vm.runInContext('studyQueue.length', ctx);
+  assert.equal(qLenAfterHard >= 1, true);
+
+  vm.runInContext(`
+    sessionMode = 'fun-random';
+    const c2 = {cid:11,nid:11,ord:0,did:'1',fields:{Front:'B'}};
+    curCard = c2;
+    studyQueue = [c2];
+    studyIdx = 0;
+    rateCard('easy');
+  `, ctx);
+  const qLenAfterEasy = vm.runInContext('studyQueue.length', ctx);
+  assert.equal(qLenAfterEasy, 1);
+});
