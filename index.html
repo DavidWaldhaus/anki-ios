@@ -425,6 +425,17 @@ html,body{height:100%;overflow:hidden;user-select:none;-webkit-user-select:none;
   </div>
 </div>
 
+<div class="modal-bg hidden" id="insightsModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📈 Lernvorschau</div>
+    <div class="modal-scroll" id="insightsContent"></div>
+    <div class="modal-footer">
+      <button class="primary-btn" style="width:100%" onclick="closeModal('insightsModal')">Schließen</button>
+    </div>
+  </div>
+</div>
+
 <!-- ════════ HOME ════════ -->
 
 <div class="screen" id="homeScreen">
@@ -465,6 +476,9 @@ html,body{height:100%;overflow:hidden;user-select:none;-webkit-user-select:none;
   <div class="ans-wrap" id="ansWrap"></div>
 </div>
 
-<script src="app.js" defer></script>
+<script src="js/state.js" defer></script>
+<script src="js/sync.js" defer></script>
+<script src="js/import-render-settings.js" defer></script>
+<script src="js/study-init.js" defer></script>
 </body>
 </html>

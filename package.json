@@ -1,0 +1,7 @@
+{
+  "name": "anki-ios-static",
+  "private": true,
+  "scripts": {
+    "test:smoke": "node --test tests/smoke.test.js"
+  }
+}
