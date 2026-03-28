@@ -202,7 +202,7 @@ return cards;
 function getCounts(cards){
 const seen = new Set();
 let newC=0, lrnC=0, revC=0;
-const newByDeck = {};
+const decksWithUnseenNew = new Set();
 for(const c of cards){
 if(seen.has(c.cid)) continue;
 seen.add(c.cid);
@@ -210,7 +210,7 @@ const st=getState(c.nid,c.ord);
 if(!st){
   newC++;
   const deckName = decks[c.did]?.name;
-  if(deckName) newByDeck[deckName] = (newByDeck[deckName] || 0) + 1;
+  if(deckName) decksWithUnseenNew.add(deckName);
   continue;
 }
 if(!isDue(st)) continue;
@@ -218,10 +218,10 @@ if(st.type===2) revC++; else lrnC++;
 }
 const newPerDeck = Math.max(0, num(userSettings.newPerDeck, 20));
 let addableNew = 0;
-for(const [deckName, unseenNew] of Object.entries(newByDeck)){
+for(const deckName of decksWithUnseenNew){
   const seenToday = getNewSeenTodayForDeck(deckName);
   const remainingByLimit = Math.max(0, newPerDeck - seenToday);
-  addableNew += Math.min(unseenNew, remainingByLimit);
+  addableNew += remainingByLimit;
 }
 return{newC,lrnC,revC,addableNew};
 }

@@ -171,6 +171,22 @@ test('new delta tracking applies same-day difference per deck (incl. parent scop
   assert.equal(vals.parentMixedLen, 25); // 10 from A + 15 from B
 });
 
+test('deck overview addableNew reflects daily quota remainder (not raw unseen count)', () => {
+  const {ctx} = createCtx();
+  vm.runInContext(`
+    decks={
+      d1:{name:'Root::A', cards:Array.from({length:8},(_,i)=>({cid:i+1,nid:i+1,ord:0,did:'d1',fields:{Front:'A'+i}}))}
+    };
+    userSettings.newPerDeck = 20;
+    userSettings.newSeenByDay = {[todayKey()]: {'Root::A': 5}};
+    const counts = getCounts(decks.d1.cards);
+    globalThis._counts = counts;
+  `, ctx);
+  const counts = vm.runInContext('_counts', ctx);
+  assert.equal(counts.newC, 8);
+  assert.equal(counts.addableNew, 15);
+});
+
 test('sync merge for newSeenByDay keeps max and trims to latest day', () => {
   const {ctx} = createCtx();
   const merged = vm.runInContext(`
