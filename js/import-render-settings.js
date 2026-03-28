@@ -202,15 +202,28 @@ return cards;
 function getCounts(cards){
 const seen = new Set();
 let newC=0, lrnC=0, revC=0;
+const decksWithUnseenNew = new Set();
 for(const c of cards){
 if(seen.has(c.cid)) continue;
 seen.add(c.cid);
 const st=getState(c.nid,c.ord);
-if(!st){ newC++; continue; }
+if(!st){
+  newC++;
+  const deckName = decks[c.did]?.name;
+  if(deckName) decksWithUnseenNew.add(deckName);
+  continue;
+}
 if(!isDue(st)) continue;
 if(st.type===2) revC++; else lrnC++;
 }
-return{newC,lrnC,revC};
+const newPerDeck = Math.max(0, num(userSettings.newPerDeck, 20));
+let addableNew = 0;
+for(const deckName of decksWithUnseenNew){
+  const seenToday = getNewSeenTodayForDeck(deckName);
+  const remainingByLimit = Math.max(0, newPerDeck - seenToday);
+  addableNew += remainingByLimit;
+}
+return{newC,lrnC,revC,addableNew};
 }
 
 function getDeckProgress(cards) {
@@ -322,7 +335,7 @@ document.getElementById('sRev').textContent=tRev;
 function renderDeckNode(node, depth=0) {
 const hasChildren = Object.keys(node.children).length > 0;
 const cards = node.activeCards;
-const {newC,lrnC,revC} = getCounts(cards);
+const {newC,lrnC,revC,addableNew} = getCounts(cards);
 const prog = getDeckProgress(cards);
 const EMOJIS = ['🎌','📖','✍️','🗾','📝','🎋','⛩️','🌸','📚','🈳'];
 const emoji = EMOJIS[Math.abs(node.fullName.length * 7) % EMOJIS.length];
@@ -335,7 +348,7 @@ const summary = getDeckStudySummary(newC, lrnC, revC);
 
 let html = '';
 if(hasChildren) {
-html += `<div class="deck-card deck-parent${disabledClass}" style="margin-left:${indent}px" onclick="toggleDeckNode('${nodeId}','${esc(node.fullName)}')"> <span class="deck-emoji">${emoji}</span> <div class="deck-info"> <div class="deck-name">${esc(node.displayName)}${hint}</div> <div class="deck-sub">${cards.length} aktive Karten · ${prog.pct}% gelernt</div><div class="deck-sub" style="margin-top:2px">${summary}</div> <div style="height:3px;background:#2c2c3e;border-radius:3px;margin-top:6px;overflow:hidden"> <div style="height:100%;width:${prog.pct}%;background:#6e66ff;border-radius:3px;transition:width .4s"></div> </div> <div class="deck-pills" style="margin-top:6px"> <span class="pill ${newC?'pill-new':'pill-0'}">${newC} neu</span> <span class="pill ${lrnC?'pill-lrn':'pill-0'}">${lrnC} lernen</span> <span class="pill ${revC?'pill-rev':'pill-0'}">${revC} wdh.</span> </div> </div> <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0"> <div style="display:flex;gap:6px;align-items:center"> ${userSettings.editMode ? `<button onclick="event.stopPropagation();showFieldModalForGroup('${esc(node.fullName)}')"
+html += `<div class="deck-card deck-parent${disabledClass}" style="margin-left:${indent}px" onclick="toggleDeckNode('${nodeId}','${esc(node.fullName)}')"> <span class="deck-emoji">${emoji}</span> <div class="deck-info"> <div class="deck-name">${esc(node.displayName)}${hint}</div> <div class="deck-sub">${cards.length} aktive Karten · ${prog.pct}% gelernt</div><div class="deck-sub" style="margin-top:2px">${summary}</div> <div style="height:3px;background:#2c2c3e;border-radius:3px;margin-top:6px;overflow:hidden"> <div style="height:100%;width:${prog.pct}%;background:#6e66ff;border-radius:3px;transition:width .4s"></div> </div> <div class="deck-pills" style="margin-top:6px"> <span class="pill ${newC?'pill-new':'pill-0'}">${newC} neu</span> <span class="pill ${lrnC?'pill-lrn':'pill-0'}">${lrnC} lernen</span> <span class="pill ${revC?'pill-rev':'pill-0'}">${revC} wdh.</span> <span class="pill ${addableNew?'pill-add':'pill-0'}">${addableNew} zusätzlich</span> </div> </div> <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0"> <div style="display:flex;gap:6px;align-items:center"> ${userSettings.editMode ? `<button onclick="event.stopPropagation();showFieldModalForGroup('${esc(node.fullName)}')"
 style="background:#20202c;color:#a89fff;border:1.5px solid #2c2c3e;border-radius:10px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">
 ⚙️ Felder</button>` : ''} <button onclick="event.stopPropagation();startStudyCards(getAllCardsForNodeByName('${esc(node.fullName)}'),'${esc(node.displayName)}', '${esc(node.fullName)}')" style="background:#6e66ff;color:#fff;border:none;border-radius:10px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap"> ▶ Alle lernen</button> </div> <span class="deck-arr" id="${nodeId}_arrow">${collapsed?'›':'⌄'}</span> </div> </div>`;
 html += `<div id="${nodeId}_children" style="display:${collapsed?'none':'block'}">`;
@@ -351,7 +364,7 @@ return html;
 }
 
 function renderLeafDeck(did, deck, depth=0) {
-const {newC,lrnC,revC} = getCounts(deck.cards);
+const {newC,lrnC,revC,addableNew} = getCounts(deck.cards);
 const prog = getDeckProgress(deck.cards);
 const EMOJIS = ['🎌','📖','✍️','🗾','📝','🎋','⛩️','🌸','📚','🈳'];
 const emoji = EMOJIS[Math.abs(did * 7) % EMOJIS.length];
@@ -372,6 +385,7 @@ return `<div class="deck-card${enabled?'':' deck-card-disabled'}" style="margin-
 <span class="pill ${newC?'pill-new':'pill-0'}">${newC} neu</span>
 <span class="pill ${lrnC?'pill-lrn':'pill-0'}">${lrnC} lernen</span>
 <span class="pill ${revC?'pill-rev':'pill-0'}">${revC} wdh.</span>
+<span class="pill ${addableNew?'pill-add':'pill-0'}">${addableNew} zusätzlich</span>
 </div>
 </div>
 <span class="deck-arr">›</span>
