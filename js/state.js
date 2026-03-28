@@ -10,7 +10,7 @@ let sessionStats = {again:0, hard:0, good:0, easy:0};
 let sessionMode = 'normal';
 let ghConfig = {token:'', repo:'', user:''};
 let syncState = 'idle';
-const APP_VERSION = 'v3.3.0';
+const APP_VERSION = 'v3.4.0';
 let userSettings = {
 theme: 'auto',
 newPerDeck: 20,
@@ -19,6 +19,10 @@ editMode: false,
 deckEnabled: {},
 funModeCount: 30,
 funModeDeckFilter: 'active',
+deckTreeCollapsed: {},
+deckOrder: {},
+funModeCustomDeck: '',
+funModeCustomOrder: 'random',
 };
 
 const PROGRESS_KEY  = 'kj_progress_v3';
@@ -148,6 +152,10 @@ ghConfig={token:'',repo:'',user:'',...ghConfig};
 userSettings.deckEnabled = userSettings.deckEnabled && typeof userSettings.deckEnabled === 'object' ? userSettings.deckEnabled : {};
 userSettings.funModeCount = Math.max(5, Math.min(200, num(userSettings.funModeCount, 30)));
 userSettings.funModeDeckFilter = userSettings.funModeDeckFilter === 'all' ? 'all' : 'active';
+userSettings.deckTreeCollapsed = userSettings.deckTreeCollapsed && typeof userSettings.deckTreeCollapsed === 'object' ? userSettings.deckTreeCollapsed : {};
+userSettings.deckOrder = userSettings.deckOrder && typeof userSettings.deckOrder === 'object' ? userSettings.deckOrder : {};
+userSettings.funModeCustomOrder = userSettings.funModeCustomOrder === 'ordered' ? 'ordered' : 'random';
+userSettings.newSeenByDay = userSettings.newSeenByDay && typeof userSettings.newSeenByDay === 'object' ? userSettings.newSeenByDay : {};
 }
 function saveLocal(){
 try{localStorage.setItem(PROGRESS_KEY,JSON.stringify(progress))}catch{}
@@ -196,4 +204,26 @@ return studyStats[todayKey()]?.studied || 0;
 function isDeckEnabled(deckName){
 if(!deckName) return true;
 return userSettings.deckEnabled?.[deckName] !== false;
+}
+
+function touchTodayNewSeenBucket(){
+const key = todayKey();
+if(!userSettings.newSeenByDay || typeof userSettings.newSeenByDay !== 'object') userSettings.newSeenByDay = {};
+if(!userSettings.newSeenByDay[key] || typeof userSettings.newSeenByDay[key] !== 'object') userSettings.newSeenByDay[key] = {};
+const keep = {[key]: userSettings.newSeenByDay[key]};
+userSettings.newSeenByDay = keep;
+return userSettings.newSeenByDay[key];
+}
+
+function getNewSeenTodayForDeck(deckName){
+if(!deckName) return 0;
+const key = todayKey();
+return num(userSettings.newSeenByDay?.[key]?.[deckName], 0);
+}
+
+function bumpNewSeenTodayForDeck(deckName, delta=1){
+if(!deckName) return;
+const bucket = touchTodayNewSeenBucket();
+bucket[deckName] = Math.max(0, num(bucket[deckName], 0) + delta);
+saveLocal();
 }

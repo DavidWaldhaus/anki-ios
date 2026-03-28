@@ -1,10 +1,11 @@
 // ══════════════════════════════════════════════
 //  STUDY SESSION
 // ══════════════════════════════════════════════
-function buildStudyQueue(cards) {
+function buildStudyQueue(cards, opts={}) {
 window._sessionStart = Date.now();
 const seen = new Set();
 const learning = [], due = [], newCards = [];
+const perDeckNew = {};
 
 for(const c of cards){
 if(seen.has(c.cid)) continue;
@@ -21,8 +22,19 @@ else due.push(c);
 shuffle(due);
 if(userSettings.newOrder==='random') shuffle(newCards);
 const maxNew = userSettings.newPerDeck || 20;
+const selectedNew = [];
+for(const c of newCards){
+const deckName = decks[c.did]?.name;
+if(!deckName) continue;
+const used = perDeckNew[deckName] || 0;
+const seenToday = getNewSeenTodayForDeck(deckName);
+const remaining = Math.max(0, maxNew - seenToday);
+if(used >= remaining) continue;
+perDeckNew[deckName] = used + 1;
+selectedNew.push(c);
+}
 // Learning cards first (already in progress), then reviews, then new
-return [...learning, ...due, ...newCards.slice(0, maxNew)];
+return [...learning, ...due, ...selectedNew];
 }
 
 function getEligibleDecksForFunMode(){
@@ -68,17 +80,47 @@ showScreen('studyScreen');
 nextCard();
 }
 
+function getCardsForCustomFunSelection(sel){
+if(!sel) return Object.values(decks).flatMap(d=>d.cards);
+if(sel.startsWith('deck:')){
+  const did = sel.slice(5);
+  return decks[did]?.cards ? [...decks[did].cards] : [];
+}
+if(sel.startsWith('group:')){
+  return getAllCardsForNodeByName(sel.slice(6));
+}
+return [];
+}
+
+function startCustomFunMode(){
+const count = Math.max(5, Math.min(200, userSettings.funModeCount || 30));
+const selection = userSettings.funModeCustomDeck || '';
+let cards = getCardsForCustomFunSelection(selection);
+if(userSettings.funModeDeckFilter !== 'all'){
+  cards = cards.filter(c => isDeckEnabled(decks[c.did]?.name));
+}
+const learned = cards.filter(c => !!getState(c.nid, c.ord));
+if(!learned.length){ toast('Keine passenden gelernten Karten gefunden'); return; }
+if(userSettings.funModeCustomOrder === 'random') shuffle(learned);
+const queue = learned.slice(0, Math.min(count, learned.length));
+sessionMode = 'fun-custom';
+sessionStats={again:0,hard:0,good:0,easy:0};
+window._sessionRequeues = {};
+studyQueue = queue;
+studyIdx = 0;
+document.getElementById('studyTitle').textContent = '🕹️ Deck-Fun-Modus';
+closeModal('settingsModal');
+showScreen('studyScreen');
+nextCard();
+}
+
 function startStudy(did){
 const deck = decks[did];
 if(!deck) return;
-if(!isDeckEnabled(deck.name)){
-toast('Deck ist deaktiviert. In den Einstellungen aktivieren.');
-return;
-}
 sessionMode = 'normal';
 sessionStats={again:0,hard:0,good:0,easy:0};
 window._sessionRequeues = {};
-studyQueue=buildStudyQueue(deck.cards);
+studyQueue=buildStudyQueue(deck.cards, {singleDeck: deck.name});
 studyIdx=0;
 if(!studyQueue.length){
 document.getElementById('studyTitle').textContent=deck.name.split('::').pop();
@@ -203,6 +245,10 @@ let newSt = oldSt;
 if(sessionMode === 'normal'){
 newSt = schedule(oldSt, rating);
 setState(c.nid, c.ord, newSt);
+if(!oldSt || oldSt.type===undefined){
+  const deckName = decks[c.did]?.name;
+  bumpNewSeenTodayForDeck(deckName, 1);
+}
 recordStudied(1);
 schedulePush();
 }else{
