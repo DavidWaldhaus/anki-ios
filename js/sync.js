@@ -39,6 +39,24 @@ function getSyncErrorMessage(err){
 return err?.message || 'Unbekannter Sync-Fehler';
 }
 
+function mergeNewSeenByDay(localMap, remoteMap){
+const merged = {};
+for(const [day, deckMap] of Object.entries(localMap || {})){
+if(deckMap && typeof deckMap === 'object') merged[day] = {...deckMap};
+}
+for(const [day, deckMap] of Object.entries(remoteMap || {})){
+if(!deckMap || typeof deckMap !== 'object') continue;
+if(!merged[day]) merged[day] = {};
+for(const [deckName, count] of Object.entries(deckMap)){
+  merged[day][deckName] = Math.max(num(merged[day][deckName], 0), num(count, 0));
+}
+}
+const days = Object.keys(merged).sort().slice(-1);
+const trimmed = {};
+for(const d of days) trimmed[d] = merged[d];
+return trimmed;
+}
+
 async function ghPushFile(path, obj, existingSha) {
 const content = encodeForGH(obj);
 await ghRequest('PUT', path, {
@@ -118,6 +136,8 @@ if(settingsFile?.content){
     ...userSettings,
     ...remoteSettings,
     deckEnabled: remoteSettings.deckEnabled && typeof remoteSettings.deckEnabled === 'object' ? remoteSettings.deckEnabled : (userSettings.deckEnabled || {}),
+    deckOrder: remoteSettings.deckOrder && typeof remoteSettings.deckOrder === 'object' ? remoteSettings.deckOrder : (userSettings.deckOrder || {}),
+    newSeenByDay: mergeNewSeenByDay(userSettings.newSeenByDay, remoteSettings.newSeenByDay),
   };
 }
 

@@ -121,3 +121,128 @@ test('fun mode re-queues card unless rated easy', () => {
   const qLenAfterEasy = vm.runInContext('studyQueue.length', ctx);
   assert.equal(qLenAfterEasy, 1);
 });
+
+test('buildStudyQueue respects daily new-per-deck delta', () => {
+  const {ctx} = createCtx();
+  vm.runInContext(`
+    decks={ d1:{name:'Root::Deck', cards:[
+      {cid:1,nid:1,ord:0,did:'d1',fields:{Front:'A'}},
+      {cid:2,nid:2,ord:0,did:'d1',fields:{Front:'B'}},
+      {cid:3,nid:3,ord:0,did:'d1',fields:{Front:'C'}}
+    ]}};
+    userSettings.newPerDeck = 3;
+    userSettings.newSeenByDay = {[todayKey()]: {'Root::Deck': 2}};
+    const q = buildStudyQueue(decks.d1.cards);
+    globalThis._qLen = q.length;
+  `, ctx);
+  assert.equal(vm.runInContext('_qLen', ctx), 1);
+});
+
+test('startStudy allows explicitly opening disabled deck', () => {
+  const {ctx} = createCtx();
+  vm.runInContext(`
+    decks={ d1:{name:'Root::Off', fields:['Front'], cards:[{cid:1,nid:1,ord:0,did:'d1',fields:{Front:'A'}}]} };
+    userSettings.deckEnabled={'Root::Off':false};
+    startStudy('d1');
+    globalThis._mode = sessionMode;
+  `, ctx);
+  assert.equal(vm.runInContext('_mode', ctx), 'normal');
+});
+
+test('new delta tracking applies same-day difference per deck (incl. parent scope)', () => {
+  const {ctx} = createCtx();
+  vm.runInContext(`
+    decks={
+      d1:{name:'Parent::A', cards:Array.from({length:40},(_,i)=>({cid:i+1,nid:i+1,ord:0,did:'d1',fields:{Front:'A'+i}}))},
+      d2:{name:'Parent::B', cards:Array.from({length:15},(_,i)=>({cid:100+i,nid:100+i,ord:0,did:'d2',fields:{Front:'B'+i}}))}
+    };
+    const day = todayKey();
+    userSettings.newPerDeck = 20;
+    userSettings.newSeenByDay = {[day]: {'Parent::A': 20, 'Parent::B': 0}};
+    const before = buildStudyQueue(decks.d1.cards).length; // already at cap
+    userSettings.newPerDeck = 30;
+    const deckAAfterRaise = buildStudyQueue(decks.d1.cards).length; // +10 remaining
+    const parentMixed = buildStudyQueue([...decks.d1.cards, ...decks.d2.cards]);
+    globalThis._vals = {before, deckAAfterRaise, parentMixedLen: parentMixed.length};
+  `, ctx);
+  const vals = vm.runInContext('_vals', ctx);
+  assert.equal(vals.before, 0);
+  assert.equal(vals.deckAAfterRaise, 10);
+  assert.equal(vals.parentMixedLen, 25); // 10 from A + 15 from B
+});
+
+test('sync merge for newSeenByDay keeps max and trims to latest day', () => {
+  const {ctx} = createCtx();
+  const merged = vm.runInContext(`
+    mergeNewSeenByDay(
+      {'2026-03-27': {'Deck': 12}, '2026-03-28': {'Deck': 5}},
+      {'2026-03-28': {'Deck': 18}, '2026-03-26': {'Deck': 99}}
+    )
+  `, ctx);
+  assert.deepEqual(JSON.parse(JSON.stringify(merged)), {'2026-03-28': {'Deck': 18}});
+});
+
+test('import dedupe removes audio/text prompt collisions but keeps legit different prompts', () => {
+  const {ctx} = createCtx();
+  vm.runInContext(`
+    const fakeDb = {
+      exec(sql){
+        if(sql.includes('SELECT decks,models FROM col')){
+          return [{ values: [[
+            JSON.stringify({'1': {name:'Root::Deck'}}),
+            JSON.stringify({'10': {name:'Basic', flds:[{name:'Front'},{name:'Back'}]}})
+          ]] }];
+        }
+        return [{ values: [
+          [1, 11, '1', 0, 0, '10', 'Haus\\x1f[sound:h.mp3]home', ''],
+          [2, 11, '1', 1, 0, '10', '<b>Haus</b>\\x1fhome', ''],
+          [3, 12, '1', 0, 0, '10', 'Baum\\x1ftree', '']
+        ]}];
+      }
+    };
+    const r = loadDecksFromDb(fakeDb);
+    globalThis._cards = r['1'].cards;
+  `, ctx);
+  const cards = vm.runInContext('_cards', ctx);
+  assert.equal(cards.length, 2);
+  assert.equal(cards.some(c => c.fields.Front.includes('Haus')), true);
+  assert.equal(cards.some(c => c.fields.Front.includes('Baum')), true);
+});
+
+test('disabled deck handling stays consistent for all-learn/fun filters', () => {
+  const {ctx} = createCtx();
+  vm.runInContext(`
+    decks={
+      a:{name:'Root::A', cards:[{cid:1,nid:1,ord:0,did:'a',fields:{Front:'A'}}]},
+      b:{name:'Root::B', cards:[{cid:2,nid:2,ord:0,did:'b',fields:{Front:'B'}}]}
+    };
+    progress['1_0'] = {type:2,due:0,interval:1,ease:2.5,reps:1,lapses:0};
+    progress['2_0'] = {type:2,due:0,interval:1,ease:2.5,reps:1,lapses:0};
+    userSettings.deckEnabled={'Root::B':false};
+    userSettings.funModeDeckFilter='active';
+    const allLearn = getAllCardsForNodeByName('Root');
+    const activeFunDecks = getEligibleDecksForFunMode().map(d=>d.name);
+    userSettings.funModeDeckFilter='all';
+    const allFunDecks = getEligibleDecksForFunMode().map(d=>d.name);
+    globalThis._res = {allLearnLen: allLearn.length, activeFunDecks, allFunDecks};
+  `, ctx);
+  const res = vm.runInContext('_res', ctx);
+  assert.equal(res.allLearnLen, 1);
+  assert.deepEqual(res.activeFunDecks, ['Root::A']);
+  assert.deepEqual(res.allFunDecks.sort(), ['Root::A','Root::B']);
+});
+
+test('deckOrder migration fallback is stable and manual order is applied', () => {
+  const {ctx} = createCtx();
+  vm.runInContext(`
+    const demo = {B:{}, A:{}};
+    userSettings.deckOrder = undefined;
+    const fallback = getOrderedEntries(demo, '__root__').map(([k])=>k);
+    userSettings.deckOrder = {'__root__':['B','A']};
+    const persisted = getOrderedEntries(demo, '__root__').map(([k])=>k);
+    globalThis._order = {fallback, persisted};
+  `, ctx);
+  const o = vm.runInContext('_order', ctx);
+  assert.deepEqual(JSON.parse(JSON.stringify(o.fallback)), ['A','B']);
+  assert.deepEqual(JSON.parse(JSON.stringify(o.persisted)), ['B','A']);
+});
