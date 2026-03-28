@@ -42,6 +42,7 @@ html,body{height:100%;overflow:hidden;user-select:none;-webkit-user-select:none;
 .sect{font-size:13px;font-weight:600;color:#8888aa;padding:2px 4px 10px}
 .deck-card{background:#1a1a24;border:1.5px solid #2c2c3e;border-radius:22px;padding:16px 18px;margin-bottom:10px;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.3)}
 .deck-card::after{content:'';position:absolute;left:0;top:14px;bottom:14px;width:4px;background:#6e66ff;border-radius:0 3px 3px 0}
+.deck-card-disabled{opacity:.55;filter:saturate(.65)}
 .deck-card:active{transform:scale(0.975);background:#20202c}
 .deck-emoji{font-size:28px;flex-shrink:0}
 .deck-info{flex:1;min-width:0}
@@ -152,6 +153,7 @@ html,body{height:100%;overflow:hidden;user-select:none;-webkit-user-select:none;
 .settings-row-sub{font-size:12px;color:#8888aa;margin-top:2px;line-height:1.45}
 .toggle{width:51px;height:31px;background:#272734;border:2px solid #2c2c3e;border-radius:15.5px;position:relative;cursor:pointer;transition:background .22s,border-color .22s;flex-shrink:0;-webkit-appearance:none;appearance:none}
 .toggle.on{background:#34c759;border-color:#34c759}
+.toggle.toggle-partial{background:#ffaa44;border-color:#ffaa44}
 .toggle::after{content:'';position:absolute;top:2px;left:2px;width:23px;height:23px;background:#fff;border-radius:50%;transition:transform .22s cubic-bezier(.4,0,.2,1);box-shadow:0 2px 6px rgba(0,0,0,.4)}
 .toggle.on::after{transform:translateX(20px)}
 .stepper{display:flex;align-items:center;gap:10px;flex-shrink:0}
@@ -221,6 +223,7 @@ html,body{height:100%;overflow:hidden;user-select:none;-webkit-user-select:none;
 .sect{font-size:13px;font-weight:600;color:#6b6b80;padding:2px 4px 10px}
 .deck-card{background:#ffffff;border:1.5px solid #d8d8e8;border-radius:22px;padding:16px 18px;margin-bottom:10px;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)}
 .deck-card::after{content:'';position:absolute;left:0;top:14px;bottom:14px;width:4px;background:#5856d6;border-radius:0 3px 3px 0}
+.deck-card-disabled{opacity:.52;filter:saturate(.65)}
 .deck-card:active{transform:scale(0.975);background:#f5f5fa}
 .deck-emoji{font-size:28px;flex-shrink:0}
 .deck-info{flex:1;min-width:0}
@@ -331,6 +334,7 @@ html,body{height:100%;overflow:hidden;user-select:none;-webkit-user-select:none;
 .settings-row-sub{font-size:12px;color:#6b6b80;margin-top:2px;line-height:1.45}
 .toggle{width:51px;height:31px;background:#ededf4;border:2px solid #d8d8e8;border-radius:15.5px;position:relative;cursor:pointer;transition:background .22s,border-color .22s;flex-shrink:0;-webkit-appearance:none;appearance:none}
 .toggle.on{background:#34c759;border-color:#34c759}
+.toggle.toggle-partial{background:#ffaa44;border-color:#ffaa44}
 .toggle::after{content:'';position:absolute;top:2px;left:2px;width:23px;height:23px;background:#fff;border-radius:50%;transition:transform .22s cubic-bezier(.4,0,.2,1);box-shadow:0 1px 4px rgba(0,0,0,.15)}
 .toggle.on::after{transform:translateX(20px)}
 .stepper{display:flex;align-items:center;gap:10px;flex-shrink:0}

@@ -121,3 +121,30 @@ test('fun mode re-queues card unless rated easy', () => {
   const qLenAfterEasy = vm.runInContext('studyQueue.length', ctx);
   assert.equal(qLenAfterEasy, 1);
 });
+
+test('buildStudyQueue respects daily new-per-deck delta', () => {
+  const {ctx} = createCtx();
+  vm.runInContext(`
+    decks={ d1:{name:'Root::Deck', cards:[
+      {cid:1,nid:1,ord:0,did:'d1',fields:{Front:'A'}},
+      {cid:2,nid:2,ord:0,did:'d1',fields:{Front:'B'}},
+      {cid:3,nid:3,ord:0,did:'d1',fields:{Front:'C'}}
+    ]}};
+    userSettings.newPerDeck = 3;
+    userSettings.newSeenByDay = {[todayKey()]: {'Root::Deck': 2}};
+    const q = buildStudyQueue(decks.d1.cards);
+    globalThis._qLen = q.length;
+  `, ctx);
+  assert.equal(vm.runInContext('_qLen', ctx), 1);
+});
+
+test('startStudy allows explicitly opening disabled deck', () => {
+  const {ctx} = createCtx();
+  vm.runInContext(`
+    decks={ d1:{name:'Root::Off', fields:['Front'], cards:[{cid:1,nid:1,ord:0,did:'d1',fields:{Front:'A'}}]} };
+    userSettings.deckEnabled={'Root::Off':false};
+    startStudy('d1');
+    globalThis._mode = sessionMode;
+  `, ctx);
+  assert.equal(vm.runInContext('_mode', ctx), 'normal');
+});
