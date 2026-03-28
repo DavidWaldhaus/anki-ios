@@ -149,7 +149,7 @@ test('startStudy allows explicitly opening disabled deck', () => {
   assert.equal(vm.runInContext('_mode', ctx), 'normal');
 });
 
-test('new delta tracking applies same-day difference per deck (incl. parent scope)', () => {
+test('new delta tracking applies same-day difference for selected scope', () => {
   const {ctx} = createCtx();
   vm.runInContext(`
     decks={
@@ -168,10 +168,10 @@ test('new delta tracking applies same-day difference per deck (incl. parent scop
   const vals = vm.runInContext('_vals', ctx);
   assert.equal(vals.before, 0);
   assert.equal(vals.deckAAfterRaise, 10);
-  assert.equal(vals.parentMixedLen, 25); // 10 from A + 15 from B
+  assert.equal(vals.parentMixedLen, 10); // parent scope has only +10 remaining after 20 already learned
 });
 
-test('deck overview addableNew reflects daily quota remainder (not raw unseen count)', () => {
+test('deck overview addableNew is capped by unseen new cards in scope', () => {
   const {ctx} = createCtx();
   vm.runInContext(`
     decks={
@@ -184,7 +184,26 @@ test('deck overview addableNew reflects daily quota remainder (not raw unseen co
   `, ctx);
   const counts = vm.runInContext('_counts', ctx);
   assert.equal(counts.newC, 8);
-  assert.equal(counts.addableNew, 15);
+  assert.equal(counts.addableNew, 8);
+});
+
+
+
+test('deck tree addableNew distributes parent quota across subdecks', () => {
+  const {ctx} = createCtx();
+  vm.runInContext(`
+    decks={
+      d1:{name:'Root::A', cards:Array.from({length:10},(_,i)=>({cid:i+1,nid:i+1,ord:0,did:'d1',fields:{Front:'A'+i}}))},
+      d2:{name:'Root::B', cards:Array.from({length:10},(_,i)=>({cid:100+i,nid:100+i,ord:0,did:'d2',fields:{Front:'B'+i}}))}
+    };
+    userSettings.newPerDeck = 15;
+    userSettings.newSeenByDay = {[todayKey()]: {'Root::A': 0, 'Root::B': 0}};
+    const parentAlloc = allocateAddableNewByDeck([...decks.d1.cards, ...decks.d2.cards]).byDeck;
+    globalThis._dist = {a: num(parentAlloc['Root::A'],0), b: num(parentAlloc['Root::B'],0)};
+  `, ctx);
+  const dist = vm.runInContext('_dist', ctx);
+  assert.equal(dist.a, 10);
+  assert.equal(dist.b, 5);
 });
 
 test('sync merge for newSeenByDay keeps max and trims to latest day', () => {
