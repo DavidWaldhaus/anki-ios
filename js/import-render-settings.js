@@ -199,31 +199,23 @@ cards.push(...deck.cards);
 return cards;
 }
 
-function getCounts(cards){
+function getCounts(cards, addableOverride=null){
 const seen = new Set();
 let newC=0, lrnC=0, revC=0;
-const decksWithUnseenNew = new Set();
 for(const c of cards){
 if(seen.has(c.cid)) continue;
 seen.add(c.cid);
 const st=getState(c.nid,c.ord);
 if(!st){
   newC++;
-  const deckName = decks[c.did]?.name;
-  if(deckName) decksWithUnseenNew.add(deckName);
   continue;
 }
 if(!isDue(st)) continue;
 if(st.type===2) revC++; else lrnC++;
 }
-const newPerDeck = Math.max(0, num(userSettings.newPerDeck, 20));
-let addableNew = 0;
-for(const deckName of decksWithUnseenNew){
-  const seenToday = getNewSeenTodayForDeck(deckName);
-  const remainingByLimit = Math.max(0, newPerDeck - seenToday);
-  addableNew += remainingByLimit;
-}
-return{newC,lrnC,revC,addableNew};
+const alloc = allocateAddableNewByDeck(cards);
+const addableNew = addableOverride===null ? alloc.totalAddable : Math.max(0, num(addableOverride, 0));
+return{newC,lrnC,revC,addableNew,addableByDeck:alloc.byDeck};
 }
 
 function getDeckProgress(cards) {
@@ -322,7 +314,7 @@ let html = `
 
 const tree = buildDeckTree();
 for(const [,node] of getOrderedEntries(tree, '__root__')) {
-html += renderDeckNode(node, 0);
+html += renderDeckNode(node, 0, null);
 }
 
 el.innerHTML=html;
@@ -332,10 +324,12 @@ document.getElementById('sLrn').textContent=tLrn;
 document.getElementById('sRev').textContent=tRev;
 }
 
-function renderDeckNode(node, depth=0) {
+function renderDeckNode(node, depth=0, inheritedAddableByDeck=null) {
 const hasChildren = Object.keys(node.children).length > 0;
 const cards = node.activeCards;
-const {newC,lrnC,revC,addableNew} = getCounts(cards);
+const ownAlloc = allocateAddableNewByDeck(cards);
+const contextualAddableNew = inheritedAddableByDeck ? sumDeckAllocationForCards(cards, inheritedAddableByDeck) : ownAlloc.totalAddable;
+const {newC,lrnC,revC,addableNew} = getCounts(cards, contextualAddableNew);
 const prog = getDeckProgress(cards);
 const EMOJIS = ['🎌','📖','✍️','🗾','📝','🎋','⛩️','🌸','📚','🈳'];
 const emoji = EMOJIS[Math.abs(node.fullName.length * 7) % EMOJIS.length];
@@ -353,18 +347,19 @@ style="background:#20202c;color:#a89fff;border:1.5px solid #2c2c3e;border-radius
 ⚙️ Felder</button>` : ''} <button onclick="event.stopPropagation();startStudyCards(getAllCardsForNodeByName('${esc(node.fullName)}'),'${esc(node.displayName)}', '${esc(node.fullName)}')" style="background:#6e66ff;color:#fff;border:none;border-radius:10px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap"> ▶ Alle lernen</button> </div> <span class="deck-arr" id="${nodeId}_arrow">${collapsed?'›':'⌄'}</span> </div> </div>`;
 html += `<div id="${nodeId}_children" style="display:${collapsed?'none':'block'}">`;
 for(const [,child] of getOrderedEntries(node.children, node.fullName)) {
-html += renderDeckNode(child, depth+1);
+html += renderDeckNode(child, depth+1, inheritedAddableByDeck || ownAlloc.byDeck);
 }
-if(node.did) html += renderLeafDeck(node.did, decks[node.did], depth+1);
+if(node.did) html += renderLeafDeck(node.did, decks[node.did], depth+1, inheritedAddableByDeck || ownAlloc.byDeck);
 html += `</div>`;
 } else {
-if(node.did) html += renderLeafDeck(node.did, decks[node.did], depth);
+if(node.did) html += renderLeafDeck(node.did, decks[node.did], depth, inheritedAddableByDeck);
 }
 return html;
 }
 
-function renderLeafDeck(did, deck, depth=0) {
-const {newC,lrnC,revC,addableNew} = getCounts(deck.cards);
+function renderLeafDeck(did, deck, depth=0, inheritedAddableByDeck=null) {
+const contextualAddableNew = inheritedAddableByDeck ? num(inheritedAddableByDeck[deck.name], 0) : null;
+const {newC,lrnC,revC,addableNew} = getCounts(deck.cards, contextualAddableNew);
 const prog = getDeckProgress(deck.cards);
 const EMOJIS = ['🎌','📖','✍️','🗾','📝','🎋','⛩️','🌸','📚','🈳'];
 const emoji = EMOJIS[Math.abs(did * 7) % EMOJIS.length];

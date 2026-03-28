@@ -21,15 +21,14 @@ else due.push(c);
 
 shuffle(due);
 if(userSettings.newOrder==='random') shuffle(newCards);
-const maxNew = userSettings.newPerDeck || 20;
+const alloc = allocateAddableNewByDeck(newCards, userSettings.newPerDeck || 20);
 const selectedNew = [];
 for(const c of newCards){
 const deckName = decks[c.did]?.name;
 if(!deckName) continue;
 const used = perDeckNew[deckName] || 0;
-const seenToday = getNewSeenTodayForDeck(deckName);
-const remaining = Math.max(0, maxNew - seenToday);
-if(used >= remaining) continue;
+const allowed = num(alloc.byDeck[deckName], 0);
+if(used >= allowed) continue;
 perDeckNew[deckName] = used + 1;
 selectedNew.push(c);
 }

@@ -227,3 +227,56 @@ const bucket = touchTodayNewSeenBucket();
 bucket[deckName] = Math.max(0, num(bucket[deckName], 0) + delta);
 saveLocal();
 }
+
+
+function getUnseenNewCountsByDeck(cards){
+const seen = new Set();
+const counts = {};
+for(const c of cards || []){
+  if(!c || seen.has(c.cid)) continue;
+  seen.add(c.cid);
+  if(getState(c.nid,c.ord)) continue;
+  const deckName = decks[c.did]?.name;
+  if(!deckName) continue;
+  counts[deckName] = (counts[deckName] || 0) + 1;
+}
+return counts;
+}
+
+function allocateAddableNewByDeck(cards, limit=num(userSettings.newPerDeck, 20), scopeDeckOrder=[]){
+const unseenByDeck = getUnseenNewCountsByDeck(cards);
+const orderedDecks = (scopeDeckOrder && scopeDeckOrder.length ? scopeDeckOrder : Object.keys(unseenByDeck).sort((a,b)=>a.localeCompare(b,'de')))
+  .filter(name => unseenByDeck[name] > 0);
+const fallbackDecks = Object.keys(unseenByDeck)
+  .filter(name => unseenByDeck[name] > 0 && !orderedDecks.includes(name))
+  .sort((a,b)=>a.localeCompare(b,'de'));
+const allDecks = [...orderedDecks, ...fallbackDecks];
+const seenTodayInScope = allDecks.reduce((sum, deckName)=>sum + getNewSeenTodayForDeck(deckName), 0);
+let remaining = Math.max(0, Math.max(0, num(limit, 20)) - seenTodayInScope);
+const byDeck = {};
+for(const deckName of allDecks){
+  if(remaining <= 0) break;
+  const take = Math.min(unseenByDeck[deckName], remaining);
+  if(take > 0){
+    byDeck[deckName] = take;
+    remaining -= take;
+  }
+}
+const totalAddable = Object.values(byDeck).reduce((a,b)=>a+b,0);
+return {totalAddable, byDeck, unseenByDeck};
+}
+
+function sumDeckAllocationForCards(cards, allocationByDeck){
+if(!allocationByDeck) return 0;
+const seen = new Set();
+const deckNames = new Set();
+for(const c of cards || []){
+  if(!c || seen.has(c.cid)) continue;
+  seen.add(c.cid);
+  const deckName = decks[c.did]?.name;
+  if(deckName) deckNames.add(deckName);
+}
+let total = 0;
+for(const deckName of deckNames) total += num(allocationByDeck[deckName], 0);
+return total;
+}
