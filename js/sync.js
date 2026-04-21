@@ -39,6 +39,18 @@ function getSyncErrorMessage(err){
 return err?.message || 'Unbekannter Sync-Fehler';
 }
 
+
+function mergeDeckEnabled(localMap, remoteMap){
+const merged = {};
+for(const [deckName, enabled] of Object.entries(localMap || {})){
+if(typeof enabled === 'boolean') merged[deckName] = enabled;
+}
+for(const [deckName, enabled] of Object.entries(remoteMap || {})){
+if(typeof enabled === 'boolean') merged[deckName] = enabled;
+}
+return merged;
+}
+
 function mergeNewSeenByDay(localMap, remoteMap){
 const merged = {};
 for(const [day, deckMap] of Object.entries(localMap || {})){
@@ -135,7 +147,7 @@ if(settingsFile?.content){
   userSettings = {
     ...userSettings,
     ...remoteSettings,
-    deckEnabled: remoteSettings.deckEnabled && typeof remoteSettings.deckEnabled === 'object' ? remoteSettings.deckEnabled : (userSettings.deckEnabled || {}),
+    deckEnabled: mergeDeckEnabled(userSettings.deckEnabled, remoteSettings.deckEnabled),
     deckOrder: remoteSettings.deckOrder && typeof remoteSettings.deckOrder === 'object' ? remoteSettings.deckOrder : (userSettings.deckOrder || {}),
     newSeenByDay: mergeNewSeenByDay(userSettings.newSeenByDay, remoteSettings.newSeenByDay),
   };
