@@ -10,7 +10,7 @@ let sessionStats = {again:0, hard:0, good:0, easy:0};
 let sessionMode = 'normal';
 let ghConfig = {token:'', repo:'', user:''};
 let syncState = 'idle';
-const APP_VERSION = 'v3.4.0';
+const APP_VERSION = 'v3.4.1';
 let userSettings = {
 theme: 'auto',
 newPerDeck: 20,

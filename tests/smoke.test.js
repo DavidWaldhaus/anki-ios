@@ -281,3 +281,38 @@ test('deckOrder migration fallback is stable and manual order is applied', () =>
   assert.deepEqual(JSON.parse(JSON.stringify(o.fallback)), ['A','B']);
   assert.deepEqual(JSON.parse(JSON.stringify(o.persisted)), ['B','A']);
 });
+
+test('sync merge for deckEnabled preserves local keys missing on remote', () => {
+  const {ctx} = createCtx();
+  const merged = vm.runInContext(`
+    mergeDeckEnabled(
+      {'Root::A': false, 'Root::B': true},
+      {'Root::A': true, 'Root::C': false}
+    )
+  `, ctx);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(merged)),
+    {'Root::A': true, 'Root::B': true, 'Root::C': false}
+  );
+});
+
+
+test('ghPull keeps local deckEnabled entries when remote settings are partial', async () => {
+  const {ctx} = createCtx();
+  vm.runInContext(`
+    ghConfig = {token:'t', repo:'r', user:'u'};
+    userSettings.deckEnabled = {'Root::Imported': false, 'Root::Old': true};
+    ghRequest = async (method, path) => {
+      if(method==='GET' && path==='kanji-settings.json'){
+        return {content: btoa(unescape(encodeURIComponent(JSON.stringify({deckEnabled:{'Root::Old': false}}))))};
+      }
+      return null;
+    };
+  `, ctx);
+  await ctx.ghPull();
+  const merged = vm.runInContext('userSettings.deckEnabled', ctx);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(merged)),
+    {'Root::Imported': false, 'Root::Old': false}
+  );
+});
